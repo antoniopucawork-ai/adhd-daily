@@ -1,0 +1,89 @@
+.next-step-card {
+  width: 100%;
+
+  display: grid;
+  grid-template-columns: 38px 1fr 34px;
+  align-items: center;
+  gap: 10px;
+
+  margin-top: 20px;
+  padding: 14px;
+
+  background:
+    radial-gradient(
+      circle at 12% 50%,
+      rgba(202, 190, 162, 0.08),
+      transparent 28%
+    ),
+    rgba(14, 27, 48, 0.82);
+
+  border: 1px solid rgba(222, 210, 184, 0.16);
+  border-radius: 16px;
+}
+
+.next-step-card__icon {
+  width: 36px;
+  height: 36px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #d9cdb2;
+  background: rgba(217, 205, 178, 0.1);
+
+  border-radius: 50%;
+}
+
+.next-step-card__content span {
+  display: block;
+
+  margin-bottom: 4px;
+
+  color: #d9cdb2;
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 12px;
+}
+
+.next-step-card__content h2 {
+  margin: 0 0 3px;
+
+  color: rgba(244, 239, 230, 0.9);
+
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.next-step-card__content p {
+  margin: 0;
+
+  color: rgba(244, 239, 230, 0.48);
+
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.next-step-card__content strong {
+  color: rgba(244, 239, 230, 0.72);
+  font-weight: 400;
+}
+
+.next-step-card__action {
+  width: 32px;
+  height: 32px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  color: #182238;
+  background: #d9cdb2;
+
+  border: none;
+  border-radius: 50%;
+
+  cursor: pointer;
+}
