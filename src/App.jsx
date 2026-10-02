@@ -1,7 +1,14 @@
+import { Route, Routes } from "react-router-dom";
 import HomePage from "./pages/HomePage";
+import MindDumpPage from "./pages/MindDumpPage";
 
 function App() {
-  return <HomePage />;
+  return (
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/svuota" element={<MindDumpPage />} />
+    </Routes>
+  );
 }
 
 export default App;
