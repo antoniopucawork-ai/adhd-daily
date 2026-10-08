@@ -22,7 +22,7 @@ function MindDumpPage() {
 
       items: [
         {
-          id: 1,
+          id: crypto.randomUUID(),
           type: "ACTION",
           title: "Chiamare il dentista",
           date: "2026-10-09",

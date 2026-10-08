@@ -1,27 +1,34 @@
-import { BookOpen, Phone, ShoppingBag } from "lucide-react";
+import { CalendarDays, CheckCircle2, Lightbulb, ListTodo } from "lucide-react";
+
 import "./TodayList.css";
 
-function TodayList() {
-  const activities = [
-    {
-      id: 1,
-      title: "Studia React",
-      time: "10:00",
-      icon: BookOpen,
-    },
-    {
-      id: 2,
-      title: "Chiama il commercialista",
-      time: "12:30",
-      icon: Phone,
-    },
-    {
-      id: 3,
-      title: "Compra il latte",
-      time: "18:00",
-      icon: ShoppingBag,
-    },
-  ];
+function TodayList({ items = [], onComplete }) {
+  const getTodayDate = () => {
+    const today = new Date();
+
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  };
+
+  const todayDate = getTodayDate();
+
+  const todayItems = items.filter(
+    (item) => item.date === todayDate && item.status !== "DONE",
+  );
+
+  const getItemIcon = (type) => {
+    const icons = {
+      ACTION: ListTodo,
+      EVENT: CalendarDays,
+      MEMORY: CheckCircle2,
+      INTENTION: Lightbulb,
+    };
+
+    return icons[type] || ListTodo;
+  };
 
   return (
     <section className="today">
@@ -34,28 +41,36 @@ function TodayList() {
       </div>
 
       <div className="today__list">
-        {activities.map((activity) => {
-          const Icon = activity.icon;
+        {todayItems.length === 0 ? (
+          <div className="today__empty">
+            <p>Niente in programma per oggi.</p>
+          </div>
+        ) : (
+          todayItems.map((item) => {
+            const Icon = getItemIcon(item.type);
 
-          return (
-            <div className="today__item" key={activity.id}>
-              <div className="today__icon">
-                <Icon size={17} strokeWidth={1.5} />
+            return (
+              <div className="today__item" key={item.id}>
+                <div className="today__icon">
+                  <Icon size={17} strokeWidth={1.5} />
+                </div>
+
+                <div className="today__content">
+                  <h3>{item.title}</h3>
+
+                  <p>{item.time || "Durante la giornata"}</p>
+                </div>
+
+                <button
+                  className="today__check"
+                  type="button"
+                  onClick={() => onComplete(item.id)}
+                  aria-label={`Completa ${item.title}`}
+                />
               </div>
-
-              <div className="today__content">
-                <h3>{activity.title}</h3>
-                <p>{activity.time}</p>
-              </div>
-
-              <button
-                className="today__check"
-                type="button"
-                aria-label={`Completa ${activity.title}`}
-              />
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
     </section>
   );
