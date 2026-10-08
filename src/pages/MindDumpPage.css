@@ -70,7 +70,46 @@
 .mind-dump-page__textarea:focus {
   border-color: rgba(217, 205, 178, 0.35);
 }
+.mind-dump-page__organize {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 
+  width: 100%;
+  margin-top: 16px;
+  padding: 15px 20px;
+
+  color: #071120;
+  background: #e5d8b8;
+
+  border: none;
+  border-radius: 16px;
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+
+  cursor: pointer;
+
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease,
+    background 180ms ease;
+}
+
+.mind-dump-page__organize:hover:not(:disabled) {
+  background: #eee3c8;
+}
+
+.mind-dump-page__organize:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+.mind-dump-page__organize:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
 @media (min-width: 600px) {
   .mind-dump-page__container {
     max-width: 430px;
