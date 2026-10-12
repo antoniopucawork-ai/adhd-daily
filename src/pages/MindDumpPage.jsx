@@ -3,23 +3,64 @@ import { ArrowRight } from "lucide-react";
 import BottomNav from "../components/BottomNav/BottomNav";
 import MindDumpResult from "../components/MindDumpResult/MindDumpResult";
 import MindDumpEdit from "../components/MindDumpEdit/MindDumpEdit";
-import "./MindDumpPage.css";
 import { getTodayDate } from "../utils/date";
+import "./MindDumpPage.css";
+
+const DRAFT_KEY = "adhdDailyDraft";
+const ITEMS_KEY = "adhdDailyItems";
+
+function readDraft() {
+  try {
+    return {
+      text: localStorage.getItem(DRAFT_KEY) || "",
+      error: "",
+    };
+  } catch {
+    return {
+      text: "",
+      error:
+        "Non riesco a recuperare la bozza. Il salvataggio nel browser potrebbe non essere disponibile.",
+    };
+  }
+}
+
 function MindDumpPage() {
-  const [mindDump, setMindDump] = useState("");
+  const [draft, setDraft] = useState(readDraft);
   const [result, setResult] = useState(null);
   const [editingItem, setEditingItem] = useState(null);
+  const [saveError, setSaveError] = useState("");
 
+  const mindDump = draft.text;
   const hasContent = mindDump.trim().length > 0;
+
+  const handleMindDumpChange = (event) => {
+    const text = event.target.value;
+    let error = "";
+
+    try {
+      if (text.length > 0) {
+        localStorage.setItem(DRAFT_KEY, text);
+      } else {
+        localStorage.removeItem(DRAFT_KEY);
+      }
+    } catch {
+      error = "Non riesco a salvare la bozza. Copia il testo prima di uscire.";
+    }
+
+    // Il testo rimane scrivibile anche se il salvataggio fallisce.
+    setDraft({ text, error });
+  };
 
   const handleOrganize = () => {
     if (!hasContent) return;
 
+    setSaveError("");
+
     // MOCK TEMPORANEO:
-    // In futuro questo risultato arriverà dal backend + AI.
+    // Non interpreta ancora il testo.
+    // In futuro il risultato arriverà dal backend + AI.
     const mockResult = {
       originalText: mindDump,
-
       items: [
         {
           id: crypto.randomUUID(),
@@ -47,7 +88,6 @@ function MindDumpPage() {
   const handleSaveItem = (updatedItem) => {
     setResult((currentResult) => ({
       ...currentResult,
-
       items: currentResult.items.map((item) =>
         item.id === updatedItem.id ? updatedItem : item,
       ),
@@ -63,22 +103,47 @@ function MindDumpPage() {
   const handleConfirm = () => {
     if (!result) return;
 
-    const savedItems = JSON.parse(
-      localStorage.getItem("adhdDailyItems") || "[]",
-    );
+    setSaveError("");
 
-    const confirmedItems = result.items.map((item) => ({
-      ...item,
-      status: "TODO",
-      confirmed: true,
-    }));
+    try {
+      const savedItems = JSON.parse(localStorage.getItem(ITEMS_KEY) || "[]");
 
-    localStorage.setItem(
-      "adhdDailyItems",
-      JSON.stringify([...savedItems, ...confirmedItems]),
-    );
+      // Evita di sovrascrivere dati con una struttura inattesa.
+      if (!Array.isArray(savedItems)) {
+        setSaveError(
+          "I dati salvati non sono leggibili. Il testo resta qui: copia il contenuto prima di uscire.",
+        );
+        return;
+      }
 
-    setMindDump("");
+      const confirmedItems = result.items.map((item) => ({
+        ...item,
+        status: "TODO",
+        confirmed: true,
+      }));
+
+      localStorage.setItem(
+        ITEMS_KEY,
+        JSON.stringify([...savedItems, ...confirmedItems]),
+      );
+    } catch {
+      setSaveError(
+        "Non sono riuscito a salvare. Il testo resta qui: puoi riprovare o tornare indietro per copiarlo.",
+      );
+      return;
+    }
+
+    // Elimina la bozza soltanto dopo aver salvato le attività.
+    let draftError = "";
+
+    try {
+      localStorage.removeItem(DRAFT_KEY);
+    } catch {
+      draftError =
+        "Le attività sono state salvate, ma non riesco a eliminare la bozza. Se ricompare, non confermarla di nuovo.";
+    }
+
+    setDraft({ text: "", error: draftError });
     setResult(null);
     setEditingItem(null);
   };
@@ -86,11 +151,15 @@ function MindDumpPage() {
   const handleBack = () => {
     setResult(null);
     setEditingItem(null);
+    setSaveError("");
   };
 
   return (
     <main className="mind-dump-page">
       <div className="mind-dump-page__container">
+        {draft.error && <p role="alert">{draft.error}</p>}
+        {saveError && <p role="alert">{saveError}</p>}
+
         {!result ? (
           <>
             <header className="mind-dump-page__header">
@@ -106,7 +175,7 @@ function MindDumpPage() {
               placeholder="Scrivi qui tutto quello che ti passa per la testa..."
               aria-label="Svuota i tuoi pensieri"
               value={mindDump}
-              onChange={(event) => setMindDump(event.target.value)}
+              onChange={handleMindDumpChange}
             />
 
             <button
