@@ -47,7 +47,7 @@ function MindDumpPage() {
       error = "Non riesco a salvare la bozza. Copia il testo prima di uscire.";
     }
 
-    // Il testo rimane scrivibile anche se il salvataggio fallisce.
+    // Mantiene il testo disponibile anche se il salvataggio fallisce.
     setDraft({ text, error });
   };
 
@@ -60,6 +60,8 @@ function MindDumpPage() {
     // Non interpreta ancora il testo.
     // In futuro il risultato arriverà dal backend + AI.
     const mockResult = {
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
       originalText: mindDump,
       items: [
         {
@@ -120,8 +122,14 @@ function MindDumpPage() {
         ...item,
         status: "TODO",
         confirmed: true,
+        source: {
+          id: result.id,
+          originalText: result.originalText,
+          createdAt: result.createdAt,
+        },
       }));
 
+      // Salva insieme gli elementi e il loro testo originale.
       localStorage.setItem(
         ITEMS_KEY,
         JSON.stringify([...savedItems, ...confirmedItems]),
@@ -133,7 +141,7 @@ function MindDumpPage() {
       return;
     }
 
-    // Elimina la bozza soltanto dopo aver salvato le attività.
+    // Elimina la bozza soltanto dopo il salvataggio riuscito.
     let draftError = "";
 
     try {
