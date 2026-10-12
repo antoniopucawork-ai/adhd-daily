@@ -4,7 +4,7 @@ import BottomNav from "../components/BottomNav/BottomNav";
 import MindDumpResult from "../components/MindDumpResult/MindDumpResult";
 import MindDumpEdit from "../components/MindDumpEdit/MindDumpEdit";
 import "./MindDumpPage.css";
-
+import { getTodayDate } from "../utils/date";
 function MindDumpPage() {
   const [mindDump, setMindDump] = useState("");
   const [result, setResult] = useState(null);
@@ -24,8 +24,8 @@ function MindDumpPage() {
         {
           id: crypto.randomUUID(),
           type: "ACTION",
-          title: "Chiamare il dentista",
-          date: "2026-10-09",
+          title: mindDump.trim(),
+          date: getTodayDate(),
           time: null,
           deadline: null,
           reminder: false,
