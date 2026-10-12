@@ -1,8 +1,10 @@
 import { CalendarDays, CheckCircle2, Lightbulb, ListTodo } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { getTodayDate } from "../../utils/date";
 import "./TodayList.css";
 
 function TodayList({ items = [], onComplete }) {
+  const navigate = useNavigate();
   const todayDate = getTodayDate();
 
   const todayItems = items.filter(
@@ -25,7 +27,11 @@ function TodayList({ items = [], onComplete }) {
       <div className="today__header">
         <h2>Oggi</h2>
 
-        <button className="today__view-all" type="button">
+        <button
+          className="today__view-all"
+          type="button"
+          onClick={() => navigate("/archivio")}
+        >
           Vedi tutto <span>›</span>
         </button>
       </div>
@@ -47,7 +53,6 @@ function TodayList({ items = [], onComplete }) {
 
                 <div className="today__content">
                   <h3>{item.title}</h3>
-
                   <p>{item.time || "Durante la giornata"}</p>
                 </div>
 
