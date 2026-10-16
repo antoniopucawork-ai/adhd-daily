@@ -56,7 +56,13 @@
 .bottom-nav__item span {
   white-space: nowrap;
 }
+/* La navigazione inferiore è riservata a mobile e tablet */
 
+@media (min-width: 1024px) {
+  .bottom-nav {
+    display: none;
+  }
+}
 @media (max-width: 350px) {
   .bottom-nav {
     width: calc(100% - 16px);

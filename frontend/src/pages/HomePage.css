@@ -172,10 +172,26 @@
   line-height: 1.4;
 }
 
-/* TABLET E DESKTOP */
-
-@media (min-width: 600px) {
+/* TABLET */
+@media (min-width: 600px) and (max-width: 1023px) {
   .home__container {
-    max-width: 430px;
+    max-width: 720px;
+    padding: 36px 32px 110px;
+  }
+}
+
+/* DESKTOP */
+@media (min-width: 1024px) {
+  .home__container {
+    max-width: 1600px;
+    padding: 48px 64px 80px;
+  }
+
+  .home__welcome h1 {
+    font-size: 44px;
+  }
+
+  .home__welcome p {
+    font-size: 15px;
   }
 }

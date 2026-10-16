@@ -1,0 +1,508 @@
+/* ==========================================
+   ADHD DAILY — SIDEBAR DESKTOP
+========================================== */
+
+.sidebar {
+  --sidebar-width: 264px;
+  --sidebar-compact-width: 76px;
+
+  --sidebar-text: #f4efe6;
+  --sidebar-muted: rgba(244, 239, 230, 0.55);
+  --sidebar-accent: #a9cdeb;
+  --sidebar-gold: #f5dca6;
+
+  --sidebar-duration: 420ms;
+  --sidebar-ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  isolation: isolate;
+
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+
+  width: var(--sidebar-width);
+  height: 100vh;
+  height: 100dvh;
+
+  padding: 32px 18px 20px;
+
+  color: var(--sidebar-text);
+
+  background:
+    radial-gradient(circle at 0% 0%, rgba(86, 119, 172, 0.12), transparent 48%),
+    linear-gradient(180deg, #101e35 0%, #091525 100%);
+
+  border-right: 1px solid rgba(244, 239, 230, 0.07);
+
+  transition:
+    width var(--sidebar-duration) var(--sidebar-ease),
+    padding var(--sidebar-duration) var(--sidebar-ease);
+}
+
+/* ==========================================
+   BRAND
+========================================== */
+
+.sidebar__brand {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+
+  min-height: 43px;
+  margin-bottom: 46px;
+}
+
+.sidebar__brand-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  min-width: 0;
+  width: 100%;
+}
+
+.sidebar__brand-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+
+  width: 43px;
+  height: 43px;
+
+  color: #b8d5f0;
+  background: rgba(139, 184, 224, 0.09);
+
+  border: 1px solid rgba(139, 184, 224, 0.13);
+  border-radius: 13px;
+}
+
+.sidebar__brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  min-width: 0;
+  overflow: hidden;
+
+  opacity: 1;
+  white-space: nowrap;
+
+  transition:
+    opacity 180ms ease,
+    width var(--sidebar-duration) var(--sidebar-ease);
+}
+
+.sidebar__brand-name {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 18px;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+}
+
+.sidebar__brand-subtitle {
+  color: rgba(244, 239, 230, 0.4);
+  font-size: 10px;
+}
+
+/* ==========================================
+   PULSANTE APERTURA / CHIUSURA
+========================================== */
+
+.sidebar__toggle {
+  position: absolute;
+  top: 36px;
+  right: 12px;
+  z-index: 10;
+
+  display: grid;
+  place-items: center;
+
+  width: 34px;
+  height: 34px;
+  padding: 0;
+
+  color: #b8d5f0;
+
+  background: #152640;
+
+  border: 1px solid rgba(169, 205, 235, 0.22);
+  border-radius: 11px;
+
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.15),
+    0 0 12px rgba(139, 184, 224, 0.04);
+
+  cursor: pointer;
+
+  transition:
+    background 220ms ease,
+    border-color 220ms ease,
+    color 220ms ease,
+    box-shadow 220ms ease;
+}
+
+.sidebar__toggle:hover {
+  color: #f4efe6;
+  background: #1c3150;
+
+  border-color: rgba(169, 205, 235, 0.4);
+
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.2),
+    0 0 14px rgba(169, 205, 235, 0.12);
+}
+
+.sidebar__toggle:active {
+  background: #243a59;
+}
+
+/* ==========================================
+   CONTENUTO NAVIGAZIONE
+========================================== */
+
+.sidebar__content {
+  flex: 1;
+  min-height: 0;
+
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  scrollbar-width: thin;
+  scrollbar-color: rgba(169, 205, 235, 0.15) transparent;
+}
+
+.sidebar__section-label {
+  height: 14px;
+
+  margin: 0 12px 14px;
+
+  color: rgba(244, 239, 230, 0.34);
+
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+
+  white-space: nowrap;
+  overflow: hidden;
+
+  transition:
+    opacity 180ms ease,
+    margin var(--sidebar-duration) var(--sidebar-ease),
+    height var(--sidebar-duration) var(--sidebar-ease);
+}
+
+.sidebar__section-label--upcoming {
+  margin-top: 36px;
+}
+
+.sidebar__navigation {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+/* ==========================================
+   LINK NAVIGAZIONE
+========================================== */
+
+.sidebar__link {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  width: 100%;
+  min-height: 47px;
+
+  padding: 0 14px;
+
+  color: var(--sidebar-muted);
+  background: transparent;
+
+  border: 1px solid transparent;
+  border-radius: 13px;
+
+  font-size: 13px;
+  text-decoration: none;
+
+  white-space: nowrap;
+  overflow: hidden;
+
+  transition:
+    color 220ms ease,
+    background 220ms ease,
+    border-color 220ms ease,
+    padding var(--sidebar-duration) var(--sidebar-ease),
+    gap var(--sidebar-duration) var(--sidebar-ease);
+}
+
+.sidebar__link-icon {
+  flex-shrink: 0;
+}
+
+.sidebar__link-text {
+  display: block;
+  min-width: 0;
+
+  opacity: 1;
+  overflow: hidden;
+
+  transition:
+    opacity 160ms ease,
+    transform var(--sidebar-duration) var(--sidebar-ease);
+}
+
+.sidebar__link:hover:not(.sidebar__link--disabled) {
+  color: var(--sidebar-text);
+  background: rgba(244, 239, 230, 0.045);
+}
+
+/* ==========================================
+   SEZIONE ATTIVA
+========================================== */
+
+.sidebar__link--active {
+  color: #dcecff;
+
+  background: rgba(128, 174, 220, 0.11);
+
+  border-color: rgba(128, 174, 220, 0.09);
+}
+
+/* Indicatore azzurro */
+
+.sidebar__link--active::before {
+  content: "";
+
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+
+  width: 2px;
+
+  background: var(--sidebar-accent);
+  border-radius: 3px;
+}
+
+/* ==========================================
+   PICCOLA STELLA DORATA
+========================================== */
+
+.sidebar__link::after {
+  content: "";
+
+  position: absolute;
+  right: 16px;
+  top: 50%;
+
+  width: 4px;
+  height: 4px;
+
+  background: var(--sidebar-gold);
+  border-radius: 50%;
+
+  opacity: 0;
+
+  box-shadow:
+    0 0 4px rgba(255, 225, 163, 0.9),
+    0 0 10px rgba(245, 202, 125, 0.5),
+    0 0 20px rgba(245, 202, 125, 0.15);
+
+  transform: translateY(-50%) scale(0.3);
+
+  pointer-events: none;
+
+  transition:
+    opacity 350ms ease,
+    transform 420ms var(--sidebar-ease);
+}
+
+.sidebar__link--active::after {
+  opacity: 1;
+  transform: translateY(-50%) scale(1);
+}
+
+/* ==========================================
+   ELEMENTI NON DISPONIBILI
+========================================== */
+
+.sidebar__link--disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* ==========================================
+   FOOTER
+========================================== */
+
+.sidebar__footer {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+
+  padding-top: 18px;
+
+  border-top: 1px solid rgba(244, 239, 230, 0.07);
+}
+
+.sidebar__profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 14px 10px 4px;
+  overflow: hidden;
+}
+
+.sidebar__avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+
+  width: 38px;
+  height: 38px;
+
+  color: #b8d5f0;
+  background: rgba(139, 184, 224, 0.1);
+
+  border: 1px solid rgba(139, 184, 224, 0.12);
+  border-radius: 12px;
+}
+
+.sidebar__profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  min-width: 0;
+  overflow: hidden;
+
+  white-space: nowrap;
+
+  transition:
+    opacity 180ms ease,
+    transform var(--sidebar-duration) var(--sidebar-ease);
+}
+
+.sidebar__profile-info span {
+  font-size: 12px;
+}
+
+.sidebar__profile-info small {
+  color: rgba(244, 239, 230, 0.4);
+  font-size: 10px;
+}
+
+/* ==========================================
+   MODALITÀ COMPATTA
+========================================== */
+
+.sidebar--collapsed {
+  width: var(--sidebar-compact-width);
+  padding-inline: 12px;
+}
+
+/* Brand */
+.sidebar--collapsed .sidebar__toggle {
+  top: 94px;
+  right: 21px;
+}
+.sidebar--collapsed .sidebar__brand {
+  margin-bottom: 104px;
+}
+.sidebar--collapsed .sidebar__brand-text {
+  width: 0;
+  opacity: 0;
+}
+
+.sidebar--collapsed .sidebar__brand-identity {
+  gap: 0;
+}
+
+/* Etichette sezioni */
+
+.sidebar--collapsed .sidebar__section-label {
+  height: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  opacity: 0;
+}
+
+.sidebar--collapsed .sidebar__section-label--upcoming {
+  margin-top: 30px;
+}
+
+/* Navigazione */
+
+.sidebar--collapsed .sidebar__link {
+  gap: 0;
+  padding-inline: 15px;
+}
+
+.sidebar--collapsed .sidebar__link-text {
+  opacity: 0;
+  transform: translateX(-8px);
+}
+
+/* Stato attivo */
+
+.sidebar--collapsed .sidebar__link--active::after {
+  right: 5px;
+  width: 3px;
+  height: 3px;
+}
+
+.sidebar--collapsed .sidebar__link--active::before {
+  top: 14px;
+  bottom: 14px;
+}
+
+/* Footer */
+
+.sidebar--collapsed .sidebar__profile {
+  padding-inline: 7px;
+}
+
+.sidebar--collapsed .sidebar__profile-info {
+  opacity: 0;
+  transform: translateX(-8px);
+}
+
+/* ==========================================
+   ACCESSIBILITÀ
+========================================== */
+
+.sidebar__link:focus-visible,
+.sidebar__toggle:focus-visible {
+  outline: 2px solid var(--sidebar-accent);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar,
+  .sidebar__toggle,
+  .sidebar__brand-text,
+  .sidebar__section-label,
+  .sidebar__link,
+  .sidebar__link-text,
+  .sidebar__link::after,
+  .sidebar__profile-info {
+    transition: none;
+  }
+}
+
+/* ==========================================
+   MOBILE E TABLET
+========================================== */
+
+@media (max-width: 1023px) {
+  .sidebar {
+    display: none;
+  }
+}
