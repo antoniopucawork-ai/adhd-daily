@@ -111,3 +111,80 @@
     height: 32px;
   }
 }
+/* =========================================
+   DESKTOP — MIND DUMP CARD
+========================================= */
+
+@media (min-width: 1024px) {
+  .mind-dump-card {
+    min-height: 300px;
+    margin-top: 0;
+    padding: 30px;
+
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto;
+    align-items: start;
+    gap: 22px;
+
+    border-radius: 22px;
+
+    transition:
+      transform 260ms ease,
+      border-color 260ms ease,
+      box-shadow 260ms ease;
+  }
+
+  .mind-dump-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(199, 207, 229, 0.22);
+
+    box-shadow:
+      0 18px 42px rgba(0, 0, 0, 0.22),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+
+  .mind-dump-card__visual {
+    width: 72px;
+    height: 72px;
+  }
+
+  .mind-dump-card__content {
+    align-self: center;
+  }
+  .mind-dump-card__content h2 {
+    margin-bottom: 14px;
+
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 34px;
+    font-weight: 400;
+    line-height: 1.15;
+    letter-spacing: -0.025em;
+  }
+
+  .mind-dump-card__content p {
+    max-width: 340px;
+
+    color: rgba(244, 239, 230, 0.7);
+
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.65;
+  }
+
+  .mind-dump-card__arrow {
+    justify-self: end;
+
+    width: 42px;
+    height: 42px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mind-dump-card {
+    transition: none;
+  }
+
+  .mind-dump-card:hover {
+    transform: none;
+  }
+}

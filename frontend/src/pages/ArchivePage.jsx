@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import BottomNav from "../components/BottomNav/BottomNav";
 import "./ArchivePage.css";
@@ -11,6 +11,7 @@ const TYPE_LABELS = {
   INTENTION: "Idea",
 };
 
+// Recupera gli elementi salvati nel browser
 function readSavedItems() {
   try {
     const items = JSON.parse(localStorage.getItem("adhdDailyItems") || "[]");
@@ -34,7 +35,7 @@ function readSavedItems() {
     }
 
     return {
-      // Mostra prima gli ultimi elementi aggiunti.
+      // Mostra prima gli ultimi elementi aggiunti
       items: [...items].reverse(),
       error: "",
     };
@@ -46,6 +47,7 @@ function readSavedItems() {
   }
 }
 
+// Formatta le date in italiano
 function formatDate(value) {
   if (!value) return "Senza data";
 
@@ -68,10 +70,39 @@ function formatDate(value) {
 
 function ArchivePage() {
   const [savedData, setSavedData] = useState(readSavedItems);
+  const location = useLocation();
+
+  // Porta l'utente all'elemento selezionato dalla Home
+  useEffect(() => {
+    if (!location.hash || savedData.error) return;
+
+    let itemId;
+
+    try {
+      itemId = decodeURIComponent(location.hash.slice(1));
+    } catch {
+      return;
+    }
+
+    const element = document.getElementById(itemId);
+
+    if (!element) return;
+
+    // Rispetta le preferenze di accessibilità dell'utente
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    element.scrollIntoView({
+      behavior: prefersReducedMotion ? "instant" : "smooth",
+      block: "center",
+    });
+  }, [location.hash, savedData]);
 
   return (
     <main className="archive-page">
       <div className="archive-page__container">
+        {/* Intestazione */}
         <header className="archive-page__header">
           <Link className="archive-page__back" to="/">
             <ArrowLeft size={18} aria-hidden="true" />
@@ -79,9 +110,11 @@ function ArchivePage() {
           </Link>
 
           <h1>Tutti gli elementi</h1>
+
           <p>Ritrova ciò che hai salvato, anche senza una data.</p>
         </header>
 
+        {/* Errore nella lettura dei dati */}
         {savedData.error ? (
           <div className="archive-page__message">
             <p role="alert">{savedData.error}</p>
@@ -95,6 +128,7 @@ function ArchivePage() {
             </button>
           </div>
         ) : savedData.items.length === 0 ? (
+          /* Archivio vuoto */
           <div className="archive-page__message">
             <p>Non hai ancora salvato elementi.</p>
 
@@ -103,9 +137,11 @@ function ArchivePage() {
             </Link>
           </div>
         ) : (
+          /* Elenco degli elementi salvati */
           <ul className="archive-page__list">
             {savedData.items.map((item) => {
               const originalText = item.source?.originalText;
+
               const hasOriginal =
                 typeof originalText === "string" && originalText.length > 0;
 
@@ -115,7 +151,12 @@ function ArchivePage() {
                   : "Elemento";
 
               return (
-                <li className="archive-page__card" key={item.id}>
+                <li
+                  className="archive-page__card"
+                  key={item.id}
+                  id={`item-${item.id}`}
+                >
+                  {/* Tipo e stato */}
                   <div className="archive-page__card-header">
                     <span className="archive-page__type">{typeLabel}</span>
 
@@ -124,8 +165,10 @@ function ArchivePage() {
                     )}
                   </div>
 
+                  {/* Titolo */}
                   <h2>{item.title}</h2>
 
+                  {/* Data e ora */}
                   <p className="archive-page__date">
                     {formatDate(item.date)}
 
@@ -134,6 +177,7 @@ function ArchivePage() {
                       : ""}
                   </p>
 
+                  {/* Testo originale */}
                   {hasOriginal ? (
                     <details className="archive-page__source">
                       <summary>Testo originale</summary>

@@ -18,11 +18,7 @@ function MindDumpCard() {
       <div className="mind-dump-card__content">
         <h2>Svuota la mente</h2>
 
-        <p>
-          Libera i pensieri, riduci
-          <br />
-          il sovraccarico mentale.
-        </p>
+        <p>Libera i pensieri, riduci il sovraccarico mentale.</p>
       </div>
 
       <span className="mind-dump-card__arrow">

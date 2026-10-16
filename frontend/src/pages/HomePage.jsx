@@ -39,11 +39,10 @@ function HomePage() {
     <main className="home">
       <div className="home__container">
         <header className="home__header">
-          <div className="home__brand">
+          <div className="home__brand home__brand--mobile">
             <Cloud size={18} strokeWidth={1.5} />
             <span>ADHD Daily</span>
           </div>
-
           <button
             className="home__notification"
             type="button"
@@ -55,14 +54,18 @@ function HomePage() {
 
         <section className="home__welcome">
           <h1>Ciao Antonio</h1>
-          <p>Facciamo una cosa alla volta ♡</p>
+          <p>Facciamo una cosa alla volta.</p>
         </section>
 
-        <MindDumpCard />
+        <div className="home__dashboard">
+          <MindDumpCard />
 
-        <TodayList items={items} onComplete={handleCompleteItem} />
+          <TodayList items={items} onComplete={handleCompleteItem} />
 
-        <NextStepCard items={items} />
+          <NextStepCard items={items} />
+        </div>
+
+        <BottomNav />
 
         <BottomNav />
       </div>

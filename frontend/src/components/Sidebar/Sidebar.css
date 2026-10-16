@@ -7,7 +7,7 @@
   --sidebar-compact-width: 76px;
 
   --sidebar-text: #f4efe6;
-  --sidebar-muted: rgba(244, 239, 230, 0.55);
+  --sidebar-muted: rgba(231, 239, 251, 0.78);
   --sidebar-accent: #a9cdeb;
   --sidebar-gold: #f5dca6;
 
@@ -32,10 +32,14 @@
   color: var(--sidebar-text);
 
   background:
-    radial-gradient(circle at 0% 0%, rgba(86, 119, 172, 0.12), transparent 48%),
-    linear-gradient(180deg, #101e35 0%, #091525 100%);
+    radial-gradient(
+      circle at 15% 12%,
+      rgba(91, 139, 202, 0.19),
+      transparent 48%
+    ),
+    linear-gradient(180deg, #142540 0%, #0c1a30 52%, #091525 100%);
 
-  border-right: 1px solid rgba(244, 239, 230, 0.07);
+  border-right: 1px solid rgba(169, 205, 235, 0.13);
 
   transition:
     width var(--sidebar-duration) var(--sidebar-ease),
@@ -180,7 +184,7 @@
 
   margin: 0 12px 14px;
 
-  color: rgba(244, 239, 230, 0.34);
+  color: rgba(192, 211, 235, 0.56);
 
   font-size: 10px;
   font-weight: 600;
@@ -243,6 +247,8 @@
 
 .sidebar__link-icon {
   flex-shrink: 0;
+
+  color: #b8d5f0;
 }
 
 .sidebar__link-text {
@@ -258,8 +264,8 @@
 }
 
 .sidebar__link:hover:not(.sidebar__link--disabled) {
-  color: var(--sidebar-text);
-  background: rgba(244, 239, 230, 0.045);
+  color: #f0f6ff;
+  background: rgba(169, 205, 235, 0.11);
 }
 
 /* ==========================================
@@ -267,11 +273,15 @@
 ========================================== */
 
 .sidebar__link--active {
-  color: #dcecff;
+  color: #f0f6ff;
 
-  background: rgba(128, 174, 220, 0.11);
+  background: linear-gradient(
+    90deg,
+    rgba(128, 174, 220, 0.19),
+    rgba(128, 174, 220, 0.08)
+  );
 
-  border-color: rgba(128, 174, 220, 0.09);
+  border-color: rgba(169, 205, 235, 0.17);
 }
 
 /* Indicatore azzurro */

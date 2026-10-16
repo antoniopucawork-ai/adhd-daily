@@ -1,8 +1,14 @@
+/* =========================================
+   ADHD DAILY — HOME PAGE
+   Mobile first
+========================================= */
+
 .home {
   position: relative;
-
   width: 100%;
+  min-width: 0;
   min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: clip;
 
   color: #f4efe6;
@@ -16,15 +22,18 @@
     linear-gradient(180deg, #0c1930 0%, #091629 45%, #071120 100%);
 }
 
-/* Micro-stelle: easter egg quasi impercettibile */
+/* =========================================
+   MICROSTELLE
+   Easter egg discreto
+========================================= */
+
 .home::before,
 .home::after {
   content: "";
   position: fixed;
   inset: 0;
-
-  pointer-events: none;
   z-index: 0;
+  pointer-events: none;
 }
 
 .home::before {
@@ -105,23 +114,33 @@
     );
 }
 
+/* =========================================
+   CONTAINER
+========================================= */
+
 .home__container {
   position: relative;
   z-index: 1;
 
   width: 100%;
+  min-width: 0;
   min-height: 100vh;
+  min-height: 100dvh;
+
   margin: 0 auto;
   padding: 24px 20px 110px;
 }
 
-/* HEADER */
+/* =========================================
+   HEADER
+========================================= */
 
 .home__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
 
+  min-height: 32px;
   margin-bottom: 36px;
 }
 
@@ -137,20 +156,45 @@
 }
 
 .home__notification {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
 
-  padding: 6px;
+  width: 36px;
+  height: 36px;
+  margin-left: auto;
+  padding: 0;
 
   color: #f4efe6;
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
+  border-radius: 11px;
 
   cursor: pointer;
+
+  transition:
+    background 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease;
 }
 
-/* WELCOME */
+.home__notification:hover {
+  color: #c9def2;
+  background: rgba(169, 205, 235, 0.07);
+  border-color: rgba(169, 205, 235, 0.1);
+}
+
+.home__notification:focus-visible {
+  outline: 2px solid #a9cdeb;
+  outline-offset: 3px;
+}
+
+/* =========================================
+   WELCOME
+========================================= */
+
+.home__welcome {
+  margin-bottom: 26px;
+}
 
 .home__welcome h1 {
   margin: 0;
@@ -172,7 +216,27 @@
   line-height: 1.4;
 }
 
-/* TABLET */
+/* =========================================
+   DASHBOARD
+========================================= */
+
+.home__dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  min-width: 0;
+  margin-top: 24px;
+}
+
+.home__dashboard > * {
+  min-width: 0;
+}
+
+/* =========================================
+   TABLET
+========================================= */
+
 @media (min-width: 600px) and (max-width: 1023px) {
   .home__container {
     max-width: 720px;
@@ -180,11 +244,30 @@
   }
 }
 
-/* DESKTOP */
+/* =========================================
+   DESKTOP
+========================================= */
+
+/* =========================================
+   DESKTOP
+========================================= */
+
 @media (min-width: 1024px) {
   .home__container {
-    max-width: 1600px;
-    padding: 48px 64px 80px;
+    max-width: 1440px;
+    padding: 42px 64px 80px;
+  }
+
+  .home__header {
+    margin-bottom: 34px;
+  }
+
+  .home__brand--mobile {
+    display: none;
+  }
+
+  .home__welcome {
+    margin-bottom: 32px;
   }
 
   .home__welcome h1 {
@@ -192,6 +275,64 @@
   }
 
   .home__welcome p {
+    margin-top: 10px;
     font-size: 15px;
+  }
+
+  .home__dashboard {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: stretch;
+    gap: 24px;
+    margin-top: 0;
+  }
+
+  .home__dashboard > * {
+    min-width: 0;
+  }
+
+  /* Mind Dump a sinistra */
+  .home__dashboard > .mind-dump-card {
+    grid-column: 1;
+    grid-row: 1;
+    min-height: 320px;
+  }
+
+  /* Oggi a destra */
+  .home__dashboard > .today {
+    grid-column: 2;
+    grid-row: 1;
+    min-height: 320px;
+  }
+
+  /* Il prossimo passo sotto */
+  .home__dashboard > .next-step-card {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    min-height: 120px;
+  }
+}
+
+/* =========================================
+   DESKTOP COMPATTO
+========================================= */
+
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .home__container {
+    padding-inline: 36px;
+  }
+
+  .home__dashboard {
+    gap: 18px;
+  }
+}
+
+/* =========================================
+   ACCESSIBILITÀ
+========================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .home__notification {
+    transition: none;
   }
 }

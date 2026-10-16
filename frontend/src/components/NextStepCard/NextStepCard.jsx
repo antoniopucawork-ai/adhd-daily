@@ -1,7 +1,10 @@
 import { Sparkles, ArrowRight, Check } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import "./NextStepCard.css";
 
 function NextStepCard({ items = [] }) {
+  const navigate = useNavigate();
+
   const getTodayDate = () => {
     const today = new Date();
 
@@ -39,6 +42,10 @@ function NextStepCard({ items = [] }) {
     );
   }
 
+  const handleOpenItem = () => {
+    navigate(`/archivio#item-${nextItem.id}`);
+  };
+
   return (
     <section className="next-step-card">
       <div className="next-step-card__icon">
@@ -58,7 +65,8 @@ function NextStepCard({ items = [] }) {
       <button
         className="next-step-card__action"
         type="button"
-        aria-label={`Vai a ${nextItem.title}`}
+        onClick={handleOpenItem}
+        aria-label={`Visualizza ${nextItem.title} nell'archivio`}
       >
         <ArrowRight size={17} strokeWidth={1.5} />
       </button>
