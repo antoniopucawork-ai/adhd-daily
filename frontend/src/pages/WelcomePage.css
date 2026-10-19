@@ -1,0 +1,273 @@
+/* ========================================
+   ADHD DAILY — WELCOME PAGE
+======================================== */
+
+.welcome-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  position: relative;
+  overflow: hidden;
+
+  padding: 48px 24px;
+
+  background:
+    radial-gradient(
+      ellipse at 50% 35%,
+      rgba(53, 91, 145, 0.19),
+      transparent 55%
+    ),
+    linear-gradient(160deg, #0c1930 0%, #071120 100%);
+
+  color: #f4f6fb;
+}
+
+/* Luce ambientale */
+
+.welcome-page::before {
+  content: "";
+  position: absolute;
+
+  width: 520px;
+  height: 520px;
+
+  top: -250px;
+  right: -180px;
+
+  background: radial-gradient(
+    circle,
+    rgba(112, 157, 214, 0.11),
+    transparent 70%
+  );
+
+  pointer-events: none;
+}
+
+/* Contenitore principale */
+
+.welcome-page__content {
+  position: relative;
+  z-index: 1;
+
+  width: 100%;
+  max-width: 760px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  text-align: center;
+}
+
+/* Brand */
+
+.welcome-page__brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  margin-bottom: 68px;
+
+  color: #e8effb;
+}
+
+.welcome-page__brand span {
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* Introduzione */
+
+.welcome-page__intro {
+  max-width: 680px;
+}
+
+.welcome-page__eyebrow {
+  display: block;
+
+  margin-bottom: 20px;
+
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+
+  color: #9bb5d6;
+}
+
+.welcome-page__intro h1 {
+  margin: 0;
+
+  font-size: clamp(38px, 5vw, 66px);
+  font-weight: 500;
+  line-height: 1.13;
+  letter-spacing: -0.045em;
+
+  color: #f6f8fc;
+}
+
+.welcome-page__intro p {
+  margin: 26px 0 0;
+
+  font-size: clamp(15px, 1.5vw, 18px);
+  line-height: 1.8;
+
+  color: #aebdd1;
+}
+
+/* Pulsanti */
+
+.welcome-page__actions {
+  width: 100%;
+  max-width: 360px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  margin-top: 46px;
+}
+
+.welcome-page__primary,
+.welcome-page__secondary {
+  min-height: 54px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+
+  padding: 14px 24px;
+
+  border-radius: 15px;
+
+  text-decoration: none;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.welcome-page__primary {
+  background: #dce9f7;
+  color: #102139;
+}
+
+.welcome-page__primary:hover {
+  background: #ffffff;
+  transform: translateY(-2px);
+}
+
+.welcome-page__secondary {
+  border: 1px solid rgba(180, 204, 235, 0.22);
+
+  background: rgba(255, 255, 255, 0.035);
+  color: #dce7f6;
+}
+
+.welcome-page__secondary:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(180, 204, 235, 0.4);
+}
+
+/* Footer */
+
+.welcome-page__footer {
+  margin-top: 75px;
+
+  font-size: 12px;
+  letter-spacing: 0.04em;
+
+  color: #7186a3;
+}
+
+/* ========================================
+   TABLET
+======================================== */
+
+@media (max-width: 768px) {
+  .welcome-page {
+    padding: 40px 28px;
+  }
+
+  .welcome-page__brand {
+    margin-bottom: 56px;
+  }
+
+  .welcome-page__intro h1 {
+    font-size: clamp(36px, 7vw, 52px);
+  }
+
+  .welcome-page__footer {
+    margin-top: 60px;
+  }
+}
+
+/* ========================================
+   SMARTPHONE
+======================================== */
+
+@media (max-width: 480px) {
+  .welcome-page {
+    padding: 32px 22px;
+  }
+
+  .welcome-page__brand {
+    margin-bottom: 55px;
+  }
+
+  .welcome-page__brand span {
+    font-size: 17px;
+  }
+
+  .welcome-page__eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+  }
+
+  .welcome-page__intro h1 {
+    font-size: clamp(35px, 9vw, 44px);
+  }
+
+  .welcome-page__intro p {
+    margin-top: 22px;
+
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  .welcome-page__actions {
+    margin-top: 38px;
+  }
+
+  .welcome-page__primary,
+  .welcome-page__secondary {
+    min-height: 56px;
+  }
+
+  .welcome-page__footer {
+    margin-top: 55px;
+  }
+}
+
+/* Accessibilità: riduzione animazioni */
+
+@media (prefers-reduced-motion: reduce) {
+  .welcome-page__primary,
+  .welcome-page__secondary {
+    transition: none;
+  }
+
+  .welcome-page__primary:hover {
+    transform: none;
+  }
+}
