@@ -8,11 +8,21 @@ import NextStepCard from "../components/NextStepCard/NextStepCard";
 import BottomNav from "../components/BottomNav/BottomNav";
 
 function HomePage() {
+  // Gestione degli errori di salvataggio
+  const [saveError, setSaveError] = useState("");
+
+  // Recuperiamo le attività salvate nel browser
   const [items, setItems] = useState(() => {
     try {
       const savedItems = localStorage.getItem("adhdDailyItems");
 
-      return savedItems ? JSON.parse(savedItems) : [];
+      if (!savedItems) {
+        return [];
+      }
+
+      const parsedItems = JSON.parse(savedItems);
+
+      return Array.isArray(parsedItems) ? parsedItems : [];
     } catch (error) {
       console.error("Errore durante la lettura degli elementi salvati:", error);
 
@@ -20,7 +30,9 @@ function HomePage() {
     }
   });
 
+  // Completiamo un'attività
   const handleCompleteItem = (itemId) => {
+    // Creiamo una nuova lista aggiornando l'attività selezionata
     const updatedItems = items.map((item) =>
       item.id === itemId
         ? {
@@ -30,9 +42,23 @@ function HomePage() {
         : item,
     );
 
-    setItems(updatedItems);
+    try {
+      // Prima salviamo i dati nel browser
+      localStorage.setItem("adhdDailyItems", JSON.stringify(updatedItems));
 
-    localStorage.setItem("adhdDailyItems", JSON.stringify(updatedItems));
+      // Aggiorniamo React soltanto se il salvataggio riesce
+      setItems(updatedItems);
+
+      // Eliminiamo eventuali messaggi di errore precedenti
+      setSaveError("");
+    } catch (error) {
+      console.error("Errore durante il salvataggio:", error);
+
+      // Informiamo l'utente senza modificare la lista
+      setSaveError(
+        "Non sono riuscito a salvare la modifica. Riprova tra poco.",
+      );
+    }
   };
 
   return (
@@ -43,6 +69,7 @@ function HomePage() {
             <Cloud size={18} strokeWidth={1.5} />
             <span>ADHD Daily</span>
           </div>
+
           <button
             className="home__notification"
             type="button"
@@ -57,6 +84,13 @@ function HomePage() {
           <p>Facciamo una cosa alla volta.</p>
         </section>
 
+        {/* Mostriamo un messaggio se il salvataggio fallisce */}
+        {saveError && (
+          <p role="alert" className="home__error">
+            {saveError}
+          </p>
+        )}
+
         <div className="home__dashboard">
           <MindDumpCard />
 
@@ -64,8 +98,6 @@ function HomePage() {
 
           <NextStepCard items={items} />
         </div>
-
-        <BottomNav />
 
         <BottomNav />
       </div>
