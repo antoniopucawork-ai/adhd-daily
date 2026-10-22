@@ -5,14 +5,16 @@ import HomePage from "./pages/HomePage";
 import MindDumpPage from "./pages/MindDumpPage";
 import ArchivePage from "./pages/ArchivePage";
 import WelcomePage from "./pages/WelcomePage";
+import LoginPage from "./pages/LoginPage";
 
 function App() {
   return (
     <Routes>
-      {/* Schermata pubblica */}
+      {/* Pagine pubbliche */}
       <Route path="/benvenuto" element={<WelcomePage />} />
+      <Route path="/login" element={<LoginPage />} />
 
-      {/* Pagine attuali dell'app */}
+      {/* Pagine dell'app */}
       <Route element={<AppLayout />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/svuota" element={<MindDumpPage />} />
