@@ -1,10 +1,46 @@
 import mongoose from "mongoose";
 
-// 1. DEFINIZIONE DEL MODELLO MIND DUMP
+const mindDumpItemSchema = new mongoose.Schema(
+  {
+    type: {
+      type: String,
+      enum: ["ACTION", "EVENT", "MEMORY", "INTENTION", "THOUGHT"],
+      required: true,
+    },
+
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 200,
+    },
+
+    date: {
+      type: String,
+      default: null,
+    },
+
+    time: {
+      type: String,
+      default: null,
+    },
+
+    uncertain: {
+      type: Boolean,
+      default: false,
+    },
+
+    status: {
+      type: String,
+      enum: ["TODO", "DONE"],
+      default: "TODO",
+    },
+  },
+  { _id: true },
+);
 
 const mindDumpSchema = new mongoose.Schema(
   {
-    // Utente proprietario del pensiero
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -12,22 +48,23 @@ const mindDumpSchema = new mongoose.Schema(
       index: true,
     },
 
-    // Testo originale scritto dall'utente
     originalText: {
       type: String,
       required: true,
       maxlength: 10000,
     },
 
-    // Stato del pensiero
     status: {
       type: String,
       enum: ["saved", "organized"],
       default: "saved",
     },
-  },
 
-  // Date automatiche di creazione e modifica
+    items: {
+      type: [mindDumpItemSchema],
+      default: [],
+    },
+  },
   {
     timestamps: true,
   },
