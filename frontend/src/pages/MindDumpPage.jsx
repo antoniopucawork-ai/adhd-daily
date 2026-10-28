@@ -1,14 +1,18 @@
 import { useState } from "react";
 import { ArrowRight } from "lucide-react";
+
 import BottomNav from "../components/BottomNav/BottomNav";
 import MindDumpResult from "../components/MindDumpResult/MindDumpResult";
 import MindDumpEdit from "../components/MindDumpEdit/MindDumpEdit";
-import { getTodayDate } from "../utils/date";
+
+import { useAuth } from "../context/useAuth";
+import { apiRequest } from "../services/api";
+
 import "./MindDumpPage.css";
 
 const DRAFT_KEY = "adhdDailyDraft";
-const ITEMS_KEY = "adhdDailyItems";
 
+// Recuperiamo la bozza salvata nel browser
 function readDraft() {
   try {
     return {
@@ -18,23 +22,30 @@ function readDraft() {
   } catch {
     return {
       text: "",
-      error:
-        "Non riesco a recuperare la bozza. Il salvataggio nel browser potrebbe non essere disponibile.",
+      error: "Non riesco a recuperare la bozza.",
     };
   }
 }
 
 function MindDumpPage() {
+  const { token } = useAuth();
+
   const [draft, setDraft] = useState(readDraft);
   const [result, setResult] = useState(null);
   const [editingItem, setEditingItem] = useState(null);
+
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
 
   const mindDump = draft.text;
   const hasContent = mindDump.trim().length > 0;
 
+  // Aggiorniamo il testo e salviamo la bozza
   const handleMindDumpChange = (event) => {
     const text = event.target.value;
+
     let error = "";
 
     try {
@@ -44,52 +55,67 @@ function MindDumpPage() {
         localStorage.removeItem(DRAFT_KEY);
       }
     } catch {
-      error = "Non riesco a salvare la bozza. Copia il testo prima di uscire.";
+      error = "Non riesco a salvare la bozza nel browser.";
     }
 
-    // Mantiene il testo disponibile anche se il salvataggio fallisce.
-    setDraft({ text, error });
+    setDraft({
+      text,
+      error,
+    });
   };
 
-  const handleOrganize = () => {
-    if (!hasContent) return;
+  // Inviamo il testo al backend per farlo analizzare da Gemini
+  const handleOrganize = async () => {
+    if (!hasContent || isAnalyzing) return;
 
     setSaveError("");
+    setIsAnalyzing(true);
 
-    // MOCK TEMPORANEO:
-    // Non interpreta ancora il testo.
-    // In futuro il risultato arriverà dal backend + AI.
-    const mockResult = {
-      id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-      originalText: mindDump,
-      items: [
-        {
+    try {
+      const analysis = await apiRequest("/api/mind-dumps/analyze", {
+        method: "POST",
+        token,
+        body: JSON.stringify({
+          originalText: mindDump,
+        }),
+      });
+
+      if (!Array.isArray(analysis.items)) {
+        throw new Error("La risposta dell'IA non è valida.");
+      }
+
+      const organizedResult = {
+        id: crypto.randomUUID(),
+        createdAt: new Date().toISOString(),
+        originalText: mindDump,
+
+        items: analysis.items.map((item) => ({
+          ...item,
           id: crypto.randomUUID(),
-          type: "ACTION",
-          title: mindDump.trim(),
-          date: getTodayDate(),
-          time: null,
-          deadline: null,
           reminder: false,
-          people: [],
-          explicit: true,
-          confidence: 0.98,
-          requiresConfirmation: false,
-        },
-      ],
-    };
+        })),
+      };
 
-    setResult(mockResult);
+      setResult(organizedResult);
+    } catch (error) {
+      setSaveError(
+        error.message || "Non sono riuscito ad analizzare il testo.",
+      );
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
+  // Apriamo la modifica di un elemento
   const handleEditItem = (item) => {
     setEditingItem(item);
   };
 
+  // Salviamo le modifiche effettuate dall'utente
   const handleSaveItem = (updatedItem) => {
     setResult((currentResult) => ({
       ...currentResult,
+
       items: currentResult.items.map((item) =>
         item.id === updatedItem.id ? updatedItem : item,
       ),
@@ -98,64 +124,56 @@ function MindDumpPage() {
     setEditingItem(null);
   };
 
+  // Annulliamo la modifica
   const handleCancelEdit = () => {
     setEditingItem(null);
   };
 
-  const handleConfirm = () => {
-    if (!result) return;
+  // Salviamo gli elementi confermati in MongoDB
+  // Eliminiamo la bozza solo dopo il salvataggio riuscito
+  const handleConfirm = async () => {
+    if (!result || isSaving) return;
 
     setSaveError("");
+    setIsSaving(true);
 
     try {
-      const savedItems = JSON.parse(localStorage.getItem(ITEMS_KEY) || "[]");
+      const response = await apiRequest("/api/mind-dumps", {
+        method: "POST",
+        token,
+        body: JSON.stringify({
+          originalText: result.originalText,
+          items: result.items.map((item) => ({
+            type: item.type,
+            title: item.title,
+            date: item.date ?? null,
+            time: item.time ?? null,
+            uncertain: item.uncertain ?? false,
+          })),
+        }),
+      });
 
-      // Evita di sovrascrivere dati con una struttura inattesa.
-      if (!Array.isArray(savedItems)) {
-        setSaveError(
-          "I dati salvati non sono leggibili. Il testo resta qui: copia il contenuto prima di uscire.",
-        );
-        return;
+      if (!response.mindDump?._id) {
+        throw new Error("Il server non ha confermato il salvataggio.");
       }
 
-      const confirmedItems = result.items.map((item) => ({
-        ...item,
-        status: "TODO",
-        confirmed: true,
-        source: {
-          id: result.id,
-          originalText: result.originalText,
-          createdAt: result.createdAt,
-        },
-      }));
+      try {
+        localStorage.removeItem(DRAFT_KEY);
+      } catch {
+        // Il pensiero è già stato salvato in MongoDB.
+      }
 
-      // Salva insieme gli elementi e il loro testo originale.
-      localStorage.setItem(
-        ITEMS_KEY,
-        JSON.stringify([...savedItems, ...confirmedItems]),
-      );
-    } catch {
-      setSaveError(
-        "Non sono riuscito a salvare. Il testo resta qui: puoi riprovare o tornare indietro per copiarlo.",
-      );
-      return;
+      setDraft({ text: "", error: "" });
+      setResult(null);
+      setEditingItem(null);
+    } catch (error) {
+      setSaveError(error.message || "Non sono riuscito a salvare il pensiero.");
+    } finally {
+      setIsSaving(false);
     }
-
-    // Elimina la bozza soltanto dopo il salvataggio riuscito.
-    let draftError = "";
-
-    try {
-      localStorage.removeItem(DRAFT_KEY);
-    } catch {
-      draftError =
-        "Le attività sono state salvate, ma non riesco a eliminare la bozza. Se ricompare, non confermarla di nuovo.";
-    }
-
-    setDraft({ text: "", error: draftError });
-    setResult(null);
-    setEditingItem(null);
   };
 
+  // Torniamo al testo originale
   const handleBack = () => {
     setResult(null);
     setEditingItem(null);
@@ -166,6 +184,7 @@ function MindDumpPage() {
     <main className="mind-dump-page">
       <div className="mind-dump-page__container">
         {draft.error && <p role="alert">{draft.error}</p>}
+
         {saveError && <p role="alert">{saveError}</p>}
 
         {!result ? (
@@ -184,15 +203,18 @@ function MindDumpPage() {
               aria-label="Svuota i tuoi pensieri"
               value={mindDump}
               onChange={handleMindDumpChange}
+              disabled={isAnalyzing}
             />
 
             <button
               className="mind-dump-page__organize"
               type="button"
-              disabled={!hasContent}
+              disabled={!hasContent || isAnalyzing}
               onClick={handleOrganize}
             >
-              <span>Metti ordine</span>
+              <span>
+                {isAnalyzing ? "Sto mettendo ordine..." : "Metti ordine"}
+              </span>
 
               <ArrowRight size={18} strokeWidth={1.7} />
             </button>
@@ -209,6 +231,7 @@ function MindDumpPage() {
             onBack={handleBack}
             onEdit={handleEditItem}
             onConfirm={handleConfirm}
+            isSaving={isSaving}
           />
         )}
       </div>
