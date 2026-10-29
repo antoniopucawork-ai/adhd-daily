@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
+
+import { useAuth } from "../context/useAuth";
+import { apiRequest } from "../services/api";
+
 import BottomNav from "../components/BottomNav/BottomNav";
 import "./ArchivePage.css";
 
@@ -9,45 +13,10 @@ const TYPE_LABELS = {
   EVENT: "Evento",
   MEMORY: "Da ricordare",
   INTENTION: "Idea",
+  THOUGHT: "Pensiero",
 };
 
-// Recupera gli elementi salvati nel browser
-function readSavedItems() {
-  try {
-    const items = JSON.parse(localStorage.getItem("adhdDailyItems") || "[]");
-
-    const valid =
-      Array.isArray(items) &&
-      items.every(
-        (item) =>
-          item !== null &&
-          typeof item === "object" &&
-          (typeof item.id === "string" ||
-            (typeof item.id === "number" && Number.isFinite(item.id))) &&
-          typeof item.title === "string",
-      );
-
-    if (!valid) {
-      return {
-        items: [],
-        error: "Non riesco a leggere gli elementi salvati.",
-      };
-    }
-
-    return {
-      // Mostra prima gli ultimi elementi aggiunti
-      items: [...items].reverse(),
-      error: "",
-    };
-  } catch {
-    return {
-      items: [],
-      error: "Non riesco ad accedere agli elementi salvati. Riprova tra poco.",
-    };
-  }
-}
-
-// Formatta le date in italiano
+// Formatta le date in italiano.
 function formatDate(value) {
   if (!value) return "Senza data";
 
@@ -69,12 +38,80 @@ function formatDate(value) {
 }
 
 function ArchivePage() {
-  const [savedData, setSavedData] = useState(readSavedItems);
+  const { token } = useAuth();
   const location = useLocation();
 
-  // Porta l'utente all'elemento selezionato dalla Home
+  const [savedData, setSavedData] = useState({
+    items: [],
+    error: "",
+  });
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [retryCount, setRetryCount] = useState(0);
+
+  // Recupera i Mind Dump dell'utente dal backend.
   useEffect(() => {
-    if (!location.hash || savedData.error) return;
+    if (!token) return;
+
+    let cancelled = false;
+
+    async function loadMindDumps() {
+      setIsLoading(true);
+
+      try {
+        const mindDumps = await apiRequest("/api/mind-dumps", {
+          token,
+        });
+
+        if (!Array.isArray(mindDumps)) {
+          throw new Error("Formato dei dati non valido.");
+        }
+
+        // Ogni Mind Dump contiene più elementi.
+        // flatMap li unisce in un unico elenco.
+        const items = mindDumps.flatMap((mindDump) =>
+          (mindDump.items || []).map((item) => ({
+            ...item,
+            id: item._id,
+            source: {
+              originalText: mindDump.originalText,
+            },
+          })),
+        );
+
+        if (!cancelled) {
+          setSavedData({
+            items,
+            error: "",
+          });
+        }
+      } catch (error) {
+        console.error("Errore caricamento archivio:", error);
+
+        if (!cancelled) {
+          setSavedData({
+            items: [],
+            error:
+              "Non riesco a caricare gli elementi salvati. Riprova tra poco.",
+          });
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadMindDumps();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token, retryCount]);
+
+  // Porta l'utente all'elemento selezionato dalla Home.
+  useEffect(() => {
+    if (isLoading || !location.hash || savedData.error) return;
 
     let itemId;
 
@@ -88,21 +125,19 @@ function ArchivePage() {
 
     if (!element) return;
 
-    // Rispetta le preferenze di accessibilità dell'utente
     const prefersReducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
 
     element.scrollIntoView({
-      behavior: prefersReducedMotion ? "instant" : "smooth",
+      behavior: prefersReducedMotion ? "auto" : "smooth",
       block: "center",
     });
-  }, [location.hash, savedData]);
+  }, [location.hash, savedData, isLoading]);
 
   return (
     <main className="archive-page">
       <div className="archive-page__container">
-        {/* Intestazione */}
         <header className="archive-page__header">
           <Link className="archive-page__back" to="/">
             <ArrowLeft size={18} aria-hidden="true" />
@@ -114,21 +149,23 @@ function ArchivePage() {
           <p>Ritrova ciò che hai salvato, anche senza una data.</p>
         </header>
 
-        {/* Errore nella lettura dei dati */}
-        {savedData.error ? (
+        {isLoading ? (
+          <div className="archive-page__message">
+            <p>Caricamento dei tuoi elementi...</p>
+          </div>
+        ) : savedData.error ? (
           <div className="archive-page__message">
             <p role="alert">{savedData.error}</p>
 
             <button
               className="archive-page__retry"
               type="button"
-              onClick={() => setSavedData(readSavedItems())}
+              onClick={() => setRetryCount((count) => count + 1)}
             >
               Riprova
             </button>
           </div>
         ) : savedData.items.length === 0 ? (
-          /* Archivio vuoto */
           <div className="archive-page__message">
             <p>Non hai ancora salvato elementi.</p>
 
@@ -137,7 +174,6 @@ function ArchivePage() {
             </Link>
           </div>
         ) : (
-          /* Elenco degli elementi salvati */
           <ul className="archive-page__list">
             {savedData.items.map((item) => {
               const originalText = item.source?.originalText;
@@ -156,19 +192,20 @@ function ArchivePage() {
                   key={item.id}
                   id={`item-${item.id}`}
                 >
-                  {/* Tipo e stato */}
                   <div className="archive-page__card-header">
                     <span className="archive-page__type">{typeLabel}</span>
 
                     {item.status === "DONE" && (
                       <span className="archive-page__done">Completato</span>
                     )}
+
+                    {item.uncertain && (
+                      <span className="archive-page__type">Da confermare</span>
+                    )}
                   </div>
 
-                  {/* Titolo */}
                   <h2>{item.title}</h2>
 
-                  {/* Data e ora */}
                   <p className="archive-page__date">
                     {formatDate(item.date)}
 
@@ -177,7 +214,6 @@ function ArchivePage() {
                       : ""}
                   </p>
 
-                  {/* Testo originale */}
                   {hasOriginal ? (
                     <details className="archive-page__source">
                       <summary>Testo originale</summary>

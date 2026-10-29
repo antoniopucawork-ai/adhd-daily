@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Bell, Cloud } from "lucide-react";
-import "./HomePage.css";
 
+import { apiRequest } from "../services/api";
 import { useAuth } from "../context/useAuth";
 import { usePreferences } from "../context/usePreferences";
 
@@ -10,9 +10,9 @@ import TodayList from "../components/TodayList/TodayList";
 import NextStepCard from "../components/NextStepCard/NextStepCard";
 import BottomNav from "../components/BottomNav/BottomNav";
 
-// Qui colleghiamo ogni modulo al suo componente.
-// In questo modo possiamo decidere quali mostrare
-// senza doverli inserire tutti manualmente nella Home.
+import "./HomePage.css";
+
+// Associa ogni modulo al relativo componente React.
 const moduleRegistry = {
   mindDump: MindDumpCard,
   today: TodayList,
@@ -20,68 +20,94 @@ const moduleRegistry = {
 };
 
 function HomePage() {
-  // Recuperiamo l'utente che ha effettuato il login.
-  const { user } = useAuth();
+  const { user, token } = useAuth();
 
-  // Recuperiamo le preferenze salvate su MongoDB.
-  const { homeModules, isLoading, error } = usePreferences();
+  const {
+    homeModules,
+    isLoading: preferencesLoading,
+    error: preferencesError,
+  } = usePreferences();
 
-  // Qui gestiamo eventuali errori nel salvataggio delle attività.
-  const [saveError, setSaveError] = useState("");
+  // I pensieri vengono recuperati dal backend.
+  const [items, setItems] = useState([]);
+  const [itemsLoading, setItemsLoading] = useState(true);
+  const [itemsError, setItemsError] = useState("");
 
-  // Per ora recuperiamo le attività dal localStorage.
-  // Più avanti le collegheremo al database dell'utente.
-  const [items, setItems] = useState(() => {
-    try {
-      const savedItems = localStorage.getItem("adhdDailyItems");
+  useEffect(() => {
+    let cancelled = false;
 
-      if (!savedItems) {
-        return [];
+    const loadMindDumps = async () => {
+      if (!token) {
+        setItems([]);
+        setItemsLoading(false);
+        return;
       }
 
-      const parsedItems = JSON.parse(savedItems);
+      setItemsLoading(true);
+      setItemsError("");
 
-      return Array.isArray(parsedItems) ? parsedItems : [];
-    } catch (error) {
-      console.error("Errore durante la lettura degli elementi:", error);
-      return [];
-    }
-  });
+      try {
+        // Recuperiamo i Mind Dump dell'utente autenticato.
+        const mindDumps = await apiRequest("/api/mind-dumps", {
+          token,
+        });
 
-  // Quando completiamo un'attività, aggiorniamo il suo stato.
-  // Prima salviamo la modifica e poi aggiorniamo la Home.
-  const handleCompleteItem = (itemId) => {
-    const updatedItems = items.map((item) =>
-      item.id === itemId
-        ? {
+        if (!Array.isArray(mindDumps)) {
+          throw new Error("Il formato dei pensieri non è valido.");
+        }
+
+        // Ogni Mind Dump può contenere più elementi.
+        // flatMap li riunisce in un unico array.
+        const organizedItems = mindDumps.flatMap((mindDump) =>
+          (mindDump.items || []).map((item) => ({
             ...item,
-            status: "DONE",
-          }
-        : item,
+
+            // I componenti React utilizzano id.
+            id: item._id,
+
+            // Conserviamo il riferimento al pensiero originale.
+            source: {
+              mindDumpId: mindDump._id,
+              originalText: mindDump.originalText,
+            },
+          })),
+        );
+
+        if (!cancelled) {
+          setItems(organizedItems);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setItemsError(error.message || "Non riesco a recuperare i pensieri.");
+        }
+      } finally {
+        if (!cancelled) {
+          setItemsLoading(false);
+        }
+      }
+    };
+
+    loadMindDumps();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
+
+  // Per ora non permettiamo di completare le attività.
+  // Il relativo endpoint di aggiornamento va ancora implementato.
+  const handleCompleteItem = () => {
+    setItemsError(
+      "Il completamento delle attività sarà disponibile dopo il collegamento al database.",
     );
-
-    try {
-      localStorage.setItem("adhdDailyItems", JSON.stringify(updatedItems));
-      setItems(updatedItems);
-      setSaveError("");
-    } catch (error) {
-      console.error("Errore durante il salvataggio:", error);
-
-      setSaveError(
-        "Non sono riuscito a salvare la modifica. Riprova tra poco.",
-      );
-    }
   };
 
-  // Qui applichiamo la personalizzazione della Home.
-  // Togliamo i moduli disattivati e ordiniamo quelli rimasti
-  // in base alla posizione scelta dall'utente.
+  // Applichiamo le preferenze dell'utente.
   const visibleModules = [...homeModules]
     .filter((module) => module.enabled)
     .sort((a, b) => a.order - b.order);
 
-  // Ogni modulo ha bisogno di dati diversi.
-  // Qui prepariamo quelli che gli servono per funzionare.
+  // Prepariamo i dati per ogni modulo.
   const moduleProps = {
     mindDump: {},
 
@@ -94,6 +120,9 @@ function HomePage() {
       items,
     },
   };
+
+  const isLoading = preferencesLoading || itemsLoading;
+  const error = preferencesError || itemsError;
 
   return (
     <main className="home">
@@ -113,22 +142,11 @@ function HomePage() {
           </button>
         </header>
 
-        {/* Mostriamo il nome dell'utente che ha effettuato il login. */}
         <section className="home__welcome">
           <h1>Ciao {user?.firstName || "!"}</h1>
           <p>Facciamo una cosa alla volta.</p>
         </section>
 
-        {/* Se il salvataggio di un'attività fallisce, mostriamo l'errore. */}
-        {saveError && (
-          <p role="alert" className="home__error">
-            {saveError}
-          </p>
-        )}
-
-        {/* Prima aspettiamo le preferenze dell'utente.
-            Se qualcosa va storto mostriamo un errore,
-            altrimenti carichiamo la sua Home personalizzata. */}
         {isLoading ? (
           <p>Prepariamo il tuo spazio...</p>
         ) : error ? (
@@ -137,12 +155,9 @@ function HomePage() {
           </p>
         ) : (
           <div className="home__dashboard">
-            {/* Creiamo soltanto i moduli attivi,
-                rispettando l'ordine salvato dall'utente. */}
             {visibleModules.map((module) => {
               const Component = moduleRegistry[module.id];
 
-              // Se il modulo non esiste, lo ignoriamo.
               if (!Component) return null;
 
               return <Component key={module.id} {...moduleProps[module.id]} />;
@@ -150,7 +165,6 @@ function HomePage() {
           </div>
         )}
 
-        {/* La navigazione rimane sempre disponibile. */}
         <BottomNav />
       </div>
     </main>
