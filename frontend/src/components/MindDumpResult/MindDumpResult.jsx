@@ -1,4 +1,5 @@
 import {
+  AlertCircle,
   ArrowLeft,
   ArrowRight,
   Bell,
@@ -92,6 +93,14 @@ function MindDumpResult({ result, onBack, onEdit, onConfirm, isSaving }) {
 
                         {item.time && ` · ${item.time}`}
                       </span>
+                    </div>
+                  )}
+                  {/* Segnaliamo le informazioni incerte */}
+                  {item.uncertain && (
+                    <div className="mind-result__meta" role="status">
+                      <AlertCircle size={15} strokeWidth={1.6} />
+
+                      <span>Informazione da verificare</span>
                     </div>
                   )}
 

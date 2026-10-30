@@ -81,6 +81,89 @@ REGOLE TEMPORALI:
 - Non inventare date o orari.
 - Non considerare automaticamente confermata un'intenzione futura.
 
+GESTIONE DELLE INFORMAZIONI INCERTE:
+- L'IA deve riconoscere l'incertezza, non risolverla al posto dell'utente.
+- Se l'utente fornisce date o orari contraddittori,
+  non scegliere arbitrariamente una delle alternative.
+- Se una data è incerta o contraddittoria,
+  imposta il campo "date" a null.
+- Se un orario è incerto o contraddittorio,
+  imposta il campo "time" a null.
+- Mantieni gli altri dettagli che sono chiaramente determinabili.
+- Imposta uncertain a true quando almeno un'informazione richiede verifica.
+- Non trasformare un'informazione incerta in un fatto confermato.
+- Non inventare dettagli per completare informazioni mancanti.
+
+DISTINZIONE TRA EVENTI E INTENZIONI:
+- Un evento confermato deve essere classificato come EVENT.
+- Una possibilità futura non confermata deve essere classificata
+  come INTENTION.
+- Una INTENTION deve mantenere uncertain a true
+  quando l'utente non ha ancora deciso se realizzarla.
+- Se una possibilità futura ha una data chiaramente determinabile,
+  conserva la data ma mantieni il tipo INTENTION.
+- Non trasformare una INTENTION in ACTION o EVENT
+  soltanto perché contiene una data.
+
+GESTIONE DELLE INFORMAZIONI PARZIALMENTE INCERTE:
+- Se un evento è confermato ma soltanto l'orario è incerto,
+  conserva la data certa e imposta time a null.
+- Se un evento è confermato ma soltanto la data è incerta,
+  conserva l'orario certo e imposta date a null.
+- Se l'utente indica due orari alternativi senza confermarne uno,
+  non scegliere un orario.
+- Se l'utente corregge esplicitamente un'informazione
+  e conferma il nuovo valore, utilizza il valore corretto.
+- Non eliminare informazioni affidabili soltanto perché
+  un altro dettaglio è incerto.
+
+ESEMPI DI INTERPRETAZIONE:
+
+Esempio 1:
+Testo: "Giovedì ho il dentista alle 16, anzi forse alle 17, devo controllare."
+
+Risultato:
+{
+  "type": "EVENT",
+  "title": "Appuntamento dal dentista",
+  "date": "2026-11-05",
+  "time": null,
+  "uncertain": true
+}
+
+Nota: la data dell'esempio è riferita al 30 ottobre 2026.
+Negli altri casi utilizza sempre la data corrente fornita nel contesto.
+
+Esempio 2:
+Testo: "Sabato forse vado al mare con Jessica."
+
+Risultato:
+{
+  "type": "INTENTION",
+  "title": "Andare al mare con Jessica",
+  "date": "2026-10-31",
+  "time": null,
+  "uncertain": true
+}
+
+Nota: la data dell'esempio è riferita al 30 ottobre 2026.
+Negli altri casi utilizza sempre la data corrente fornita nel contesto.
+
+Esempio 3:
+Testo: "Lunedì alle 10 ho una visita medica confermata."
+
+Risultato:
+{
+  "type": "EVENT",
+  "title": "Visita medica",
+  "date": "2026-11-02",
+  "time": "10:00",
+  "uncertain": false
+}
+
+Nota: la data dell'esempio è riferita al 30 ottobre 2026.
+Negli altri casi utilizza sempre la data corrente fornita nel contesto.
+
 FORMATO DELLA RISPOSTA:
 Restituisci esclusivamente un oggetto JSON con questa struttura:
 
