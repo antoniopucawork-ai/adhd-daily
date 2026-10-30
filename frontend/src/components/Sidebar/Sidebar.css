@@ -1,5 +1,10 @@
 /* ==========================================
-   ADHD DAILY — SIDEBAR DESKTOP
+   ADHD DAILY — LIVING SUNSET GLASS
+   Sidebar desktop
+========================================== */
+
+/* ==========================================
+   1. SIDEBAR — STRUTTURA E VETRO
 ========================================== */
 
 .sidebar {
@@ -9,14 +14,18 @@
   --sidebar-text: #f4efe6;
   --sidebar-muted: rgba(231, 239, 251, 0.78);
   --sidebar-accent: #a9cdeb;
-  --sidebar-gold: #f5dca6;
 
   --sidebar-duration: 420ms;
   --sidebar-ease: cubic-bezier(0.4, 0, 0.2, 1);
 
+  --mouse-x: 50%;
+  --mouse-y: 50%;
+  --glow-opacity: 0;
+
   position: sticky;
   top: 0;
   z-index: 20;
+
   isolation: isolate;
 
   display: flex;
@@ -24,6 +33,7 @@
   flex: 0 0 auto;
 
   width: var(--sidebar-width);
+
   height: 100vh;
   height: 100dvh;
 
@@ -31,15 +41,41 @@
 
   color: var(--sidebar-text);
 
+  /* Sunset Glass */
+
   background:
     radial-gradient(
-      circle at 15% 12%,
-      rgba(91, 139, 202, 0.19),
-      transparent 48%
+      ellipse at 90% 95%,
+      rgba(236, 157, 151, 0.12) 0%,
+      rgba(177, 112, 160, 0.08) 35%,
+      transparent 75%
     ),
-    linear-gradient(180deg, #142540 0%, #0c1a30 52%, #091525 100%);
+    radial-gradient(
+      ellipse at 15% 55%,
+      rgba(137, 119, 194, 0.13) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse at 75% 15%,
+      rgba(104, 151, 208, 0.12) 0%,
+      transparent 65%
+    ),
+    linear-gradient(
+      170deg,
+      rgba(12, 29, 55, 0.66) 0%,
+      rgba(24, 33, 65, 0.58) 40%,
+      rgba(43, 38, 73, 0.52) 70%,
+      rgba(62, 43, 73, 0.46) 100%
+    );
 
-  border-right: 1px solid rgba(169, 205, 235, 0.13);
+  -webkit-backdrop-filter: blur(32px) saturate(135%);
+  backdrop-filter: blur(32px) saturate(135%);
+
+  border-right: 1px solid rgba(255, 235, 224, 0.12);
+
+  box-shadow:
+    inset -1px 0 0 rgba(255, 255, 255, 0.05),
+    8px 0 32px rgba(8, 13, 30, 0.08);
 
   transition:
     width var(--sidebar-duration) var(--sidebar-ease),
@@ -47,12 +83,50 @@
 }
 
 /* ==========================================
-   BRAND
+   2. RIFLESSO INTERATTIVO
+========================================== */
+
+.sidebar::before {
+  content: "";
+
+  position: absolute;
+  inset: 0;
+
+  z-index: 0;
+
+  background: radial-gradient(
+    circle 210px at var(--mouse-x) var(--mouse-y),
+    rgba(255, 218, 197, 0.16) 0%,
+    rgba(191, 167, 225, 0.09) 35%,
+    transparent 75%
+  );
+
+  opacity: var(--glow-opacity);
+
+  pointer-events: none;
+
+  transition: opacity 350ms ease;
+}
+
+/* Mantiene tutti gli elementi sopra il riflesso */
+
+.sidebar > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Il pulsante deve mantenere il posizionamento assoluto */
+
+.sidebar > .sidebar__toggle {
+  position: absolute;
+  z-index: 10;
+}
+
+/* ==========================================
+   3. BRAND
 ========================================== */
 
 .sidebar__brand {
-  position: relative;
-
   display: flex;
   align-items: center;
 
@@ -72,15 +146,17 @@
 .sidebar__brand-icon {
   display: grid;
   place-items: center;
+
   flex-shrink: 0;
 
   width: 43px;
   height: 43px;
 
   color: #b8d5f0;
-  background: rgba(139, 184, 224, 0.09);
 
-  border: 1px solid rgba(139, 184, 224, 0.13);
+  background: rgba(232, 205, 226, 0.1);
+
+  border: 1px solid rgba(255, 225, 211, 0.18);
   border-radius: 13px;
 }
 
@@ -108,37 +184,41 @@
 }
 
 .sidebar__brand-subtitle {
-  color: rgba(244, 239, 230, 0.4);
+  color: rgba(244, 239, 230, 0.55);
   font-size: 10px;
 }
 
 /* ==========================================
-   PULSANTE APERTURA / CHIUSURA
+   4. PULSANTE COMPRIMI / ESPANDI
 ========================================== */
 
 .sidebar__toggle {
   position: absolute;
+
   top: 36px;
   right: 12px;
-  z-index: 10;
 
   display: grid;
   place-items: center;
 
   width: 34px;
   height: 34px;
+
   padding: 0;
 
   color: #b8d5f0;
 
-  background: #152640;
+  background: rgba(35, 49, 79, 0.55);
 
-  border: 1px solid rgba(169, 205, 235, 0.22);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+
+  border: 1px solid rgba(255, 235, 226, 0.16);
   border-radius: 11px;
 
   box-shadow:
-    0 4px 14px rgba(0, 0, 0, 0.15),
-    0 0 12px rgba(139, 184, 224, 0.04);
+    0 4px 14px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 
   cursor: pointer;
 
@@ -150,22 +230,23 @@
 }
 
 .sidebar__toggle:hover {
-  color: #f4efe6;
-  background: #1c3150;
+  color: #fff8f2;
 
-  border-color: rgba(169, 205, 235, 0.4);
+  background: rgba(79, 74, 113, 0.48);
+
+  border-color: rgba(255, 235, 226, 0.3);
 
   box-shadow:
-    0 4px 14px rgba(0, 0, 0, 0.2),
-    0 0 14px rgba(169, 205, 235, 0.12);
+    0 4px 18px rgba(0, 0, 0, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .sidebar__toggle:active {
-  background: #243a59;
+  background: rgba(96, 85, 125, 0.5);
 }
 
 /* ==========================================
-   CONTENUTO NAVIGAZIONE
+   5. CONTENUTO E NAVIGAZIONE
 ========================================== */
 
 .sidebar__content {
@@ -176,6 +257,7 @@
   overflow-y: auto;
 
   scrollbar-width: thin;
+
   scrollbar-color: rgba(169, 205, 235, 0.15) transparent;
 }
 
@@ -184,7 +266,7 @@
 
   margin: 0 12px 14px;
 
-  color: rgba(192, 211, 235, 0.56);
+  color: rgba(192, 211, 235, 0.65);
 
   font-size: 10px;
   font-weight: 600;
@@ -210,7 +292,7 @@
 }
 
 /* ==========================================
-   LINK NAVIGAZIONE
+   6. LINK DI NAVIGAZIONE
 ========================================== */
 
 .sidebar__link {
@@ -226,6 +308,7 @@
   padding: 0 14px;
 
   color: var(--sidebar-muted);
+
   background: transparent;
 
   border: 1px solid transparent;
@@ -241,6 +324,7 @@
     color 220ms ease,
     background 220ms ease,
     border-color 220ms ease,
+    box-shadow 220ms ease,
     padding var(--sidebar-duration) var(--sidebar-ease),
     gap var(--sidebar-duration) var(--sidebar-ease);
 }
@@ -253,6 +337,7 @@
 
 .sidebar__link-text {
   display: block;
+
   min-width: 0;
 
   opacity: 1;
@@ -263,92 +348,47 @@
     transform var(--sidebar-duration) var(--sidebar-ease);
 }
 
+/* Hover */
+
 .sidebar__link:hover:not(.sidebar__link--disabled) {
-  color: #f0f6ff;
-  background: rgba(169, 205, 235, 0.11);
+  color: #fff8f2;
+
+  background: rgba(205, 190, 231, 0.12);
+
+  border-color: rgba(255, 235, 226, 0.12);
 }
 
 /* ==========================================
-   SEZIONE ATTIVA
+   7. LINK ATTIVO — GLASS
 ========================================== */
 
 .sidebar__link--active {
-  color: #f0f6ff;
+  color: #fff8f2;
 
   background: linear-gradient(
-    90deg,
-    rgba(128, 174, 220, 0.19),
-    rgba(128, 174, 220, 0.08)
+    110deg,
+    rgba(185, 194, 236, 0.18),
+    rgba(242, 188, 175, 0.1)
   );
 
-  border-color: rgba(169, 205, 235, 0.17);
-}
-
-/* Indicatore azzurro */
-
-.sidebar__link--active::before {
-  content: "";
-
-  position: absolute;
-  left: 0;
-  top: 12px;
-  bottom: 12px;
-
-  width: 2px;
-
-  background: var(--sidebar-accent);
-  border-radius: 3px;
-}
-
-/* ==========================================
-   PICCOLA STELLA DORATA
-========================================== */
-
-.sidebar__link::after {
-  content: "";
-
-  position: absolute;
-  right: 16px;
-  top: 50%;
-
-  width: 4px;
-  height: 4px;
-
-  background: var(--sidebar-gold);
-  border-radius: 50%;
-
-  opacity: 0;
+  border-color: rgba(255, 235, 226, 0.19);
 
   box-shadow:
-    0 0 4px rgba(255, 225, 163, 0.9),
-    0 0 10px rgba(245, 202, 125, 0.5),
-    0 0 20px rgba(245, 202, 125, 0.15);
-
-  transform: translateY(-50%) scale(0.3);
-
-  pointer-events: none;
-
-  transition:
-    opacity 350ms ease,
-    transform 420ms var(--sidebar-ease);
-}
-
-.sidebar__link--active::after {
-  opacity: 1;
-  transform: translateY(-50%) scale(1);
+    inset 0 1px 0 rgba(255, 255, 255, 0.13),
+    0 4px 18px rgba(10, 15, 35, 0.08);
 }
 
 /* ==========================================
-   ELEMENTI NON DISPONIBILI
+   8. ELEMENTI NON DISPONIBILI
 ========================================== */
 
 .sidebar__link--disabled {
-  opacity: 0.35;
+  opacity: 0.58;
   cursor: default;
 }
 
 /* ==========================================
-   FOOTER
+   9. FOOTER
 ========================================== */
 
 .sidebar__footer {
@@ -358,7 +398,7 @@
 
   padding-top: 18px;
 
-  border-top: 1px solid rgba(244, 239, 230, 0.07);
+  border-top: 1px solid rgba(244, 239, 230, 0.1);
 }
 
 .sidebar__profile {
@@ -367,21 +407,24 @@
   gap: 12px;
 
   padding: 14px 10px 4px;
+
   overflow: hidden;
 }
 
 .sidebar__avatar {
   display: grid;
   place-items: center;
+
   flex-shrink: 0;
 
   width: 38px;
   height: 38px;
 
   color: #b8d5f0;
-  background: rgba(139, 184, 224, 0.1);
 
-  border: 1px solid rgba(139, 184, 224, 0.12);
+  background: rgba(232, 205, 226, 0.1);
+
+  border: 1px solid rgba(255, 225, 211, 0.18);
   border-radius: 12px;
 }
 
@@ -405,12 +448,12 @@
 }
 
 .sidebar__profile-info small {
-  color: rgba(244, 239, 230, 0.4);
+  color: rgba(244, 239, 230, 0.55);
   font-size: 10px;
 }
 
 /* ==========================================
-   MODALITÀ COMPATTA
+   10. MODALITÀ COMPATTA
 ========================================== */
 
 .sidebar--collapsed {
@@ -418,14 +461,15 @@
   padding-inline: 12px;
 }
 
-/* Brand */
 .sidebar--collapsed .sidebar__toggle {
   top: 94px;
   right: 21px;
 }
+
 .sidebar--collapsed .sidebar__brand {
   margin-bottom: 104px;
 }
+
 .sidebar--collapsed .sidebar__brand-text {
   width: 0;
   opacity: 0;
@@ -435,20 +479,18 @@
   gap: 0;
 }
 
-/* Etichette sezioni */
-
 .sidebar--collapsed .sidebar__section-label {
   height: 0;
+
   margin-top: 0;
   margin-bottom: 0;
+
   opacity: 0;
 }
 
 .sidebar--collapsed .sidebar__section-label--upcoming {
   margin-top: 30px;
 }
-
-/* Navigazione */
 
 .sidebar--collapsed .sidebar__link {
   gap: 0;
@@ -460,21 +502,6 @@
   transform: translateX(-8px);
 }
 
-/* Stato attivo */
-
-.sidebar--collapsed .sidebar__link--active::after {
-  right: 5px;
-  width: 3px;
-  height: 3px;
-}
-
-.sidebar--collapsed .sidebar__link--active::before {
-  top: 14px;
-  bottom: 14px;
-}
-
-/* Footer */
-
 .sidebar--collapsed .sidebar__profile {
   padding-inline: 7px;
 }
@@ -485,7 +512,7 @@
 }
 
 /* ==========================================
-   ACCESSIBILITÀ
+   11. ACCESSIBILITÀ
 ========================================== */
 
 .sidebar__link:focus-visible,
@@ -494,21 +521,27 @@
   outline-offset: 3px;
 }
 
+/* Movimento ridotto */
+
 @media (prefers-reduced-motion: reduce) {
   .sidebar,
+  .sidebar::before,
   .sidebar__toggle,
   .sidebar__brand-text,
   .sidebar__section-label,
   .sidebar__link,
   .sidebar__link-text,
-  .sidebar__link::after,
   .sidebar__profile-info {
     transition: none;
+  }
+
+  .sidebar::before {
+    display: none;
   }
 }
 
 /* ==========================================
-   MOBILE E TABLET
+   12. MOBILE E TABLET
 ========================================== */
 
 @media (max-width: 1023px) {

@@ -62,6 +62,7 @@ function Sidebar() {
 
           <div className="sidebar__brand-text">
             <span className="sidebar__brand-name">ADHD Daily</span>
+
             <span className="sidebar__brand-subtitle">
               Il tuo spazio mentale
             </span>
@@ -86,6 +87,8 @@ function Sidebar() {
 
       <div className="sidebar__content">
         <p className="sidebar__section-label">IL TUO SPAZIO</p>
+
+        {/* NAVIGAZIONE PRINCIPALE */}
 
         <nav
           className="sidebar__navigation"
@@ -137,6 +140,8 @@ function Sidebar() {
       </div>
 
       <div className="sidebar__footer">
+        {/* IMPOSTAZIONI */}
+
         <div className="sidebar__link sidebar__link--disabled">
           <Settings
             className="sidebar__link-icon"
@@ -146,6 +151,8 @@ function Sidebar() {
 
           <span className="sidebar__link-text">Impostazioni</span>
         </div>
+
+        {/* PROFILO */}
 
         <div className="sidebar__profile">
           <div className="sidebar__avatar">
