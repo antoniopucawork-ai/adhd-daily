@@ -1,38 +1,46 @@
-/* =========================================
+/* ==========================================
    ADHD DAILY — HOME PAGE
    Mobile first
-========================================= */
+========================================== */
+
+/* ==========================================
+   1. PAGINA
+========================================== */
 
 .home {
   position: relative;
+
   width: 100%;
   min-width: 0;
   min-height: 100vh;
   min-height: 100dvh;
+
   overflow-x: clip;
 
-  color: #f4efe6;
+  color: var(--color-text);
 
   background:
-    radial-gradient(
-      circle at 78% 12%,
-      rgba(75, 96, 150, 0.25),
-      transparent 28%
+    linear-gradient(
+      180deg,
+      rgba(7, 20, 38, 0.15) 0%,
+      rgba(7, 20, 38, 0.25) 55%,
+      rgba(7, 20, 38, 0.75) 100%
     ),
-    linear-gradient(180deg, #0c1930 0%, #091629 45%, #071120 100%);
+    url("/images/midnight-landscape.png") center center / cover no-repeat;
 }
 
-/* =========================================
-   MICROSTELLE
-   Easter egg discreto
-========================================= */
+/* ==========================================
+   2. MICROSTELLE
+========================================== */
 
 .home::before,
 .home::after {
   content: "";
+
   position: fixed;
   inset: 0;
   z-index: 0;
+
   pointer-events: none;
 }
 
@@ -114,9 +122,9 @@
     );
 }
 
-/* =========================================
-   CONTAINER
-========================================= */
+/* ==========================================
+   3. CONTENITORE
+========================================== */
 
 .home__container {
   position: relative;
@@ -128,19 +136,20 @@
   min-height: 100dvh;
 
   margin: 0 auto;
-  padding: 24px 20px 110px;
+
+  padding: 24px 20px calc(110px + env(safe-area-inset-bottom));
 }
 
-/* =========================================
-   HEADER
-========================================= */
+/* ==========================================
+   4. HEADER
+========================================== */
 
 .home__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
 
-  min-height: 32px;
+  min-height: 36px;
   margin-bottom: 36px;
 }
 
@@ -149,9 +158,9 @@
   align-items: center;
   gap: 7px;
 
-  color: #f4efe6;
+  color: var(--color-text);
 
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-heading);
   font-size: 16px;
 }
 
@@ -161,20 +170,22 @@
 
   width: 36px;
   height: 36px;
+
   margin-left: auto;
   padding: 0;
 
-  color: #f4efe6;
+  color: var(--color-text);
   background: transparent;
+
   border: 1px solid transparent;
-  border-radius: 11px;
+  border-radius: var(--radius-small);
 
   cursor: pointer;
 
   transition:
-    background 200ms ease,
-    border-color 200ms ease,
-    color 200ms ease;
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast);
 }
 
 .home__notification:hover {
@@ -188,69 +199,86 @@
   outline-offset: 3px;
 }
 
-/* =========================================
-   WELCOME
-========================================= */
+/* ==========================================
+   5. BENVENUTO
+========================================== */
 
 .home__welcome {
-  margin-bottom: 26px;
+  margin-bottom: 28px;
 }
 
 .home__welcome h1 {
   margin: 0;
 
-  font-family: Georgia, "Times New Roman", serif;
+  color: var(--color-text);
+
+  font-family: var(--font-heading);
   font-size: 32px;
   font-weight: 400;
+
   line-height: 1.1;
   letter-spacing: -0.02em;
 }
 
 .home__welcome p {
-  margin: 7px 0 0;
+  margin: 8px 0 0;
 
   color: rgba(244, 239, 230, 0.62);
 
   font-size: 13px;
   font-weight: 300;
-  line-height: 1.4;
+  line-height: 1.5;
 }
 
-/* =========================================
-   DASHBOARD
-========================================= */
+/* ==========================================
+   6. DASHBOARD — MOBILE FIRST
+========================================== */
 
 .home__dashboard {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-
+  align-items: start;
+  width: 100%;
   min-width: 0;
-  margin-top: 24px;
+
+  gap: 20px;
 }
 
 .home__dashboard > * {
   min-width: 0;
 }
 
-/* =========================================
-   TABLET
-========================================= */
+/*
+   Evitiamo di sommare i margini interni
+   delle card al gap della dashboard.
+*/
+
+.home__dashboard > .mind-dump-card,
+.home__dashboard > .today,
+.home__dashboard > .next-step-card {
+  width: 100%;
+  margin-top: 0;
+}
+
+/* ==========================================
+   7. TABLET
+========================================== */
 
 @media (min-width: 600px) and (max-width: 1023px) {
   .home__container {
     max-width: 720px;
-    padding: 36px 32px 110px;
+
+    padding: 36px 32px calc(110px + env(safe-area-inset-bottom));
+  }
+
+  .home__dashboard {
+    gap: 24px;
   }
 }
 
-/* =========================================
-   DESKTOP
-========================================= */
-
-/* =========================================
-   DESKTOP
-========================================= */
+/* ==========================================
+   8. DESKTOP
+========================================== */
 
 @media (min-width: 1024px) {
   .home__container {
@@ -279,43 +307,65 @@
     font-size: 15px;
   }
 
+  /*
+     Due colonne desktop.
+
+     Non assegniamo posizioni fisse ai moduli:
+     l'ordine dipende dalle preferenze dell'utente.
+  */
+
   .home__dashboard {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    align-items: stretch;
+
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
     gap: 24px;
-    margin-top: 0;
+    align-items: start;
   }
-
-  .home__dashboard > * {
-    min-width: 0;
-  }
-
-  /* Mind Dump a sinistra */
   .home__dashboard > .mind-dump-card {
-    grid-column: 1;
-    grid-row: 1;
-    min-height: 320px;
+    min-height: 150px;
+    height: auto;
+    align-self: start;
   }
 
-  /* Oggi a destra */
-  .home__dashboard > .today {
-    grid-column: 2;
-    grid-row: 1;
-    min-height: 320px;
-  }
+  /*
+     Un solo modulo visibile:
+     occupa entrambe le colonne.
+  */
 
-  /* Il prossimo passo sotto */
-  .home__dashboard > .next-step-card {
+  .home__dashboard > :only-child {
     grid-column: 1 / -1;
-    grid-row: 2;
+  }
+
+  /*
+     Con tre moduli, il terzo
+     occupa tutta la seconda riga.
+  */
+
+  .home__dashboard > :nth-child(3):last-child {
+    grid-column: 1 / -1;
+  }
+
+  /*
+     Il modulo Oggi mantiene spazio
+     sufficiente per mostrare le attività.
+  */
+  .home__dashboard > .today {
+    min-height: 0;
+  }
+  /*
+     Il prossimo passo rimane compatto,
+     senza essere allungato dalla griglia.
+  */
+
+  .home__dashboard > .next-step-card {
     min-height: 120px;
   }
 }
 
-/* =========================================
-   DESKTOP COMPATTO
-========================================= */
+/* ==========================================
+   9. DESKTOP COMPATTO
+========================================== */
 
 @media (min-width: 1024px) and (max-width: 1199px) {
   .home__container {
@@ -327,12 +377,36 @@
   }
 }
 
-/* =========================================
-   ACCESSIBILITÀ
-========================================= */
+/* ==========================================
+   10. ACCESSIBILITÀ
+========================================== */
 
 @media (prefers-reduced-motion: reduce) {
   .home__notification {
     transition: none;
+  }
+}
+/* ==========================================
+   MOBILE — MIDNIGHT LANDSCAPE
+========================================== */
+
+@media (max-width: 599px) {
+  .home {
+    background:
+      linear-gradient(
+        180deg,
+        rgba(7, 20, 38, 0.2) 0%,
+        rgba(7, 20, 38, 0.1) 50%,
+        rgba(7, 20, 38, 0.65) 100%
+      ),
+      url("/images/midnight-landscape.png");
+
+    background-size:
+      cover,
+      auto 100%;
+    background-position:
+      center,
+      70% center;
+    background-repeat: no-repeat;
   }
 }

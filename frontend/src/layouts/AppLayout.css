@@ -1,18 +1,42 @@
+/* ==========================================
+   ADHD DAILY — APP LAYOUT
+   Struttura condivisa desktop e mobile
+========================================== */
+
 .app-layout {
   display: flex;
+
   width: 100%;
   min-height: 100vh;
   min-height: 100dvh;
-  background: #071120;
+
+  background: var(--color-background);
 }
 
+/* ==========================================
+   CONTENUTO PRINCIPALE
+========================================== */
+
 .app-layout__content {
+  position: relative;
+
   flex: 1;
   min-width: 0;
+  min-height: 100dvh;
+
+  background: var(--color-background);
 }
+
+/* ==========================================
+   TABLET E MOBILE
+========================================== */
 
 @media (max-width: 1023px) {
   .app-layout {
     display: block;
+  }
+
+  .app-layout__content {
+    width: 100%;
   }
 }

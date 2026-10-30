@@ -1,35 +1,103 @@
-* {
+/* 
+   1. VARIABILI GLOBALI
+ */
+
+:root {
+  /* Colori principali */
+  --color-background: #071120;
+  --color-background-secondary: #0c1930;
+  --color-surface: #102039;
+
+  /* Testi */
+  --color-text: #f4efe6;
+  --color-text-muted: #b9c1cf;
+
+  /* Accenti */
+  --color-accent: #e5d8b8;
+  --color-accent-hover: #eee3c8;
+
+  /* Bordi */
+  --color-border: rgba(199, 207, 229, 0.12);
+
+  /* Superfici trasparenti */
+  --color-surface-glass: rgba(16, 30, 53, 0.72);
+
+  /* Tipografia */
+  --font-body:
+    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  --font-heading: Georgia, "Times New Roman", serif;
+
+  /* Angoli */
+  --radius-small: 12px;
+  --radius-medium: 16px;
+  --radius-large: 18px;
+
+  /* Transizioni */
+  --transition-fast: 180ms ease;
+  --transition-normal: 300ms ease;
+}
+
+/*
+   2. RESET GLOBALE
+ */
+
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
-html {
-  width: 100%;
-  min-height: 100%;
+/* 
+   3. DOCUMENTO
+ */
 
-  background: #071120;
+html {
+  min-width: 320px;
+  min-height: 100%;
+  background: var(--color-background);
 }
 
 body {
-  width: 100%;
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
 
-  background: #071120;
+  background: var(--color-background);
+  color: var(--color-text);
+
+  font-family: var(--font-body);
 
   overflow-x: clip;
   overscroll-behavior: none;
 }
 
 #root {
-  width: 100%;
   min-height: 100vh;
-
-  background: #071120;
+  background: var(--color-background);
 }
+
+/* 
+   4. ELEMENTI INTERATTIVI
+ */
 
 button,
 input,
-textarea {
+textarea,
+select {
   font: inherit;
+}
+/* ADHD Daily — Midnight Glass */
+
+.glass-surface {
+  background: rgba(20, 35, 60, 0.58);
+
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+
+  border: 1px solid rgba(220, 232, 255, 0.12);
+
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }

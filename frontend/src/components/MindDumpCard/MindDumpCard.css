@@ -1,109 +1,199 @@
+/* ==========================================
+   ADHD DAILY — MIND DUMP CARD
+   Evoluzione Essenziale
+   Mobile first
+========================================== */
+
+/* ==========================================
+   1. CARD
+========================================== */
+
 .mind-dump-card {
   width: 100%;
-  min-height: 116px;
+  min-width: 0;
+  min-height: 100px;
 
   display: grid;
-  grid-template-columns: 72px 1fr 38px;
+  grid-template-columns: 44px minmax(0, 1fr) 36px;
   align-items: center;
   gap: 12px;
 
-  margin-top: 22px;
-  padding: 14px;
+  margin: 0;
+  padding: 16px;
 
-  color: #f4efe6;
+  color: #14233a;
   text-align: left;
 
-  background:
-    radial-gradient(
-      circle at 18% 40%,
-      rgba(91, 111, 166, 0.24),
-      transparent 30%
-    ),
-    linear-gradient(135deg, rgba(31, 48, 80, 0.94), rgba(17, 31, 55, 0.94));
+  background: rgba(246, 229, 200, 0.72);
 
-  border: 1px solid rgba(199, 207, 229, 0.12);
-  border-radius: 18px;
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 16px;
 
   box-shadow:
-    0 14px 35px rgba(0, 0, 0, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    0 12px 30px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
 
   cursor: pointer;
+
+  transition:
+    transform 220ms ease,
+    box-shadow 220ms ease,
+    background 220ms ease;
 }
 
+/* ==========================================
+   2. ICONA
+========================================== */
+
 .mind-dump-card__visual {
-  width: 68px;
-  height: 68px;
+  width: 44px;
+  height: 44px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  border: 1px solid rgba(222, 214, 194, 0.16);
-  border-radius: 50%;
+  flex-shrink: 0;
 
-  background: radial-gradient(
-    circle,
-    rgba(221, 207, 178, 0.13),
-    rgba(79, 96, 143, 0.08) 55%,
-    transparent 72%
-  );
+  background: rgba(20, 35, 58, 0.05);
+
+  border: 1px solid rgba(20, 35, 58, 0.1);
+  border-radius: 50%;
 }
 
 .mind-dump-card__steam {
-  color: #ded2b8;
-  font-size: 30px;
+  display: block;
+
+  color: #14233a;
+
   font-family: Georgia, "Times New Roman", serif;
+  font-size: 25px;
+  font-weight: 400;
+  line-height: 1;
+
   transform: rotate(90deg);
 }
 
-.mind-dump-card__content h2 {
-  margin: 0 0 6px;
+/* ==========================================
+   3. CONTENUTO
+========================================== */
 
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 19px;
-  font-weight: 400;
+.mind-dump-card__content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  min-width: 0;
+  gap: 5px;
 }
 
-.mind-dump-card__content p {
-  margin: 0;
+.mind-dump-card__title {
+  display: block;
 
-  color: rgba(244, 239, 230, 0.58);
+  color: #14233a;
 
+  font-family: var(--font-heading, Georgia, "Times New Roman", serif);
+
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.mind-dump-card__description {
+  display: block;
+
+  color: rgba(20, 35, 58, 0.7);
+
+  font-family: var(--font-body, Arial, sans-serif);
   font-size: 11px;
+  font-weight: 400;
   line-height: 1.45;
 }
 
-.mind-dump-card__arrow {
-  width: 36px;
-  height: 36px;
+/* ==========================================
+   4. FRECCIA
+========================================== */
 
+.mind-dump-card__arrow {
   display: flex;
   align-items: center;
   justify-content: center;
 
-  color: #172238;
-  background: #ded2b8;
+  width: 36px;
+  height: 36px;
 
+  justify-self: end;
+
+  color: #14233a;
+  background: #f0dfbf;
+
+  border: 1px solid rgba(20, 35, 58, 0.06);
   border-radius: 50%;
+
+  transition:
+    transform 220ms ease,
+    background 220ms ease;
 }
 
-/* Telefoni molto piccoli */
+/* ==========================================
+   5. INTERAZIONI
+========================================== */
+
+@media (hover: hover) {
+  .mind-dump-card:hover {
+    transform: translateY(-2px);
+
+    box-shadow:
+      0 16px 36px rgba(0, 0, 0, 0.22),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+
+  .mind-dump-card:hover .mind-dump-card__arrow {
+    transform: translateX(3px);
+    background: #e9d3aa;
+  }
+}
+
+.mind-dump-card:active {
+  transform: translateY(0);
+}
+
+.mind-dump-card:focus-visible {
+  outline: 3px solid #a9cdeb;
+  outline-offset: 4px;
+}
+
+/* ==========================================
+   6. TELEFONI PICCOLI
+========================================== */
 
 @media (max-width: 350px) {
   .mind-dump-card {
-    grid-template-columns: 58px 1fr 34px;
+    grid-template-columns: 38px minmax(0, 1fr) 32px;
     gap: 9px;
+
     padding: 12px;
   }
 
   .mind-dump-card__visual {
-    width: 56px;
-    height: 56px;
+    width: 38px;
+    height: 38px;
   }
 
-  .mind-dump-card__content h2 {
-    font-size: 17px;
+  .mind-dump-card__steam {
+    font-size: 22px;
+  }
+
+  .mind-dump-card__title {
+    font-size: 16px;
+  }
+
+  .mind-dump-card__description {
+    font-size: 10px;
   }
 
   .mind-dump-card__arrow {
@@ -111,80 +201,100 @@
     height: 32px;
   }
 }
-/* =========================================
-   DESKTOP — MIND DUMP CARD
-========================================= */
 
-@media (min-width: 1024px) {
+/* ==========================================
+   7. TABLET
+========================================== */
+
+@media (min-width: 600px) and (max-width: 1023px) {
   .mind-dump-card {
-    min-height: 300px;
-    margin-top: 0;
-    padding: 30px;
+    min-height: 120px;
 
-    grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr auto;
-    align-items: start;
-    gap: 22px;
+    grid-template-columns: 54px minmax(0, 1fr) 42px;
+    gap: 18px;
 
-    border-radius: 22px;
-
-    transition:
-      transform 260ms ease,
-      border-color 260ms ease,
-      box-shadow 260ms ease;
-  }
-
-  .mind-dump-card:hover {
-    transform: translateY(-3px);
-    border-color: rgba(199, 207, 229, 0.22);
-
-    box-shadow:
-      0 18px 42px rgba(0, 0, 0, 0.22),
-      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    padding: 20px 24px;
   }
 
   .mind-dump-card__visual {
-    width: 72px;
-    height: 72px;
+    width: 54px;
+    height: 54px;
   }
 
-  .mind-dump-card__content {
-    align-self: center;
-  }
-  .mind-dump-card__content h2 {
-    margin-bottom: 14px;
-
-    font-family: Georgia, "Times New Roman", serif;
-    font-size: 34px;
-    font-weight: 400;
-    line-height: 1.15;
-    letter-spacing: -0.025em;
+  .mind-dump-card__title {
+    font-size: 22px;
   }
 
-  .mind-dump-card__content p {
-    max-width: 340px;
-
-    color: rgba(244, 239, 230, 0.7);
-
-    font-size: 16px;
-    font-weight: 400;
-    line-height: 1.65;
+  .mind-dump-card__description {
+    font-size: 13px;
   }
 
   .mind-dump-card__arrow {
-    justify-self: end;
-
     width: 42px;
     height: 42px;
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+/* ==========================================
+   8. DESKTOP
+========================================== */
+
+@media (min-width: 1024px) {
   .mind-dump-card {
+    min-height: 150px;
+
+    grid-template-columns: 58px minmax(0, 1fr) 46px;
+    align-items: center;
+    gap: 20px;
+
+    padding: 28px 30px;
+
+    border-radius: 20px;
+  }
+
+  .mind-dump-card__visual {
+    width: 58px;
+    height: 58px;
+  }
+
+  .mind-dump-card__steam {
+    font-size: 30px;
+  }
+
+  .mind-dump-card__content {
+    gap: 8px;
+  }
+
+  .mind-dump-card__title {
+    font-size: 26px;
+  }
+
+  .mind-dump-card__description {
+    max-width: 340px;
+
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  .mind-dump-card__arrow {
+    width: 46px;
+    height: 46px;
+  }
+}
+
+/* ==========================================
+   9. ACCESSIBILITÀ
+========================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .mind-dump-card,
+  .mind-dump-card__arrow {
     transition: none;
   }
 
-  .mind-dump-card:hover {
+  .mind-dump-card:hover,
+  .mind-dump-card:active,
+  .mind-dump-card:hover .mind-dump-card__arrow {
     transform: none;
   }
 }

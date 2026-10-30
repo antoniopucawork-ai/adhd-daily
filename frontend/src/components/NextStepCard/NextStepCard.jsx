@@ -47,7 +47,7 @@ function NextStepCard({ items = [] }) {
   };
 
   return (
-    <section className="next-step-card">
+    <section className="next-step-card glass-surface">
       <div className="next-step-card__icon">
         <Sparkles size={18} strokeWidth={1.5} />
       </div>

@@ -1,5 +1,6 @@
 import { ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+
 import "./MindDumpCard.css";
 
 function MindDumpCard() {
@@ -10,18 +11,23 @@ function MindDumpCard() {
       className="mind-dump-card"
       type="button"
       onClick={() => navigate("/svuota")}
+      aria-label="Apri Svuota la mente"
     >
-      <div className="mind-dump-card__visual" aria-hidden="true">
+      <span className="mind-dump-card__visual" aria-hidden="true">
         <span className="mind-dump-card__steam">〰</span>
-      </div>
+      </span>
 
-      <div className="mind-dump-card__content">
-        <h2>Svuota la mente</h2>
+      <span className="mind-dump-card__content">
+        <span className="mind-dump-card__title">Svuota la mente</span>
 
-        <p>Libera i pensieri, riduci il sovraccarico mentale.</p>
-      </div>
+        <span className="mind-dump-card__description">
+          Scrivi tutto quello che hai in testa.
+          <br />
+          Io lo organizzo per te.
+        </span>
+      </span>
 
-      <span className="mind-dump-card__arrow">
+      <span className="mind-dump-card__arrow" aria-hidden="true">
         <ArrowRight size={18} strokeWidth={1.5} />
       </span>
     </button>
