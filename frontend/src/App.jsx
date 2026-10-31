@@ -8,6 +8,7 @@ import WelcomePage from "./pages/WelcomePage";
 import LoginPage from "./pages/LoginPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import RegisterPage from "./pages/RegisterPage";
+import OrganizePage from "./pages/OrganizePage";
 function App() {
   return (
     <Routes>
@@ -21,6 +22,8 @@ function App() {
         <Route element={<AppLayout />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/svuota" element={<MindDumpPage />} />
+          <Route path="/organizza" element={<OrganizePage />} />
+          <Route path="/organizza/:category" element={<OrganizePage />} />
           <Route path="/archivio" element={<ArchivePage />} />
         </Route>
       </Route>

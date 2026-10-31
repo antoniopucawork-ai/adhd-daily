@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Bell, Cloud } from "lucide-react";
 
-import { apiRequest } from "../services/api";
 import { useAuth } from "../context/useAuth";
 import { usePreferences } from "../context/usePreferences";
+import { useMindDumps } from "../hooks/useMindDumps";
 
 import MindDumpCard from "../components/MindDumpCard/MindDumpCard";
 import TodayList from "../components/TodayList/TodayList";
@@ -20,84 +20,25 @@ const moduleRegistry = {
 };
 
 function HomePage() {
-  const { user, token } = useAuth();
+  const { user } = useAuth();
 
+  // Recuperiamo le preferenze dell'utente.
   const {
     homeModules,
     isLoading: preferencesLoading,
     error: preferencesError,
   } = usePreferences();
 
-  // I pensieri vengono recuperati dal backend.
-  const [items, setItems] = useState([]);
-  const [itemsLoading, setItemsLoading] = useState(true);
-  const [itemsError, setItemsError] = useState("");
+  // Recuperiamo i pensieri attraverso il nostro custom hook.
+  const { items, isLoading: itemsLoading, error: itemsError } = useMindDumps();
 
-  useEffect(() => {
-    let cancelled = false;
-
-    const loadMindDumps = async () => {
-      if (!token) {
-        setItems([]);
-        setItemsLoading(false);
-        return;
-      }
-
-      setItemsLoading(true);
-      setItemsError("");
-
-      try {
-        // Recuperiamo i Mind Dump dell'utente autenticato.
-        const mindDumps = await apiRequest("/api/mind-dumps", {
-          token,
-        });
-
-        if (!Array.isArray(mindDumps)) {
-          throw new Error("Il formato dei pensieri non è valido.");
-        }
-
-        // Ogni Mind Dump può contenere più elementi.
-        // flatMap li riunisce in un unico array.
-        const organizedItems = mindDumps.flatMap((mindDump) =>
-          (mindDump.items || []).map((item) => ({
-            ...item,
-
-            // I componenti React utilizzano id.
-            id: item._id,
-
-            // Conserviamo il riferimento al pensiero originale.
-            source: {
-              mindDumpId: mindDump._id,
-              originalText: mindDump.originalText,
-            },
-          })),
-        );
-
-        if (!cancelled) {
-          setItems(organizedItems);
-        }
-      } catch (error) {
-        if (!cancelled) {
-          setItemsError(error.message || "Non riesco a recuperare i pensieri.");
-        }
-      } finally {
-        if (!cancelled) {
-          setItemsLoading(false);
-        }
-      }
-    };
-
-    loadMindDumps();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [token]);
+  // Messaggio temporaneo per il completamento delle attività.
+  const [completionError, setCompletionError] = useState("");
 
   // Per ora non permettiamo di completare le attività.
-  // Il relativo endpoint di aggiornamento va ancora implementato.
+  // Implementeremo questa funzione quando avremo l'endpoint PATCH.
   const handleCompleteItem = () => {
-    setItemsError(
+    setCompletionError(
       "Il completamento delle attività sarà disponibile dopo il collegamento al database.",
     );
   };
@@ -107,7 +48,7 @@ function HomePage() {
     .filter((module) => module.enabled)
     .sort((a, b) => a.order - b.order);
 
-  // Prepariamo i dati per ogni modulo.
+  // Prepariamo i dati necessari a ogni modulo.
   const moduleProps = {
     mindDump: {},
 
@@ -121,8 +62,9 @@ function HomePage() {
     },
   };
 
+  // Gestiamo caricamento ed eventuali errori.
   const isLoading = preferencesLoading || itemsLoading;
-  const error = preferencesError || itemsError;
+  const error = preferencesError || itemsError || completionError;
 
   return (
     <main className="home">

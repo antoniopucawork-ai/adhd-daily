@@ -5,6 +5,7 @@ import {
   Cloud,
   House,
   Archive,
+  ListChecks,
   CircleDot,
   BookOpen,
   Settings,
@@ -18,6 +19,7 @@ import "./Sidebar.css";
 const navigation = [
   { label: "Home", path: "/", icon: House },
   { label: "Svuota la mente", path: "/svuota", icon: Cloud },
+  { label: "Organizza", path: "/organizza", icon: ListChecks },
   { label: "Archivio", path: "/archivio", icon: Archive },
 ];
 
