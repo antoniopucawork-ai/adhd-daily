@@ -1,26 +1,24 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { motion, useReducedMotion } from "motion/react";
-import { ListTodo, CalendarDays, AlertTriangle } from "lucide-react";
+
+import {
+  ListTodo,
+  CalendarDays,
+  Lightbulb,
+  Bookmark,
+  Brain,
+  ChevronDown,
+} from "lucide-react";
 
 import { useMindDumps } from "../hooks/useMindDumps";
 import { organizeItems } from "../utils/organizeItems";
 
 import "./OrganizePage.css";
 
-// ========================================
-// CONFIGURAZIONE DEL MOVIMENTO
-// ========================================
+// Velocità dei pensieri: più basso = movimento più lento.
+const THOUGHT_SPEED = 0.7;
 
-// 1 = velocità originale
-// 1.6 = velocità attuale
-// 2 = movimento più rapido
-
-const THOUGHT_SPEED = 0.9;
-
-// ========================================
-// CATEGORIE ATTUALI
-// ========================================
-
+// Le cinque categorie restano uguali su desktop e mobile.
 const categories = [
   {
     id: "da-fare",
@@ -29,36 +27,36 @@ const categories = [
     color: "#ED8194",
   },
   {
-    id: "eventi",
-    label: "Eventi",
+    id: "in-programma",
+    label: "In programma",
     icon: CalendarDays,
     color: "#C7B6ED",
   },
   {
-    id: "da-verificare",
-    label: "Da verificare",
-    icon: AlertTriangle,
+    id: "forse",
+    label: "Forse",
+    icon: Lightbulb,
     color: "#E6B36C",
+  },
+  {
+    id: "da-ricordare",
+    label: "Da ricordare",
+    icon: Bookmark,
+    color: "#A9CDEB",
+  },
+  {
+    id: "pensieri-liberi",
+    label: "Pensieri liberi",
+    icon: Brain,
+    color: "#B8A9E8",
   },
 ];
 
-// ========================================
-// FILI DEI PENSIERI
-// ========================================
-
-// Ogni filo contiene:
-// - un percorso SVG aperto;
-// - un colore;
-// - la posizione del puntino finale;
-// - una durata di rotazione;
-// - una direzione.
-//
-// I fili non cambiano forma:
-// ruotano soltanto intorno al centro.
-
+// I fili rappresentano visivamente i pensieri.
+// Non sono collegati ai singoli documenti MongoDB.
 const thoughtStrands = [
   {
-    id: "thought-1",
+    id: 1,
     color: "#F0A5C3",
     duration: 14,
     direction: 1,
@@ -66,7 +64,7 @@ const thoughtStrands = [
     end: { x: 171, y: 56 },
   },
   {
-    id: "thought-2",
+    id: 2,
     color: "#D9C3FF",
     duration: 18,
     direction: -1,
@@ -74,7 +72,7 @@ const thoughtStrands = [
     end: { x: 351, y: 167 },
   },
   {
-    id: "thought-3",
+    id: 3,
     color: "#ED9AB9",
     duration: 16,
     direction: 1,
@@ -82,7 +80,7 @@ const thoughtStrands = [
     end: { x: 235, y: 350 },
   },
   {
-    id: "thought-4",
+    id: 4,
     color: "#B6A9ED",
     duration: 21,
     direction: -1,
@@ -90,7 +88,7 @@ const thoughtStrands = [
     end: { x: 58, y: 252 },
   },
   {
-    id: "thought-5",
+    id: 5,
     color: "#A9CDEB",
     duration: 12,
     direction: 1,
@@ -98,7 +96,7 @@ const thoughtStrands = [
     end: { x: 210, y: 103 },
   },
   {
-    id: "thought-6",
+    id: 6,
     color: "#E9B8D3",
     duration: 17,
     direction: -1,
@@ -106,7 +104,7 @@ const thoughtStrands = [
     end: { x: 297, y: 230 },
   },
   {
-    id: "thought-7",
+    id: 7,
     color: "#C7B6ED",
     duration: 15,
     direction: 1,
@@ -114,7 +112,7 @@ const thoughtStrands = [
     end: { x: 151, y: 292 },
   },
   {
-    id: "thought-8",
+    id: 8,
     color: "#A9CDEB",
     duration: 19,
     direction: -1,
@@ -122,7 +120,7 @@ const thoughtStrands = [
     end: { x: 99, y: 182 },
   },
   {
-    id: "thought-9",
+    id: 9,
     color: "#F2B6D0",
     duration: 13,
     direction: 1,
@@ -131,26 +129,48 @@ const thoughtStrands = [
   },
 ];
 
-// ========================================
-// SINGOLO PENSIERO ANIMATO
-// ========================================
+// I collegamenti desktop si diramano verso le categorie.
+const connections = [
+  {
+    id: "da-fare",
+    path: "M 380 250 C 440 250 445 39 510 39",
+  },
+  {
+    id: "in-programma",
+    path: "M 380 250 C 440 250 445 145 510 145",
+  },
+  {
+    id: "forse",
+    path: "M 380 250 C 440 250 450 250 510 250",
+  },
+  {
+    id: "da-ricordare",
+    path: "M 380 250 C 440 250 445 355 510 355",
+  },
+  {
+    id: "pensieri-liberi",
+    path: "M 380 250 C 440 250 445 461 510 461",
+  },
+];
 
+// Ogni filo ruota da solo, senza spostamenti verticali.
 function ThoughtStrand({ strand, reduceMotion }) {
-  const rotation = strand.direction * 360;
-
-  const rotationDuration = strand.duration / THOUGHT_SPEED;
-
   return (
     <motion.g
       className="organize__strand"
       initial={{ rotate: 0 }}
-      animate={reduceMotion ? { rotate: 0 } : { rotate: [0, rotation] }}
-      transition={{
-        duration: rotationDuration,
-        repeat: Infinity,
-        repeatType: "loop",
-        ease: "linear",
+      animate={{
+        rotate: reduceMotion ? 0 : [0, strand.direction * 360],
       }}
+      transition={
+        reduceMotion
+          ? { duration: 0 }
+          : {
+              duration: strand.duration / THOUGHT_SPEED,
+              repeat: Infinity,
+              ease: "linear",
+            }
+      }
       style={{
         transformBox: "view-box",
         transformOrigin: "center",
@@ -168,20 +188,14 @@ function ThoughtStrand({ strand, reduceMotion }) {
     </motion.g>
   );
 }
-// ========================================
-// NUCLEO DEI PENSIERI
-// ========================================
 
+// Il nucleo è solo grafico: il testo resta fermo.
 function MindCore() {
   const reduceMotion = useReducedMotion();
 
   return (
     <div className="organize__core">
-      {/* Luce ambientale */}
-
       <div className="organize__core-glow" aria-hidden="true" />
-
-      {/* Fili che ruotano intorno al centro */}
 
       <svg
         className="organize__core-traces"
@@ -197,8 +211,6 @@ function MindCore() {
         ))}
       </svg>
 
-      {/* Scritta centrale immobile */}
-
       <div className="organize__core-label">
         <span>I miei</span>
         <span>pensieri</span>
@@ -207,35 +219,24 @@ function MindCore() {
   );
 }
 
-// ========================================
-// COLLEGAMENTI ALLE CATEGORIE
-// ========================================
-
-const connections = [
-  {
-    id: "da-fare",
-    path: "M 380 195 C 440 195 450 60 510 60",
-  },
-  {
-    id: "eventi",
-    path: "M 380 195 C 435 195 455 195 510 195",
-  },
-  {
-    id: "da-verificare",
-    path: "M 380 195 C 440 195 450 330 510 330",
-  },
-];
-
+// Sul desktop evidenziamo il filo della categoria selezionata.
 function MindConnections({ activeCategoryId }) {
   const reduceMotion = useReducedMotion();
 
   return (
     <svg
       className="organize__connections"
-      viewBox="0 0 1000 390"
+      viewBox="0 0 1000 500"
       preserveAspectRatio="none"
       aria-hidden="true"
     >
+      {/* Tratto tra il nucleo e la diramazione */}
+      <path
+        className="organize__connection"
+        d="M 335 250 C 355 250 365 250 380 250"
+        opacity="0.7"
+      />
+
       {connections.map(({ id, path }) => {
         const isActive = activeCategoryId === id;
 
@@ -251,7 +252,7 @@ function MindConnections({ activeCategoryId }) {
               opacity: isActive ? 1 : 0.4,
             }}
             transition={{
-              duration: reduceMotion ? 0 : 0.4,
+              duration: reduceMotion ? 0 : 0.3,
             }}
           />
         );
@@ -260,39 +261,183 @@ function MindConnections({ activeCategoryId }) {
   );
 }
 
-// ========================================
-// PAGINA ORGANIZZA
-// ========================================
+// Usiamo la stessa lista di pensieri su desktop e mobile.
+function ThoughtList({ items }) {
+  if (items.length === 0) {
+    return <p>Non ci sono pensieri in questa categoria.</p>;
+  }
+
+  return (
+    <ul className="organize__list">
+      {items.map((item) => (
+        <li key={item.id} className="organize__item">
+          <div>
+            <strong>{item.title}</strong>
+
+            {item.date && <p>Data: {item.date}</p>}
+
+            {item.time && <p>Ora: {item.time}</p>}
+
+            {item.uncertain === true && <p>Informazione da chiarire</p>}
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+// Categorie desktop: selezionano il pannello sotto la mappa.
+function DesktopCategories({
+  organizedItems,
+  activeCategoryId,
+  isLoading,
+  error,
+  navigate,
+}) {
+  return (
+    <nav className="organize__categories" aria-label="Categorie di Organizza">
+      {categories.map(({ id, label, icon: Icon, color }) => {
+        const isActive = activeCategoryId === id;
+
+        return (
+          <button
+            key={id}
+            type="button"
+            className={`organize__category ${
+              isActive ? "organize__category--active" : ""
+            }`}
+            style={{ "--category-color": color }}
+            onClick={() => navigate(`/organizza/${id}`)}
+            aria-pressed={isActive}
+          >
+            <Icon
+              className="organize__category-icon"
+              size={24}
+              strokeWidth={1.6}
+              aria-hidden="true"
+            />
+
+            <span className="organize__category-label">{label}</span>
+
+            <strong className="organize__category-count">
+              {isLoading || error ? "—" : (organizedItems[id]?.length ?? 0)}
+            </strong>
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
+// Sul mobile tocchiamo una categoria per aprirla.
+// La categoria aperta è letta direttamente dall'URL.
+function MobileCategories({
+  selectedId,
+  organizedItems,
+  isLoading,
+  error,
+  navigate,
+}) {
+  function toggleCategory(id) {
+    navigate(selectedId === id ? "/organizza" : `/organizza/${id}`);
+  }
+
+  return (
+    <nav
+      className="organize__mobile-categories"
+      aria-label="Esplora i tuoi pensieri"
+    >
+      {isLoading && (
+        <p role="status" className="organize__mobile-status">
+          Recuperiamo i tuoi pensieri...
+        </p>
+      )}
+
+      {error && (
+        <p role="alert" className="organize__mobile-status">
+          {error}
+        </p>
+      )}
+
+      {categories.map(({ id, label, icon: Icon, color }) => {
+        const isExpanded = selectedId === id;
+        const categoryItems = organizedItems[id] ?? [];
+        const panelId = `organize-mobile-${id}`;
+
+        return (
+          <div
+            key={id}
+            className="organize__mobile-group"
+            style={{ "--category-color": color }}
+          >
+            <button
+              type="button"
+              className={`organize__category organize__mobile-button ${
+                isExpanded ? "organize__category--active" : ""
+              }`}
+              onClick={() => toggleCategory(id)}
+              aria-expanded={isExpanded}
+              aria-controls={panelId}
+            >
+              <Icon
+                className="organize__category-icon"
+                size={22}
+                strokeWidth={1.6}
+                aria-hidden="true"
+              />
+
+              <span className="organize__category-label">{label}</span>
+
+              <strong className="organize__category-count">
+                {isLoading || error ? "—" : categoryItems.length}
+              </strong>
+
+              <ChevronDown
+                className="organize__mobile-chevron"
+                size={18}
+                aria-hidden="true"
+              />
+            </button>
+
+            <div
+              id={panelId}
+              className="organize__mobile-panel"
+              hidden={!isExpanded}
+            >
+              {!isLoading && !error && <ThoughtList items={categoryItems} />}
+            </div>
+          </div>
+        );
+      })}
+    </nav>
+  );
+}
 
 function OrganizePage() {
   const navigate = useNavigate();
   const { category } = useParams();
 
-  // Recuperiamo i dati salvati nel database.
+  // I dati arrivano sempre dal nostro hook esistente.
   const { items, isLoading, error } = useMindDumps();
-
-  // Conserviamo la classificazione esistente.
   const organizedItems = organizeItems(items);
 
-  // Categoria selezionata o predefinita.
+  // Sul desktop selezioniamo "Da fare" se manca la categoria.
   const activeCategory =
     categories.find((item) => item.id === category) ?? categories[0];
 
-  const visibleItems = organizedItems[activeCategory.id] ?? [];
+  // Sul mobile, senza categoria nell'URL, resta tutto chiuso.
+  const mobileSelectedId = categories.some((item) => item.id === category)
+    ? category
+    : null;
 
   return (
     <main className="organize">
-      {/* INTESTAZIONE */}
-
       <header className="organize__header">
         <div className="organize__eyebrow">Il tuo spazio</div>
 
         <h1>Organizza</h1>
-
         <p>I tuoi pensieri, al loro posto.</p>
       </header>
-
-      {/* INTRODUZIONE */}
 
       <section className="organize__intro">
         <h2>Ritrova ciò che hai in mente.</h2>
@@ -303,78 +448,49 @@ function OrganizePage() {
         </p>
       </section>
 
-      {/* MAPPA INTERATTIVA */}
-
       <section className="organize__map" aria-label="Mappa dei pensieri">
         <MindCore />
 
+        {/* I collegamenti curvi sono visibili sul desktop. */}
         <MindConnections activeCategoryId={activeCategory.id} />
 
-        {/* CATEGORIE */}
+        <DesktopCategories
+          organizedItems={organizedItems}
+          activeCategoryId={activeCategory.id}
+          isLoading={isLoading}
+          error={error}
+          navigate={navigate}
+        />
 
-        <nav
-          className="organize__categories"
-          aria-label="Categorie di Organizza"
+        {/* Sul telefono il collegamento diventa verticale. */}
+        <svg
+          className="organize__mobile-bridge"
+          viewBox="0 0 100 44"
+          preserveAspectRatio="none"
+          aria-hidden="true"
         >
-          {categories.map(({ id, label, icon: Icon, color }) => {
-            const isActive = activeCategory.id === id;
+          <path d="M 50 0 C 50 24 10 8 2 44" />
+        </svg>
 
-            return (
-              <button
-                key={id}
-                type="button"
-                className={`organize__category ${
-                  isActive ? "organize__category--active" : ""
-                }`}
-                style={{
-                  "--category-color": color,
-                }}
-                onClick={() => navigate(`/organizza/${id}`)}
-                aria-current={isActive ? "page" : undefined}
-              >
-                <Icon
-                  className="organize__category-icon"
-                  size={24}
-                  strokeWidth={1.6}
-                  aria-hidden="true"
-                />
-
-                <span className="organize__category-label">{label}</span>
-
-                <strong className="organize__category-count">
-                  {isLoading ? "—" : (organizedItems[id]?.length ?? 0)}
-                </strong>
-              </button>
-            );
-          })}
-        </nav>
+        <MobileCategories
+          selectedId={mobileSelectedId}
+          organizedItems={organizedItems}
+          isLoading={isLoading}
+          error={error}
+          navigate={navigate}
+        />
       </section>
 
-      {/* PENSIERI DELLA CATEGORIA */}
-
+      {/* Questo pannello viene mostrato solo sul desktop. */}
       <section className="organize__content" aria-live="polite">
         <h2>{activeCategory.label}</h2>
 
         {isLoading ? (
-          <p>Recuperiamo i tuoi pensieri...</p>
+          <p role="status">Recuperiamo i tuoi pensieri...</p>
         ) : error ? (
           <p role="alert">{error}</p>
-        ) : visibleItems.length === 0 ? (
-          <p>Non ci sono elementi in questa categoria.</p>
         ) : (
-          <ul className="organize__list">
-            {visibleItems.map((item) => (
-              <li key={item.id} className="organize__item">
-                <div>
-                  <strong>{item.title}</strong>
-
-                  {item.date && <p>Data: {item.date}</p>}
-
-                  {item.time && <p>Ora: {item.time}</p>}
-                </div>
-              </li>
-            ))}
-          </ul>
+          <ThoughtList items={organizedItems[activeCategory.id] ?? []} />
         )}
       </section>
     </main>
