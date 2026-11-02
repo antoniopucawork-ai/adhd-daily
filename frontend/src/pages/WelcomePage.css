@@ -109,6 +109,8 @@
   letter-spacing: -0.045em;
 
   color: #f6f8fc;
+  font-family: var(--font-heading);
+  font-weight: 400;
 }
 
 .welcome-page__intro p {

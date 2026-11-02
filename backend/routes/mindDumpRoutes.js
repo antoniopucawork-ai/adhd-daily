@@ -7,15 +7,36 @@ import {
   analyzeMindDump,
 } from "../controllers/mindDumpController.js";
 
+import {
+  getMindDumpById,
+  updateMindDumpItem,
+  deleteMindDumpItem,
+  deleteMindDump,
+  deleteAllMindDumps,
+} from "../controllers/mindDumpCrudController.js";
+
 const router = express.Router();
 
-// Analizza il pensiero con Gemini, senza salvarlo
+// Analizziamo il testo senza salvarlo.
 router.post("/analyze", verifyToken, analyzeMindDump);
 
-// Salva il pensiero nel database
+// Creiamo e recuperiamo i Mind Dump dell'utente.
 router.post("/", verifyToken, createMindDump);
-
-// Recupera i pensieri dell'utente
 router.get("/", verifyToken, getMindDumps);
+
+// Recuperiamo un singolo Mind Dump.
+router.get("/:dumpId", verifyToken, getMindDumpById);
+
+// Modifichiamo un elemento già salvato.
+router.patch("/:dumpId/items/:itemId", verifyToken, updateMindDumpItem);
+
+// Eliminiamo un singolo elemento.
+router.delete("/:dumpId/items/:itemId", verifyToken, deleteMindDumpItem);
+
+// Eliminiamo un intero Mind Dump.
+router.delete("/:dumpId", verifyToken, deleteMindDump);
+
+// Eliminiamo tutti i Mind Dump dell'utente.
+router.delete("/", verifyToken, deleteAllMindDumps);
 
 export default router;

@@ -1,140 +1,185 @@
+/* ========================================
+   ADHD DAILY — MODIFICA MIND DUMP
+======================================== */
+
 .mind-edit {
   width: 100%;
-  padding-top: 4px;
 }
+
+/* Navigazione */
 
 .mind-edit__back {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 9px;
 
-  margin: 0 0 28px;
+  min-height: 44px;
+  margin: 0 0 22px;
   padding: 0;
 
-  color: rgba(244, 239, 230, 0.5);
+  color: #a9cdeb;
   background: transparent;
   border: 0;
 
-  font-family: inherit;
-  font-size: 12px;
+  font-size: 13px;
   cursor: pointer;
 }
 
+/* Intestazione */
+
 .mind-edit__header {
   margin-bottom: 30px;
+}
+
+.mind-edit__eyebrow {
+  margin: 0 0 12px;
+
+  color: #a9cdeb;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
 }
 
 .mind-edit__header h1 {
   margin: 0;
 
   color: #f4efe6;
-
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 34px;
+  font-family: var(--font-heading);
+  font-size: clamp(35px, 5vw, 48px);
   font-weight: 400;
+  line-height: 1.12;
 }
 
-.mind-edit__header p {
-  margin: 8px 0 0;
+.mind-edit__header > p:last-child {
+  margin: 12px 0 0;
 
-  color: rgba(244, 239, 230, 0.5);
-
-  font-size: 13px;
-  font-weight: 300;
+  color: #b9c1cf;
+  font-size: 14px;
+  line-height: 1.7;
 }
+
+/* ========================================
+   FORM DI MODIFICA
+======================================== */
 
 .mind-edit__form {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
+
+  padding: 24px;
+
+  background: linear-gradient(
+    145deg,
+    rgba(185, 193, 207, 0.085),
+    rgba(16, 30, 53, 0.58)
+  );
+
+  border: 1px solid rgba(199, 182, 237, 0.2);
+  border-radius: 22px;
 }
 
 .mind-edit__field {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
   flex: 1;
+  flex-direction: column;
+  gap: 9px;
+
+  min-width: 0;
 }
 
 .mind-edit__field > span {
-  margin-left: 2px;
+  color: #c7b6ed;
 
-  color: rgba(229, 216, 184, 0.6);
-
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.12em;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
-.mind-edit__field input {
+.mind-edit__field input,
+.mind-edit__field select {
   width: 100%;
   min-width: 0;
-  padding: 14px;
+  min-height: 50px;
+  padding: 12px 14px;
 
-  color: rgba(244, 239, 230, 0.92);
-  background: rgba(16, 30, 53, 0.72);
+  color: #f4efe6;
+  background: #14243d;
 
-  border: 1px solid rgba(199, 207, 229, 0.1);
-  border-radius: 14px;
-  outline: none;
+  border: 1px solid rgba(199, 182, 237, 0.23);
+  border-radius: 13px;
 
-  font-family: inherit;
-  font-size: 13px;
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.4;
 }
 
-.mind-edit__field input:focus {
-  border-color: rgba(229, 216, 184, 0.35);
+.mind-edit__field select {
+  cursor: pointer;
+}
+
+.mind-edit__field input:focus,
+.mind-edit__field select:focus {
+  border-color: #c7b6ed;
+  outline: 2px solid rgba(199, 182, 237, 0.2);
+  outline-offset: 2px;
 }
 
 .mind-edit__row {
-  display: flex;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
 }
 
-.mind-edit__reminder {
+/* Incertezza: non è la stessa cosa della categoria "Forse". */
+
+.mind-edit__uncertain {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 20px;
+  align-items: center;
+  gap: 16px;
 
-  padding: 17px;
+  min-height: 74px;
+  padding: 16px;
 
-  background: rgba(16, 30, 53, 0.6);
-  border: 1px solid rgba(199, 207, 229, 0.08);
-  border-radius: 16px;
+  background: rgba(199, 182, 237, 0.055);
+  border: 1px solid rgba(199, 182, 237, 0.14);
+  border-radius: 15px;
 
   cursor: pointer;
 }
 
-.mind-edit__reminder div {
+.mind-edit__uncertain > div {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
-.mind-edit__reminder strong {
-  color: rgba(244, 239, 230, 0.9);
-
-  font-family: inherit;
+.mind-edit__uncertain strong {
+  color: #f4efe6;
   font-size: 13px;
-  font-weight: 400;
+  font-weight: 600;
 }
 
-.mind-edit__reminder span {
-  color: rgba(244, 239, 230, 0.4);
-
-  font-size: 11px;
-  font-weight: 300;
+.mind-edit__uncertain span {
+  color: #b9c1cf;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
-.mind-edit__reminder input {
-  width: 18px;
-  height: 18px;
-  flex: 0 0 auto;
+.mind-edit__uncertain input {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
 
-  accent-color: #e5d8b8;
+  accent-color: #c7b6ed;
 }
+
+/* ========================================
+   SALVATAGGIO DELLE MODIFICHE
+======================================== */
 
 .mind-edit__save {
   display: flex;
@@ -143,22 +188,60 @@
   gap: 10px;
 
   width: 100%;
-  margin-top: 8px;
+  min-height: 54px;
+  margin-top: 6px;
   padding: 15px 20px;
 
   color: #071120;
-  background: #e5d8b8;
+  background: var(--color-accent);
 
   border: 0;
   border-radius: 16px;
 
-  font-family: inherit;
+  font-family: var(--font-body);
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
 
   cursor: pointer;
+
+  transition:
+    background 180ms ease,
+    transform 180ms ease;
 }
 
-.mind-edit__save:active {
+.mind-edit__save:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+}
+
+.mind-edit__save:active:not(:disabled) {
   transform: scale(0.985);
+}
+
+.mind-edit__save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mind-edit button:focus-visible {
+  outline: 2px solid #a9cdeb;
+  outline-offset: 4px;
+}
+
+@media (max-width: 768px) {
+  .mind-edit__form {
+    padding: 18px;
+    border-radius: 18px;
+  }
+}
+
+@media (max-width: 380px) {
+  .mind-edit__row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mind-edit__save {
+    transition: none;
+  }
 }

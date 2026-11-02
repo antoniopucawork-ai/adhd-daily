@@ -1,0 +1,162 @@
+/* Gestione della cancellazione totale */
+
+.delete-all {
+  margin-top: 30px;
+  padding-top: 24px;
+
+  border-top: 1px solid rgba(199, 207, 229, 0.14);
+}
+
+.delete-all__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  min-height: 44px;
+  padding: 12px 18px;
+
+  color: #e9a6ac;
+  background: rgba(179, 86, 99, 0.08);
+
+  border: 1px solid rgba(233, 166, 172, 0.24);
+  border-radius: 12px;
+
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.delete-all__panel {
+  padding: 24px;
+
+  background: rgba(15, 26, 47, 0.9);
+  border: 1px solid rgba(233, 166, 172, 0.25);
+  border-radius: 20px;
+}
+
+.delete-all__heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+
+  color: #e9a6ac;
+}
+
+.delete-all__heading svg {
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.delete-all__heading h2 {
+  margin: 0;
+
+  color: #f4efe6;
+  font-family: var(--font-heading);
+  font-size: 23px;
+  font-weight: 400;
+  line-height: 1.35;
+}
+
+.delete-all__description {
+  margin: 16px 0 22px;
+
+  color: #b9c1cf;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.delete-all__label {
+  display: block;
+  margin-bottom: 10px;
+
+  color: #d5dbe5;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.delete-all__label strong {
+  color: #f4efe6;
+}
+
+.delete-all__input {
+  width: 100%;
+  min-height: 50px;
+  padding: 12px 15px;
+
+  color: #f4efe6;
+  background: rgba(20, 35, 60, 0.75);
+
+  border: 1px solid rgba(199, 207, 229, 0.25);
+  border-radius: 12px;
+
+  font: inherit;
+  font-size: 16px;
+}
+
+.delete-all__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.delete-all__cancel,
+.delete-all__confirm {
+  flex: 1;
+  min-width: 0;
+  min-height: 46px;
+  padding: 11px 15px;
+
+  border-radius: 12px;
+
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.delete-all__cancel {
+  color: #e5d8b8;
+  background: transparent;
+  border: 1px solid rgba(229, 216, 184, 0.25);
+}
+
+.delete-all__confirm {
+  color: #fff4f4;
+  background: #954c5c;
+  border: 1px solid #b66c7b;
+}
+
+.delete-all__confirm:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.delete-all__error {
+  margin: 12px 0 0;
+
+  color: #f0a5ad;
+  font-size: 13px;
+}
+
+.delete-all button:focus-visible,
+.delete-all input:focus-visible {
+  outline: 2px solid #e5d8b8;
+  outline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+  .delete-all__panel {
+    padding: 18px;
+  }
+
+  .delete-all__heading h2 {
+    font-size: 21px;
+  }
+}
+
+@media (max-width: 360px) {
+  .delete-all__actions {
+    flex-direction: column;
+  }
+}

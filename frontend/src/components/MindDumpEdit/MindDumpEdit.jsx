@@ -1,60 +1,97 @@
 import { useState } from "react";
 import { ArrowLeft, Check } from "lucide-react";
+
 import "./MindDumpEdit.css";
 
+const TYPE_OPTIONS = [
+  { value: "ACTION", label: "Da fare" },
+  { value: "EVENT", label: "In programma" },
+  { value: "INTENTION", label: "Forse" },
+  { value: "MEMORY", label: "Da ricordare" },
+  { value: "THOUGHT", label: "Pensieri liberi" },
+];
+
 function MindDumpEdit({ item, onSave, onCancel }) {
+  // Partiamo dai dati che Gemini ha già riconosciuto.
   const [formData, setFormData] = useState({
-    title: item.title || "",
-    date: item.date || "",
-    time: item.time || "",
-    reminder: item.reminder || false,
+    type: item.type,
+    title: item.title ?? "",
+    date: item.date ?? "",
+    time: item.time ?? "",
+    uncertain: item.uncertain ?? false,
   });
 
-  const handleChange = (event) => {
+  function handleChange(event) {
     const { name, value, type, checked } = event.target;
 
     setFormData((current) => ({
       ...current,
       [name]: type === "checkbox" ? checked : value,
     }));
-  };
+  }
 
-  const handleSubmit = (event) => {
+  function handleSubmit(event) {
     event.preventDefault();
 
-    if (!formData.title.trim()) return;
+    const title = formData.title.trim();
 
+    if (!title || title.length > 200) return;
+
+    // Aggiorniamo solo i dati modificati dall'utente.
     onSave({
       ...item,
-      title: formData.title.trim(),
+      type: formData.type,
+      title,
       date: formData.date || null,
       time: formData.time || null,
-      reminder: formData.reminder,
+      uncertain: formData.uncertain,
     });
-  };
+  }
 
   return (
     <section className="mind-edit">
       <button className="mind-edit__back" type="button" onClick={onCancel}>
-        <ArrowLeft size={17} strokeWidth={1.6} />
-        <span>Indietro</span>
+        <ArrowLeft size={18} aria-hidden="true" />
+        <span>Torna ai risultati</span>
       </button>
 
       <header className="mind-edit__header">
-        <h1>Modifica</h1>
-        <p>Sistema quello che vuoi cambiare.</p>
+        <p className="mind-edit__eyebrow">Il pensiero resta tuo</p>
+
+        <h1>Modifica il pensiero.</h1>
+
+        <p>Correggi quello che l'IA non ha interpretato come volevi.</p>
       </header>
 
       <form className="mind-edit__form" onSubmit={handleSubmit}>
         <label className="mind-edit__field">
-          <span>Cosa devi fare</span>
+          <span>Titolo</span>
 
           <input
             type="text"
             name="title"
             value={formData.title}
             onChange={handleChange}
+            maxLength={200}
+            required
           />
+        </label>
+
+        <label className="mind-edit__field">
+          <span>Categoria</span>
+
+          <select
+            name="type"
+            value={formData.type}
+            onChange={handleChange}
+            required
+          >
+            {TYPE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         </label>
 
         <div className="mind-edit__row">
@@ -81,23 +118,28 @@ function MindDumpEdit({ item, onSave, onCancel }) {
           </label>
         </div>
 
-        <label className="mind-edit__reminder">
+        <label className="mind-edit__uncertain">
           <div>
-            <strong>Promemoria</strong>
-            <span>Ricordamelo quando serve.</span>
+            <strong>Informazione da verificare</strong>
+
+            <span>Attivala quando qualcosa non è ancora certo.</span>
           </div>
 
           <input
             type="checkbox"
-            name="reminder"
-            checked={formData.reminder}
+            name="uncertain"
+            checked={formData.uncertain}
             onChange={handleChange}
           />
         </label>
 
-        <button className="mind-edit__save" type="submit">
+        <button
+          className="mind-edit__save"
+          type="submit"
+          disabled={!formData.title.trim()}
+        >
           <span>Salva modifiche</span>
-          <Check size={18} strokeWidth={1.7} />
+          <Check size={18} aria-hidden="true" />
         </button>
       </form>
     </section>

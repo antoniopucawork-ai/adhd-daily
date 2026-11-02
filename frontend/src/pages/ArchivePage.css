@@ -1,40 +1,58 @@
+/* =========================================
+   ARCHIVIO — ADHD DAILY
+   Layout responsive, coerente con Quiet Canvas
+   ========================================= */
+
 .archive-page {
+  --archive-text: #f4efe6;
+  --archive-muted: #b9c1cf;
+  --archive-accent: #e5d8b8;
+  --archive-border: rgba(199, 207, 229, 0.16);
+  --archive-surface: rgba(22, 36, 62, 0.68);
+
   width: 100%;
   min-height: 100vh;
 
-  color: #f4efe6;
-
+  color: var(--archive-text);
   background:
     radial-gradient(
-      circle at 78% 12%,
-      rgba(75, 96, 150, 0.25),
-      transparent 28%
+      ellipse at 75% 8%,
+      rgba(76, 91, 147, 0.24),
+      transparent 42%
     ),
-    linear-gradient(180deg, #0c1930 0%, #091629 45%, #071120 100%);
+    linear-gradient(180deg, #0d1930 0%, #0a1529 48%, #071120 100%);
 }
 
+/* Contenitore principale */
+
 .archive-page__container {
+  box-sizing: border-box;
+
   width: 100%;
-  max-width: 430px;
+  max-width: 860px;
   min-height: 100vh;
 
   margin: 0 auto;
-  padding: 24px 20px calc(120px + env(safe-area-inset-bottom));
+  padding: 52px 32px calc(120px + env(safe-area-inset-bottom));
 }
 
+/* =========================================
+   INTESTAZIONE
+   ========================================= */
+
 .archive-page__header {
-  margin-bottom: 24px;
+  margin-bottom: 30px;
 }
 
 .archive-page__back {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
 
   min-height: 44px;
-  margin-bottom: 12px;
+  margin-bottom: 26px;
 
-  color: #e5d8b8;
+  color: var(--archive-accent);
   text-decoration: none;
   font-size: 14px;
 }
@@ -42,36 +60,51 @@
 .archive-page__header h1 {
   margin: 0;
 
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 30px;
+  color: var(--archive-text);
+  font-family: var(--font-heading, Georgia, "Times New Roman", serif);
+  font-size: clamp(34px, 3.5vw, 46px);
   font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
 }
 
 .archive-page__header > p {
-  margin: 10px 0 0;
+  max-width: 580px;
+  margin: 14px 0 0;
 
-  color: #b9c1cf;
-  font-size: 14px;
-  line-height: 1.6;
+  color: var(--archive-muted);
+  font-size: 15px;
+  line-height: 1.7;
 }
+
+/* =========================================
+   ELENCO E CARD
+   ========================================= */
 
 .archive-page__list {
   display: grid;
-  gap: 14px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
 
   margin: 0;
   padding: 0;
-
   list-style: none;
 }
 
 .archive-page__card {
   min-width: 0;
-  padding: 18px;
+  padding: 28px;
 
-  background: rgba(16, 30, 53, 0.72);
-  border: 1px solid rgba(199, 207, 229, 0.12);
-  border-radius: 18px;
+  background: linear-gradient(
+    145deg,
+    rgba(38, 50, 78, 0.55),
+    rgba(15, 28, 52, 0.82)
+  );
+
+  border: 1px solid var(--archive-border);
+  border-radius: 22px;
+
+  box-shadow: 0 12px 38px rgba(0, 0, 0, 0.08);
 
   overflow-wrap: anywhere;
 }
@@ -79,24 +112,26 @@
 .archive-page__card-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
 
-  margin-bottom: 12px;
+  margin-bottom: 17px;
 }
 
 .archive-page__type {
-  color: #e5d8b8;
-  font-size: 12px;
+  color: #ccbce9;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .archive-page__done {
-  padding: 4px 8px;
+  padding: 5px 10px;
 
   color: #c4dbc9;
   background: rgba(130, 172, 146, 0.12);
-  border-radius: 8px;
+  border-radius: 9px;
 
   font-size: 12px;
 }
@@ -104,60 +139,305 @@
 .archive-page__card h2 {
   margin: 0;
 
-  color: #f4efe6;
-  font-size: 16px;
+  color: var(--archive-text);
+  font-family: var(--font-heading, Georgia, "Times New Roman", serif);
+  font-size: 24px;
   font-weight: 400;
-  line-height: 1.5;
+  line-height: 1.35;
+  letter-spacing: -0.015em;
 }
 
 .archive-page__date {
-  margin: 8px 0 0;
+  margin: 12px 0 0;
 
-  color: #b9c1cf;
-  font-size: 13px;
-  line-height: 1.5;
+  color: var(--archive-muted);
+  font-size: 14px;
+  line-height: 1.6;
 }
 
+/* =========================================
+   TESTO ORIGINALE
+   ========================================= */
+
 .archive-page__source {
-  margin-top: 14px;
-  border-top: 1px solid rgba(199, 207, 229, 0.12);
+  margin-top: 22px;
+  border-top: 1px solid var(--archive-border);
 }
 
 .archive-page__source summary {
+  display: list-item;
+
   min-height: 44px;
-  padding: 13px 0;
+  padding: 15px 0;
 
-  color: #e5d8b8;
+  color: var(--archive-accent);
   font-size: 13px;
-
   cursor: pointer;
 }
 
 .archive-page__source p {
-  margin: 0 0 4px;
+  max-width: 68ch;
+  margin: 0 0 8px;
 
   color: #d5dbe5;
   font-size: 14px;
-  line-height: 1.7;
+  line-height: 1.8;
 
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
 .archive-page__missing-source {
-  margin: 14px 0 0;
+  margin: 18px 0 0;
 
-  color: #b9c1cf;
-  font-size: 12px;
+  color: var(--archive-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* =========================================
+   PULSANTI MODIFICA ED ELIMINA
+   ========================================= */
+
+.archive-page__actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  margin-top: 22px;
+}
+
+.archive-page__edit-button,
+.archive-page__delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+
+  min-height: 44px;
+  padding: 10px 17px;
+
+  border-radius: 12px;
+
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.archive-page__edit-button {
+  color: var(--archive-accent);
+  background: rgba(229, 216, 184, 0.07);
+  border: 1px solid rgba(229, 216, 184, 0.2);
+}
+
+.archive-page__edit-button:hover:not(:disabled) {
+  background: rgba(229, 216, 184, 0.14);
+}
+
+.archive-page__delete {
+  color: #e9a6ac;
+  background: rgba(179, 86, 99, 0.11);
+  border: 1px solid rgba(233, 166, 172, 0.22);
+}
+
+.archive-page__delete:hover:not(:disabled) {
+  background: rgba(179, 86, 99, 0.2);
+}
+
+/* =========================================
+   CONFERMA ELIMINAZIONE
+   ========================================= */
+
+.archive-page__confirm {
+  box-sizing: border-box;
+
+  width: 100%;
+  margin-top: 20px;
+  padding: 22px;
+
+  background: rgba(8, 18, 34, 0.68);
+  border: 1px solid rgba(233, 166, 172, 0.24);
+  border-radius: 16px;
+}
+
+.archive-page__confirm-title {
+  margin: 0;
+
+  color: var(--archive-text);
+  font-size: 16px;
+  font-weight: 600;
   line-height: 1.5;
 }
 
-.archive-page__message {
-  padding: 24px 18px;
+.archive-page__confirm-description {
+  max-width: 62ch;
+  margin: 10px 0 0;
 
-  background: rgba(16, 30, 53, 0.72);
-  border: 1px solid rgba(199, 207, 229, 0.12);
-  border-radius: 18px;
+  color: var(--archive-muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.archive-page__delete-error {
+  margin: 14px 0 0;
+
+  color: #f0a5ad;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.archive-page__confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  margin-top: 20px;
+}
+
+.archive-page__cancel,
+.archive-page__confirm-delete {
+  min-width: 135px;
+  min-height: 44px;
+  padding: 10px 18px;
+
+  border-radius: 12px;
+
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.archive-page__cancel {
+  color: var(--archive-accent);
+  background: transparent;
+  border: 1px solid rgba(229, 216, 184, 0.25);
+}
+
+.archive-page__confirm-delete {
+  color: #fff4f4;
+  background: #954c5c;
+  border: 1px solid #b66c7b;
+}
+
+.archive-page__confirm-delete:hover:not(:disabled) {
+  background: #a55768;
+}
+
+/* =========================================
+   MODIFICA — VERSIONE DESKTOP
+   ========================================= */
+
+/*
+  MindDumpEdit è condiviso con Svuota la mente.
+  Qui cambiamo solo la sua presentazione
+  all'interno dell'Archivio.
+*/
+
+.archive-page__editor {
+  width: 100%;
+  min-width: 0;
+  margin-top: 12px;
+}
+
+.archive-page .mind-edit {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  padding-top: 0;
+}
+
+.archive-page .mind-edit__back {
+  margin-bottom: 24px;
+}
+
+.archive-page .mind-edit__header {
+  margin-bottom: 28px;
+}
+
+.archive-page .mind-edit__header h1 {
+  font-family: var(--font-heading, Georgia, "Times New Roman", serif);
+  font-size: clamp(30px, 3vw, 40px);
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.archive-page .mind-edit__header p {
+  max-width: 600px;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+/* Il modulo utilizza tutta la larghezza disponibile. */
+
+.archive-page .mind-edit__form {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Su desktop data e ora stanno affiancate. */
+
+.archive-page .mind-edit__row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.archive-page .mind-edit__field {
+  min-width: 0;
+}
+
+.archive-page .mind-edit__field input,
+.archive-page .mind-edit__field select {
+  box-sizing: border-box;
+
+  width: 100%;
+  min-width: 0;
+  min-height: 52px;
+
+  font-size: 16px;
+}
+
+/* Il pulsante di salvataggio rimane ben visibile. */
+
+.archive-page .mind-edit__save {
+  min-height: 54px;
+  margin-top: 12px;
+  font-size: 15px;
+}
+
+.archive-page__edit-status,
+.archive-page__edit-error {
+  margin: 14px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.archive-page__edit-status {
+  color: var(--archive-accent);
+}
+
+.archive-page__edit-error {
+  color: #f0a5ad;
+}
+
+/* =========================================
+   CARICAMENTO, ERRORI E STATO VUOTO
+   ========================================= */
+
+.archive-page__message {
+  padding: 32px 28px;
+
+  background: var(--archive-surface);
+  border: 1px solid var(--archive-border);
+  border-radius: 20px;
 
   text-align: center;
 }
@@ -166,38 +446,179 @@
   margin: 0;
 
   color: #d5dbe5;
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: 15px;
+  line-height: 1.7;
 }
 
 .archive-page__empty-link {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
 
   min-height: 44px;
-  margin-top: 12px;
+  margin-top: 16px;
 
-  color: #e5d8b8;
+  color: var(--archive-accent);
   font-size: 14px;
 }
 
 .archive-page__retry {
   min-height: 44px;
-  margin-top: 16px;
-  padding: 10px 18px;
+  margin-top: 18px;
+  padding: 11px 20px;
 
   color: #071120;
-  background: #e5d8b8;
+  background: var(--archive-accent);
 
   border: none;
   border-radius: 12px;
 
+  font: inherit;
+  font-size: 14px;
   cursor: pointer;
 }
 
+/* =========================================
+   ACCESSIBILITÀ
+   ========================================= */
+
 .archive-page a:focus-visible,
 .archive-page button:focus-visible,
-.archive-page summary:focus-visible {
-  outline: 2px solid #e5d8b8;
-  outline-offset: 4px;
+.archive-page summary:focus-visible,
+.archive-page input:focus-visible,
+.archive-page select:focus-visible {
+  outline: 2px solid var(--archive-accent);
+  outline-offset: 3px;
+}
+
+.archive-page__edit-button:disabled,
+.archive-page__delete:disabled,
+.archive-page__cancel:disabled,
+.archive-page__confirm-delete:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* =========================================
+   TABLET E MOBILE
+   ========================================= */
+
+@media (max-width: 600px) {
+  .archive-page__container {
+    padding: 26px 18px calc(115px + env(safe-area-inset-bottom));
+  }
+
+  .archive-page__header {
+    margin-bottom: 24px;
+  }
+
+  .archive-page__back {
+    margin-bottom: 16px;
+  }
+
+  .archive-page__header h1 {
+    font-size: 32px;
+  }
+
+  .archive-page__header > p {
+    font-size: 14px;
+  }
+
+  .archive-page__list {
+    gap: 14px;
+  }
+
+  .archive-page__card {
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+  .archive-page__card h2 {
+    font-size: 21px;
+  }
+
+  .archive-page__source {
+    margin-top: 18px;
+  }
+
+  .archive-page__actions {
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .archive-page__confirm {
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+  .archive-page__confirm-actions {
+    gap: 10px;
+  }
+
+  .archive-page__cancel,
+  .archive-page__confirm-delete {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Modulo in colonna su mobile. */
+
+  .archive-page .mind-edit__header h1 {
+    font-size: 28px;
+  }
+
+  .archive-page .mind-edit__row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .archive-page .mind-edit__header {
+    margin-bottom: 20px;
+  }
+}
+
+/* =========================================
+   MOBILE PICCOLO — 320 PX
+   ========================================= */
+
+@media (max-width: 360px) {
+  .archive-page__container {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+
+  .archive-page__card {
+    padding: 15px;
+  }
+
+  .archive-page__confirm {
+    padding: 12px;
+  }
+
+  .archive-page__actions,
+  .archive-page__confirm-actions {
+    gap: 8px;
+  }
+
+  .archive-page__edit-button,
+  .archive-page__delete {
+    flex: 1;
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+
+  .archive-page .mind-edit__header h1 {
+    font-size: 25px;
+  }
+}
+
+/* =========================================
+   MOVIMENTO RIDOTTO
+   ========================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .archive-page__edit-button,
+  .archive-page__delete {
+    transition: none;
+  }
 }

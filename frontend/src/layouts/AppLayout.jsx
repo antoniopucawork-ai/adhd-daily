@@ -1,5 +1,8 @@
 import { Outlet } from "react-router-dom";
+
 import Sidebar from "../components/Sidebar/Sidebar";
+import BottomNav from "../components/BottomNav/BottomNav";
+
 import "./AppLayout.css";
 
 function AppLayout() {
@@ -10,6 +13,8 @@ function AppLayout() {
       <div className="app-layout__content">
         <Outlet />
       </div>
+
+      <BottomNav />
     </div>
   );
 }
