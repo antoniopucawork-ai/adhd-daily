@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useAuth } from "../../context/useAuth";
 import { NavLink } from "react-router-dom";
 
 import {
   Cloud,
   House,
+  LogOut,
   Archive,
   ListChecks,
   CircleDot,
@@ -29,6 +31,7 @@ const upcoming = [
 ];
 
 function Sidebar() {
+  const { logout } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(() => {
     try {
       return localStorage.getItem("adhdSidebarCollapsed") === "true";
@@ -153,6 +156,11 @@ function Sidebar() {
 
           <span className="sidebar__link-text">Impostazioni</span>
         </div>
+
+        <button type="button" className="sidebar__link" onClick={logout} aria-label="Esci" title="Esci">
+          <LogOut className="sidebar__link-icon" size={19} aria-hidden="true" />
+          <span className="sidebar__link-text">Esci</span>
+        </button>
 
         {/* PROFILO */}
 

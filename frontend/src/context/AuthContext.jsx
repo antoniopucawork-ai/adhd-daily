@@ -1,63 +1,85 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { apiRequest } from "../services/api";
 import { AuthContext } from "./authStore";
 
-const TOKEN_KEY = "adhdDailyToken";
+import { getSessionSignal, getSessionToken, replaceSession } from "../services/session";
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(() => sessionStorage.getItem(TOKEN_KEY));
+  const [token, setToken] = useState(getSessionToken);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Verifica la sessione quando l'app viene avviata
+  const [restoreError, setRestoreError] = useState("");
+  const [attempt, setAttempt] = useState(0);
+  const loginAttempt = useRef(0);
+
+  const logout = useCallback(() => {
+    replaceSession(null);
+    setUser(null);
+    setToken(null);
+    setRestoreError("");
+    setIsLoading(false);
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener("adhd:session-expired", logout);
+    return () => window.removeEventListener("adhd:session-expired", logout);
+  }, [logout]);
+
   useEffect(() => {
     let cancelled = false;
+    const signal = getSessionSignal();
 
     async function restoreSession() {
-      const savedToken = sessionStorage.getItem(TOKEN_KEY);
-
+      const savedToken = getSessionToken();
       if (!savedToken) {
-        if (!cancelled) setIsLoading(false);
+        setIsLoading(false);
         return;
       }
-
       try {
-        const currentUser = await apiRequest("/api/auth/me", {
-          token: savedToken,
-        });
-
-        if (!cancelled) {
+        const currentUser = await apiRequest("/api/auth/me", { token: savedToken });
+        if (!cancelled && !signal.aborted) {
           setUser(currentUser);
           setToken(savedToken);
         }
       } catch {
-        if (!cancelled) {
-          sessionStorage.removeItem(TOKEN_KEY);
-          setUser(null);
-          setToken(null);
+        // Il client API ha già invalidato la sessione in caso di 401.
+        if (!cancelled && !signal.aborted) {
+          setRestoreError("Non riesco a verificare la sessione. Riprova tra poco.");
         }
       } finally {
-        if (!cancelled) setIsLoading(false);
+        if (!cancelled && !signal.aborted) setIsLoading(false);
       }
     }
 
     restoreSession();
+    return () => { cancelled = true; };
+  }, [attempt]);
 
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  function retrySession() {
+    setRestoreError("");
+    setIsLoading(true);
+    setAttempt((previous) => previous + 1);
+  }
 
   const login = async (email, password) => {
+    const signal = getSessionSignal();
+    const request = ++loginAttempt.current;
     const data = await apiRequest("/api/auth/login", {
       method: "POST",
+      signal,
       body: JSON.stringify({ email, password }),
     });
 
-    sessionStorage.setItem(TOKEN_KEY, data.token);
+    signal.throwIfAborted();
+    if (request !== loginAttempt.current) {
+      throw new DOMException("Accesso superato", "AbortError");
+    }
+    replaceSession(data.token);
     setUser(data.user);
     setToken(data.token);
-
+    setRestoreError("");
+    setIsLoading(false);
     return data;
   };
 
@@ -66,12 +88,6 @@ export function AuthProvider({ children }) {
       method: "POST",
       body: JSON.stringify({ firstName, email, password }),
     });
-  };
-
-  const logout = () => {
-    sessionStorage.removeItem(TOKEN_KEY);
-    setUser(null);
-    setToken(null);
   };
 
   const isAuthenticated = Boolean(user && token);
@@ -86,6 +102,8 @@ export function AuthProvider({ children }) {
         logout,
         isAuthenticated,
         isLoading,
+        restoreError,
+        retrySession,
       }}
     >
       {children}

@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { useAuth } from "../../context/useAuth";
 import { NavLink } from "react-router-dom";
 
 import {
   House,
+  LogOut,
   Cloud,
   ListChecks,
   Archive,
@@ -54,6 +56,7 @@ const upcomingNavigation = [
 ];
 
 function BottomNav() {
+  const { logout } = useAuth();
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const [expandedItem, setExpandedItem] = useState(null);
 
@@ -112,6 +115,10 @@ function BottomNav() {
               </button>
             </div>
 
+            <button type="button" className="bottom-nav__upcoming-button" onClick={logout}>
+              <LogOut size={19} aria-hidden="true" />
+              <span>Esci</span>
+            </button>
             <p className="bottom-nav__panel-intro">
               Queste funzionalità sono previste, ma non sono ancora disponibili.
             </p>
