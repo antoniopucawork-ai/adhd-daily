@@ -2,6 +2,10 @@ export function getOpenItems(items) {
   return items.filter((item) => item.status !== "DONE");
 }
 
+export function getCompletedItems(items) {
+  return items.filter((item) => item.status === "DONE");
+}
+
 export function organizeItems(items) {
   const openItems = getOpenItems(items);
 

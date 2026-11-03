@@ -9,10 +9,12 @@ import {
   Brain,
   ChevronDown,
   AlertTriangle,
+  CheckCircle2,
 } from "lucide-react";
 
 import { useMindDumps } from "../hooks/useMindDumps";
-import { organizeItems } from "../utils/organizeItems";
+
+import { organizeItems, getCompletedItems } from "../utils/organizeItems";
 
 import "./OrganizePage.css";
 
@@ -477,6 +479,7 @@ function OrganizePage() {
 
   // Tutti i gruppi derivano dai dati MongoDB.
   const organizedItems = organizeItems(items);
+  const completedItems = getCompletedItems(items);
 
   // Desktop: categoria predefinita "Da fare".
   const activeCategory =
@@ -578,6 +581,50 @@ function OrganizePage() {
             isVerification={isVerificationActive}
           />
         )}
+      </section>
+      {/* Sezione trasversale: non è una categoria del Mind Engine. */}
+      <section className="organize__completed" aria-label="Elementi completati">
+        <details className="organize__completed-details">
+          <summary className="organize__completed-summary">
+            <span className="organize__completed-title">
+              <CheckCircle2 size={20} aria-hidden="true" />
+              Completate
+            </span>
+
+            <span className="organize__completed-count">
+              {isLoading || error ? "—" : completedItems.length}
+            </span>
+
+            <ChevronDown
+              className="organize__completed-chevron"
+              size={18}
+              aria-hidden="true"
+            />
+          </summary>
+
+          <div className="organize__completed-body">
+            {isLoading ? (
+              <p role="status">Recuperiamo i tuoi pensieri...</p>
+            ) : error ? (
+              <p role="alert">{error}</p>
+            ) : completedItems.length === 0 ? (
+              <p>Non hai ancora elementi completati.</p>
+            ) : (
+              <ul className="organize__list">
+                {completedItems.map((item) => (
+                  <li
+                    key={item.id}
+                    className="organize__item organize__completed-item"
+                  >
+                    <strong>{item.title}</strong>
+                    {item.date && <p>Data prevista: {item.date}</p>}
+                    {item.time && <p>Ora prevista: {item.time}</p>}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </details>
       </section>
     </main>
   );

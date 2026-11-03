@@ -746,3 +746,111 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
+
+/* ========================================
+   SEZIONE COMPLETATE
+======================================== */
+.organize__completed {
+  margin-top: 24px;
+}
+
+.organize__completed-details {
+  overflow: hidden;
+  background: rgba(185, 193, 207, 0.055);
+  border: 1px solid rgba(169, 205, 235, 0.18);
+  border-radius: 18px;
+}
+
+.organize__completed-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 70px;
+  padding: 18px 22px;
+  color: #f4efe6;
+  cursor: pointer;
+  list-style: none;
+}
+
+.organize__completed-summary::-webkit-details-marker {
+  display: none;
+}
+
+.organize__completed-summary::marker {
+  content: "";
+}
+
+.organize__completed-summary:focus-visible {
+  outline: 2px solid #a9cdeb;
+  outline-offset: -4px;
+}
+
+.organize__completed-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-right: auto;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.organize__completed-title svg {
+  color: #a9cdeb;
+  flex-shrink: 0;
+}
+
+.organize__completed-count {
+  color: #a9cdeb;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.organize__completed-chevron {
+  flex-shrink: 0;
+  color: #b9c1cf;
+  transition: transform 200ms ease;
+}
+
+.organize__completed-details[open] .organize__completed-chevron {
+  transform: rotate(180deg);
+}
+
+.organize__completed-body {
+  padding: 0 22px 22px;
+}
+
+.organize__completed-body > p {
+  color: #b9c1cf;
+  font-size: 13px;
+}
+
+.organize__completed-body .organize__list {
+  margin-top: 8px;
+}
+
+.organize__completed-item strong {
+  color: rgba(244, 239, 230, 0.6);
+  text-decoration: line-through;
+  text-decoration-color: rgba(169, 205, 235, 0.65);
+}
+
+@media (max-width: 768px) {
+  .organize__completed {
+    margin-top: 20px;
+  }
+
+  .organize__completed-summary {
+    min-height: 64px;
+    padding: 16px;
+  }
+
+  .organize__completed-body {
+    padding: 0 16px 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .organize__completed-chevron {
+    transition: none;
+  }
+}

@@ -4,15 +4,14 @@ import { Bell, Cloud } from "lucide-react";
 import { useAuth } from "../context/useAuth";
 import { usePreferences } from "../context/usePreferences";
 import { useMindDumps } from "../hooks/useMindDumps";
+import { apiRequest } from "../services/api";
 
 import MindDumpCard from "../components/MindDumpCard/MindDumpCard";
 import TodayList from "../components/TodayList/TodayList";
 import NextStepCard from "../components/NextStepCard/NextStepCard";
-import BottomNav from "../components/BottomNav/BottomNav";
 
 import "./HomePage.css";
 
-// Associa ogni modulo al relativo componente React.
 const moduleRegistry = {
   mindDump: MindDumpCard,
   today: TodayList,
@@ -20,41 +19,92 @@ const moduleRegistry = {
 };
 
 function HomePage() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
 
-  // Recuperiamo le preferenze dell'utente.
   const {
     homeModules,
     isLoading: preferencesLoading,
     error: preferencesError,
   } = usePreferences();
 
-  // Recuperiamo i pensieri attraverso il nostro custom hook.
-  const { items, isLoading: itemsLoading, error: itemsError } = useMindDumps();
+  const {
+    items,
+    reload,
+    isLoading: itemsLoading,
+    error: itemsError,
+  } = useMindDumps();
 
-  // Messaggio temporaneo per il completamento delle attività.
+  const [completingId, setCompletingId] = useState(null);
   const [completionError, setCompletionError] = useState("");
 
-  // Per ora non permettiamo di completare le attività.
-  // Implementeremo questa funzione quando avremo l'endpoint PATCH.
-  const handleCompleteItem = () => {
-    setCompletionError(
-      "Il completamento delle attività sarà disponibile dopo il collegamento al database.",
-    );
-  };
+  async function handleCompleteItem(itemId) {
+    if (completingId !== null) return;
 
-  // Applichiamo le preferenze dell'utente.
+    const item = items.find((entry) => entry.id === itemId);
+
+    // Completiamo soltanto azioni confermate.
+    if (
+      !item ||
+      item.type !== "ACTION" ||
+      item.uncertain ||
+      item.status === "DONE" ||
+      !item.source?.mindDumpId
+    ) {
+      setCompletionError("Questa attività non può essere completata.");
+      return;
+    }
+
+    setCompletingId(itemId);
+    setCompletionError("");
+
+    try {
+      const response = await apiRequest(
+        `/api/mind-dumps/${encodeURIComponent(
+          item.source.mindDumpId,
+        )}/items/${encodeURIComponent(item.id)}`,
+        {
+          method: "PATCH",
+          token,
+          body: JSON.stringify({
+            status: "DONE",
+          }),
+        },
+      );
+
+      // Verifichiamo che il server abbia aggiornato
+      // proprio l'elemento richiesto.
+      if (
+        String(response?.item?._id) !== String(item.id) ||
+        response.item.status !== "DONE"
+      ) {
+        throw new Error("Il server non ha confermato il completamento.");
+      }
+
+      // Rileggiamo i dati dal backend.
+      reload();
+    } catch (error) {
+      if (error.name === "AbortError" || error.status === 401) {
+        return;
+      }
+
+      setCompletionError("Non riesco a completare l'attività. Riprova.");
+    } finally {
+      setCompletingId(null);
+    }
+  }
+
   const visibleModules = [...homeModules]
     .filter((module) => module.enabled)
     .sort((a, b) => a.order - b.order);
 
-  // Prepariamo i dati necessari a ogni modulo.
   const moduleProps = {
     mindDump: {},
 
     today: {
       items,
       onComplete: handleCompleteItem,
+      completingId,
+      completionError,
     },
 
     nextStep: {
@@ -62,9 +112,8 @@ function HomePage() {
     },
   };
 
-  // Gestiamo caricamento ed eventuali errori.
   const isLoading = preferencesLoading || itemsLoading;
-  const error = preferencesError || itemsError || completionError;
+  const loadingError = preferencesError || itemsError;
 
   return (
     <main className="home">
@@ -91,9 +140,9 @@ function HomePage() {
 
         {isLoading ? (
           <p>Prepariamo il tuo spazio...</p>
-        ) : error ? (
+        ) : loadingError ? (
           <p role="alert" className="home__error">
-            {error}
+            {loadingError}
           </p>
         ) : (
           <div className="home__dashboard">
@@ -106,8 +155,6 @@ function HomePage() {
             })}
           </div>
         )}
-
-        <BottomNav />
       </div>
     </main>
   );

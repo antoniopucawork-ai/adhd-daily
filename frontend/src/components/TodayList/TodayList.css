@@ -507,3 +507,18 @@
     transition: none;
   }
 }
+.today__error {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  color: #ffe1d7;
+  background: rgba(126, 46, 46, 0.28);
+  border: 1px solid rgba(255, 180, 160, 0.25);
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.today__check:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
