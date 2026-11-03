@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import MindDump from "../models/MindDump.js";
+import { isValidDate } from "../services/dateValidation.js";
 
 const ALLOWED_TYPES = ["ACTION", "EVENT", "MEMORY", "INTENTION", "THOUGHT"];
 
@@ -14,7 +15,7 @@ const EDITABLE_FIELDS = [
   "status",
 ];
 
-// Controlliamo gli ID prima di usarli nelle query.
+// Verifica che l'ID sia un ObjectId MongoDB valido.
 function isValidId(value) {
   return (
     typeof value === "string" &&
@@ -23,24 +24,12 @@ function isValidId(value) {
   );
 }
 
-// Controlliamo anche che la data esista davvero.
-function isValidDate(value) {
-  if (value === null) return true;
-
-  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return false;
-  }
-
-  const [year, month, day] = value.split("-").map(Number);
-  const parsed = new Date(Date.UTC(year, month - 1, day));
-
-  return (
-    parsed.getUTCFullYear() === year &&
-    parsed.getUTCMonth() === month - 1 &&
-    parsed.getUTCDate() === day
-  );
+// Una data può essere null oppure una data reale.
+function isValidItemDate(value) {
+  return value === null || isValidDate(value);
 }
 
+// Un orario può essere null oppure HH:mm.
 function isValidTime(value) {
   return (
     value === null ||
@@ -48,7 +37,7 @@ function isValidTime(value) {
   );
 }
 
-// Validiamo solo i campi che l'utente può modificare.
+// Controlla i campi ricevuti per la modifica.
 function isValidUpdate(body) {
   if (!body || typeof body !== "object" || Array.isArray(body)) {
     return false;
@@ -56,6 +45,8 @@ function isValidUpdate(body) {
 
   const fields = Object.keys(body);
 
+  // Non accettiamo modifiche vuote
+  // né campi non previsti.
   if (
     fields.length === 0 ||
     fields.some((field) => !EDITABLE_FIELDS.includes(field))
@@ -78,7 +69,7 @@ function isValidUpdate(body) {
         );
 
       case "date":
-        return isValidDate(value);
+        return isValidItemDate(value);
 
       case "time":
         return isValidTime(value);
@@ -95,7 +86,18 @@ function isValidUpdate(body) {
   });
 }
 
-// Recuperiamo un singolo Mind Dump dell'utente.
+// Gestisce gli errori di validazione Mongoose.
+function isDatabaseValidationError(error) {
+  return (
+    error instanceof mongoose.Error.ValidationError ||
+    error instanceof mongoose.Error.CastError
+  );
+}
+
+// ==========================================
+// RECUPERA UN SINGOLO MIND DUMP
+// ==========================================
+
 export async function getMindDumpById(req, res) {
   try {
     const { dumpId } = req.params;
@@ -106,6 +108,8 @@ export async function getMindDumpById(req, res) {
       });
     }
 
+    // Il documento deve appartenere
+    // all'utente autenticato.
     const mindDump = await MindDump.findOne({
       _id: dumpId,
       user: req.userId,
@@ -127,7 +131,10 @@ export async function getMindDumpById(req, res) {
   }
 }
 
-// Modifichiamo un elemento già salvato in MongoDB.
+// ==========================================
+// MODIFICA UN ELEMENTO
+// ==========================================
+
 export async function updateMindDumpItem(req, res) {
   try {
     const { dumpId, itemId } = req.params;
@@ -144,39 +151,51 @@ export async function updateMindDumpItem(req, res) {
       });
     }
 
-    // Cerchiamo soltanto nei documenti dell'utente autenticato.
-    const mindDump = await MindDump.findOne({
-      _id: dumpId,
-      user: req.userId,
-    });
+    // Prepariamo soltanto i campi autorizzati.
+    // Il simbolo $ identifica l'elemento
+    // corrispondente alla query.
+    const updates = {};
 
-    if (!mindDump) {
-      return res.status(404).json({
-        message: "Pensiero non trovato",
-      });
+    for (const [field, value] of Object.entries(req.body)) {
+      updates[`items.$.${field}`] = field === "title" ? value.trim() : value;
     }
 
-    const item = mindDump.items.id(itemId);
+    // Aggiornamento mirato, senza leggere e
+    // risalvare l'intero Mind Dump.
+    const mindDump = await MindDump.findOneAndUpdate(
+      {
+        _id: dumpId,
+        user: req.userId,
+        "items._id": new mongoose.Types.ObjectId(itemId),
+      },
+      {
+        $set: updates,
+      },
+      {
+        returnDocument: "after",
+        runValidators: true,
+      },
+    );
 
-    if (!item) {
+    if (!mindDump) {
       return res.status(404).json({
         message: "Elemento non trovato",
       });
     }
 
-    // Non permettiamo di modificare ID, utente o testo originale.
-    for (const field of Object.keys(req.body)) {
-      item[field] =
-        field === "title" ? req.body[field].trim() : req.body[field];
-    }
-
-    await mindDump.save();
+    const updatedItem = mindDump.items.id(itemId);
 
     return res.status(200).json({
       message: "Elemento aggiornato correttamente",
-      item: mindDump.items.id(itemId),
+      item: updatedItem,
     });
   } catch (error) {
+    if (isDatabaseValidationError(error)) {
+      return res.status(400).json({
+        message: "Dati della modifica non validi",
+      });
+    }
+
     console.error("Errore modifica elemento:", error.message);
 
     return res.status(500).json({
@@ -185,7 +204,10 @@ export async function updateMindDumpItem(req, res) {
   }
 }
 
-// Eliminiamo soltanto l'elemento selezionato.
+// ==========================================
+// ELIMINA UN SINGOLO ELEMENTO
+// ==========================================
+
 export async function deleteMindDumpItem(req, res) {
   try {
     const { dumpId, itemId } = req.params;
@@ -196,19 +218,52 @@ export async function deleteMindDumpItem(req, res) {
       });
     }
 
+    const itemObjectId = new mongoose.Types.ObjectId(itemId);
+
+    // Aggiornamento atomico sul documento.
+    //
+    // Prima rimuoviamo l'elemento selezionato.
+    // Poi ricalcoliamo lo stato in base
+    // all'array aggiornato.
+    //
+    // originalText non viene mai modificato.
     const mindDump = await MindDump.findOneAndUpdate(
       {
         _id: dumpId,
         user: req.userId,
-        "items._id": itemId,
+        "items._id": itemObjectId,
       },
-      {
-        $pull: {
-          items: { _id: itemId },
+      [
+        {
+          $set: {
+            items: {
+              $filter: {
+                input: "$items",
+                as: "item",
+                cond: {
+                  $ne: ["$$item._id", itemObjectId],
+                },
+              },
+            },
+          },
         },
-      },
+        {
+          $set: {
+            status: {
+              $cond: [
+                {
+                  $eq: [{ $size: "$items" }, 0],
+                },
+                "saved",
+                "organized",
+              ],
+            },
+          },
+        },
+      ],
       {
-        new: true,
+        updatePipeline: true,
+        returnDocument: "after",
       },
     );
 
@@ -218,22 +273,14 @@ export async function deleteMindDumpItem(req, res) {
       });
     }
 
-    let removedDump = false;
-
-    // Se non rimangono elementi, eliminiamo anche il documento vuoto.
-    if (mindDump.items.length === 0) {
-      const result = await MindDump.deleteOne({
-        _id: dumpId,
-        user: req.userId,
-        items: { $size: 0 },
-      });
-
-      removedDump = result.deletedCount === 1;
-    }
-
     return res.status(200).json({
       message: "Elemento eliminato correttamente",
-      removedDump,
+
+      // Il documento originale viene conservato.
+      removedDump: false,
+
+      // Numero di elementi rimasti.
+      remainingItems: mindDump.items.length,
     });
   } catch (error) {
     console.error("Errore eliminazione elemento:", error.message);
@@ -244,7 +291,10 @@ export async function deleteMindDumpItem(req, res) {
   }
 }
 
-// Eliminiamo il testo originale e tutti i suoi elementi.
+// ==========================================
+// ELIMINA UN MIND DUMP COMPLETO
+// ==========================================
+
 export async function deleteMindDump(req, res) {
   try {
     const { dumpId } = req.params;
@@ -255,6 +305,11 @@ export async function deleteMindDump(req, res) {
       });
     }
 
+    // Operazione distinta dall'eliminazione
+    // di un singolo elemento.
+    //
+    // Cancella intenzionalmente anche
+    // originalText e tutti gli elementi.
     const mindDump = await MindDump.findOneAndDelete({
       _id: dumpId,
       user: req.userId,
@@ -278,16 +333,21 @@ export async function deleteMindDump(req, res) {
   }
 }
 
-// Eliminiamo tutti i Mind Dump dell'utente.
-// Richiediamo una conferma esplicita anche al backend.
+// ==========================================
+// ELIMINA TUTTI I MIND DUMP
+// ==========================================
+
 export async function deleteAllMindDumps(req, res) {
   try {
+    // Richiede una conferma esplicita.
     if (req.body?.confirmation !== "ELIMINA TUTTO") {
       return res.status(400).json({
         message: "Conferma di eliminazione mancante",
       });
     }
 
+    // Il filtro per utente è obbligatorio.
+    // Non cancelliamo documenti di altri account.
     const result = await MindDump.deleteMany({
       user: req.userId,
     });

@@ -5,6 +5,7 @@ import { useAuth } from "../context/useAuth";
 
 import "./WelcomePage.css";
 import "./LoginPage.css";
+import AdhdDailyLogo from "../logo/AdhdDailyLogo";
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -36,6 +37,7 @@ function LoginPage() {
         <div className="welcome-page__brand">
           <Brain size={30} strokeWidth={1.5} />
           <span>ADHD Daily</span>
+          <AdhdDailyLogo></AdhdDailyLogo>
         </div>
 
         <div className="welcome-page__intro">

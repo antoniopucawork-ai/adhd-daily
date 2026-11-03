@@ -7,6 +7,8 @@ export function useMindDumps() {
 
   const [result, setResult] = useState(null);
 
+  const [revision, setRevision] = useState(0);
+
   useEffect(() => {
     if (!token) return;
 
@@ -36,6 +38,8 @@ export function useMindDumps() {
         if (!cancelled) {
           setResult({
             token,
+            revision,
+            dumps: mindDumps,
             items,
             error: "",
           });
@@ -44,6 +48,8 @@ export function useMindDumps() {
         if (!cancelled) {
           setResult({
             token,
+            revision,
+            dumps: [],
             items: [],
             error: error.message || "Non riesco a recuperare i pensieri.",
           });
@@ -56,11 +62,13 @@ export function useMindDumps() {
     return () => {
       cancelled = true;
     };
-  }, [token]);
+  }, [token, revision]);
 
-  const currentResult = result?.token === token ? result : null;
+  const currentResult = result?.token === token && result?.revision === revision ? result : null;
 
   return {
+    dumps: currentResult?.dumps ?? [],
+    reload: () => setRevision((current) => current + 1),
     items: currentResult?.items ?? [],
     isLoading: Boolean(token && !currentResult),
     error: currentResult?.error ?? "",

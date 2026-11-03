@@ -7,8 +7,7 @@ import "./DeleteAllMindDumps.css";
 
 const CONFIRMATION_TEXT = "ELIMINA TUTTO";
 
-function DeleteAllMindDumps({ token, count, onDeleted }) {
-  const [isOpen, setIsOpen] = useState(false);
+function DeleteAllMindDumps({ token, dumpCount, itemCount, disabled, isOpen, onOpenChange, onDeleted }) {
   const [confirmation, setConfirmation] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState("");
@@ -18,7 +17,7 @@ function DeleteAllMindDumps({ token, count, onDeleted }) {
   function handleCancel() {
     if (isDeleting) return;
 
-    setIsOpen(false);
+    onOpenChange(false);
     setConfirmation("");
     setError("");
   }
@@ -40,7 +39,7 @@ function DeleteAllMindDumps({ token, count, onDeleted }) {
         }),
       });
 
-      setIsOpen(false);
+      onOpenChange(false);
       setConfirmation("");
 
       // L'Archivio recupererà nuovamente i dati dal server.
@@ -58,7 +57,8 @@ function DeleteAllMindDumps({ token, count, onDeleted }) {
         <button
           type="button"
           className="delete-all__trigger"
-          onClick={() => setIsOpen(true)}
+          disabled={disabled}
+          onClick={() => onOpenChange(true)}
         >
           <Trash2 size={17} aria-hidden="true" />
           Elimina tutti i pensieri
@@ -72,9 +72,8 @@ function DeleteAllMindDumps({ token, count, onDeleted }) {
           </div>
 
           <p className="delete-all__description">
-            Verranno eliminati tutti i tuoi Mind Dump, compresi i testi
-            originali e i {count} elementi attualmente presenti nell'Archivio.
-            Questa operazione è definitiva.
+            Mind Dump conservati: {dumpCount}. Elementi organizzati: {itemCount}.
+            Tutti i testi originali e tutti gli elementi saranno eliminati definitivamente.
           </p>
 
           <label

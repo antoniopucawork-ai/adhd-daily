@@ -8,6 +8,7 @@ import {
   Bookmark,
   Brain,
   ChevronDown,
+  AlertTriangle,
 } from "lucide-react";
 
 import { useMindDumps } from "../hooks/useMindDumps";
@@ -15,10 +16,10 @@ import { organizeItems } from "../utils/organizeItems";
 
 import "./OrganizePage.css";
 
-// Velocità dei pensieri: più basso = movimento più lento.
+// Velocità dei pensieri: più basso = più lento.
 const THOUGHT_SPEED = 0.7;
 
-// Le cinque categorie restano uguali su desktop e mobile.
+// Le cinque categorie principali.
 const categories = [
   {
     id: "da-fare",
@@ -52,8 +53,18 @@ const categories = [
   },
 ];
 
-// I fili rappresentano visivamente i pensieri.
-// Non sono collegati ai singoli documenti MongoDB.
+// Filtro trasversale, non una sesta categoria IA.
+const verificationFilter = {
+  id: "da-verificare",
+  label: "Da verificare",
+  icon: AlertTriangle,
+  color: "#E6B36C",
+};
+
+const allSections = [...categories, verificationFilter];
+
+// Fili animati del nucleo centrale.
+// Non rappresentano singoli documenti del database.
 const thoughtStrands = [
   {
     id: 1,
@@ -129,7 +140,7 @@ const thoughtStrands = [
   },
 ];
 
-// I collegamenti desktop si diramano verso le categorie.
+// Cinque collegamenti grafici, uno per categoria.
 const connections = [
   {
     id: "da-fare",
@@ -153,7 +164,7 @@ const connections = [
   },
 ];
 
-// Ogni filo ruota da solo, senza spostamenti verticali.
+// Animazione di un singolo filo.
 function ThoughtStrand({ strand, reduceMotion }) {
   return (
     <motion.g
@@ -189,7 +200,7 @@ function ThoughtStrand({ strand, reduceMotion }) {
   );
 }
 
-// Il nucleo è solo grafico: il testo resta fermo.
+// Nucleo animato della mappa.
 function MindCore() {
   const reduceMotion = useReducedMotion();
 
@@ -219,7 +230,7 @@ function MindCore() {
   );
 }
 
-// Sul desktop evidenziamo il filo della categoria selezionata.
+// Collegamenti animati sul desktop.
 function MindConnections({ activeCategoryId }) {
   const reduceMotion = useReducedMotion();
 
@@ -230,7 +241,6 @@ function MindConnections({ activeCategoryId }) {
       preserveAspectRatio="none"
       aria-hidden="true"
     >
-      {/* Tratto tra il nucleo e la diramazione */}
       <path
         className="organize__connection"
         d="M 335 250 C 355 250 365 250 380 250"
@@ -261,10 +271,16 @@ function MindConnections({ activeCategoryId }) {
   );
 }
 
-// Usiamo la stessa lista di pensieri su desktop e mobile.
-function ThoughtList({ items }) {
+// Lista condivisa fra desktop e mobile.
+function ThoughtList({ items, isVerification = false }) {
   if (items.length === 0) {
-    return <p>Non ci sono pensieri in questa categoria.</p>;
+    return (
+      <p>
+        {isVerification
+          ? "Non ci sono informazioni da verificare."
+          : "Non ci sono pensieri in questa categoria."}
+      </p>
+    );
   }
 
   return (
@@ -278,7 +294,12 @@ function ThoughtList({ items }) {
 
             {item.time && <p>Ora: {item.time}</p>}
 
-            {item.uncertain === true && <p>Informazione da chiarire</p>}
+            {item.uncertain === true && (
+              <p className="organize__uncertain">
+                <AlertTriangle size={14} strokeWidth={1.6} aria-hidden="true" />
+                Informazione da chiarire
+              </p>
+            )}
           </div>
         </li>
       ))}
@@ -286,7 +307,7 @@ function ThoughtList({ items }) {
   );
 }
 
-// Categorie desktop: selezionano il pannello sotto la mappa.
+// Categorie principali sulla mappa desktop.
 function DesktopCategories({
   organizedItems,
   activeCategoryId,
@@ -329,8 +350,72 @@ function DesktopCategories({
   );
 }
 
-// Sul mobile tocchiamo una categoria per aprirla.
-// La categoria aperta è letta direttamente dall'URL.
+// Singola categoria espandibile su mobile.
+function MobileCategoryGroup({
+  section,
+  selectedId,
+  organizedItems,
+  isLoading,
+  error,
+  navigate,
+}) {
+  const { id, label, icon: Icon, color } = section;
+
+  const isExpanded = selectedId === id;
+  const sectionItems = organizedItems[id] ?? [];
+  const panelId = `organize-mobile-${id}`;
+
+  const toggleCategory = () => {
+    navigate(isExpanded ? "/organizza" : `/organizza/${id}`);
+  };
+
+  return (
+    <div
+      className="organize__mobile-group"
+      style={{ "--category-color": color }}
+    >
+      <button
+        type="button"
+        className={`organize__category organize__mobile-button ${
+          isExpanded ? "organize__category--active" : ""
+        }`}
+        onClick={toggleCategory}
+        aria-expanded={isExpanded}
+        aria-controls={panelId}
+      >
+        <Icon
+          className="organize__category-icon"
+          size={22}
+          strokeWidth={1.6}
+          aria-hidden="true"
+        />
+
+        <span className="organize__category-label">{label}</span>
+
+        <strong className="organize__category-count">
+          {isLoading || error ? "—" : sectionItems.length}
+        </strong>
+
+        <ChevronDown
+          className="organize__mobile-chevron"
+          size={18}
+          aria-hidden="true"
+        />
+      </button>
+
+      <div id={panelId} className="organize__mobile-panel" hidden={!isExpanded}>
+        {!isLoading && !error && (
+          <ThoughtList
+            items={sectionItems}
+            isVerification={id === verificationFilter.id}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Navigazione mobile: cinque categorie più un filtro.
 function MobileCategories({
   selectedId,
   organizedItems,
@@ -338,10 +423,6 @@ function MobileCategories({
   error,
   navigate,
 }) {
-  function toggleCategory(id) {
-    navigate(selectedId === id ? "/organizza" : `/organizza/${id}`);
-  }
-
   return (
     <nav
       className="organize__mobile-categories"
@@ -359,76 +440,62 @@ function MobileCategories({
         </p>
       )}
 
-      {categories.map(({ id, label, icon: Icon, color }) => {
-        const isExpanded = selectedId === id;
-        const categoryItems = organizedItems[id] ?? [];
-        const panelId = `organize-mobile-${id}`;
+      {categories.map((section) => (
+        <MobileCategoryGroup
+          key={section.id}
+          section={section}
+          selectedId={selectedId}
+          organizedItems={organizedItems}
+          isLoading={isLoading}
+          error={error}
+          navigate={navigate}
+        />
+      ))}
 
-        return (
-          <div
-            key={id}
-            className="organize__mobile-group"
-            style={{ "--category-color": color }}
-          >
-            <button
-              type="button"
-              className={`organize__category organize__mobile-button ${
-                isExpanded ? "organize__category--active" : ""
-              }`}
-              onClick={() => toggleCategory(id)}
-              aria-expanded={isExpanded}
-              aria-controls={panelId}
-            >
-              <Icon
-                className="organize__category-icon"
-                size={22}
-                strokeWidth={1.6}
-                aria-hidden="true"
-              />
+      <div className="organize__mobile-filter-heading">
+        <span>Da controllare</span>
+      </div>
 
-              <span className="organize__category-label">{label}</span>
-
-              <strong className="organize__category-count">
-                {isLoading || error ? "—" : categoryItems.length}
-              </strong>
-
-              <ChevronDown
-                className="organize__mobile-chevron"
-                size={18}
-                aria-hidden="true"
-              />
-            </button>
-
-            <div
-              id={panelId}
-              className="organize__mobile-panel"
-              hidden={!isExpanded}
-            >
-              {!isLoading && !error && <ThoughtList items={categoryItems} />}
-            </div>
-          </div>
-        );
-      })}
+      <MobileCategoryGroup
+        section={verificationFilter}
+        selectedId={selectedId}
+        organizedItems={organizedItems}
+        isLoading={isLoading}
+        error={error}
+        navigate={navigate}
+      />
     </nav>
   );
 }
 
+// Pagina principale.
 function OrganizePage() {
   const navigate = useNavigate();
   const { category } = useParams();
 
-  // I dati arrivano sempre dal nostro hook esistente.
   const { items, isLoading, error } = useMindDumps();
+
+  // Tutti i gruppi derivano dai dati MongoDB.
   const organizedItems = organizeItems(items);
 
-  // Sul desktop selezioniamo "Da fare" se manca la categoria.
+  // Desktop: categoria predefinita "Da fare".
   const activeCategory =
-    categories.find((item) => item.id === category) ?? categories[0];
+    allSections.find((section) => section.id === category) ?? categories[0];
 
-  // Sul mobile, senza categoria nell'URL, resta tutto chiuso.
-  const mobileSelectedId = categories.some((item) => item.id === category)
+  // Mobile: senza categoria nell'URL è tutto chiuso.
+  const mobileSelectedId = allSections.some(
+    (section) => section.id === category,
+  )
     ? category
     : null;
+
+  const verificationCount = organizedItems[verificationFilter.id]?.length ?? 0;
+
+  const isVerificationActive = activeCategory.id === verificationFilter.id;
+
+  const toggleVerification = () => {
+    navigate(isVerificationActive ? "/organizza" : "/organizza/da-verificare");
+  };
 
   return (
     <main className="organize">
@@ -436,6 +503,7 @@ function OrganizePage() {
         <div className="organize__eyebrow">Il tuo spazio</div>
 
         <h1>Organizza</h1>
+
         <p>I tuoi pensieri, al loro posto.</p>
       </header>
 
@@ -443,15 +511,14 @@ function OrganizePage() {
         <h2>Ritrova ciò che hai in mente.</h2>
 
         <p>
-          Qui trovi i pensieri che hai affidato ad ADHD Daily. Esplorali
-          liberamente, senza dover organizzare nulla.
+          Esplora i tuoi pensieri, scegli come organizzarli e individua ciò che
+          richiede un chiarimento.
         </p>
       </section>
 
       <section className="organize__map" aria-label="Mappa dei pensieri">
         <MindCore />
 
-        {/* I collegamenti curvi sono visibili sul desktop. */}
         <MindConnections activeCategoryId={activeCategory.id} />
 
         <DesktopCategories
@@ -462,7 +529,6 @@ function OrganizePage() {
           navigate={navigate}
         />
 
-        {/* Sul telefono il collegamento diventa verticale. */}
         <svg
           className="organize__mobile-bridge"
           viewBox="0 0 100 44"
@@ -481,16 +547,36 @@ function OrganizePage() {
         />
       </section>
 
-      {/* Questo pannello viene mostrato solo sul desktop. */}
+      {/* Pannello degli elementi su desktop */}
       <section className="organize__content" aria-live="polite">
-        <h2>{activeCategory.label}</h2>
+        <div className="organize__content-top">
+          <h2>{activeCategory.label}</h2>
+
+          <button
+            type="button"
+            className={`organize__review-filter ${
+              isVerificationActive ? "organize__review-filter--active" : ""
+            }`}
+            onClick={toggleVerification}
+            aria-pressed={isVerificationActive}
+          >
+            <AlertTriangle size={17} aria-hidden="true" />
+
+            <span>Da verificare</span>
+
+            <strong>{isLoading || error ? "—" : verificationCount}</strong>
+          </button>
+        </div>
 
         {isLoading ? (
           <p role="status">Recuperiamo i tuoi pensieri...</p>
         ) : error ? (
           <p role="alert">{error}</p>
         ) : (
-          <ThoughtList items={organizedItems[activeCategory.id] ?? []} />
+          <ThoughtList
+            items={organizedItems[activeCategory.id] ?? []}
+            isVerification={isVerificationActive}
+          />
         )}
       </section>
     </main>

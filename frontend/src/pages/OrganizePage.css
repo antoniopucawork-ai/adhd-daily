@@ -688,3 +688,61 @@
 
   /* Motion gestisce la riduzione del movimento dei fili. */
 }
+
+/* Filtro separato nella vista desktop */
+
+.organize__content-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.organize__review-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid rgba(230, 179, 108, 0.28);
+  border-radius: 12px;
+  background: rgba(230, 179, 108, 0.06);
+  color: #f4efe6;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.organize__review-filter--active {
+  border-color: #e6b36c;
+  background: rgba(230, 179, 108, 0.14);
+}
+
+.organize__review-filter:focus-visible {
+  outline: 2px solid #a9cdeb;
+  outline-offset: 3px;
+}
+
+.organize__review-filter strong {
+  color: #e6b36c;
+}
+
+/* Segnalazione delle informazioni incerte */
+
+.organize__item .organize__uncertain {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #e6b36c;
+}
+
+/* Separazione del filtro su mobile */
+
+.organize__mobile-filter-heading {
+  margin-top: 24px;
+  padding: 8px 4px;
+  color: #b9c1cf;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}

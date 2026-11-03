@@ -1,15 +1,17 @@
 import { GoogleGenAI } from "@google/genai";
 import { validateItemDate } from "./mindEngineValidator.js";
 
-// Tipologie riconosciute dal Mind Engine
 const ALLOWED_TYPES = ["ACTION", "EVENT", "MEMORY", "INTENTION", "THOUGHT"];
 
-// Configurazione Gemini
+const MAX_TEXT_LENGTH = 10000;
+const MAX_ITEMS = 20;
+const MAX_TITLE_LENGTH = 200;
+
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
 
-// Recupera la data corrente nel fuso orario italiano
+// Recupera la data corrente in Italia.
 const getCurrentDateContext = () => {
   const now = new Date();
 
@@ -37,7 +39,7 @@ const getCurrentDateContext = () => {
   };
 };
 
-// Controlla la struttura di un elemento Gemini
+// Controlla la struttura della risposta Gemini.
 const isValidItem = (item) => {
   return (
     item !== null &&
@@ -46,7 +48,7 @@ const isValidItem = (item) => {
     ALLOWED_TYPES.includes(item.type) &&
     typeof item.title === "string" &&
     item.title.trim().length > 0 &&
-    item.title.length <= 500 &&
+    item.title.length <= MAX_TITLE_LENGTH &&
     (item.date === null ||
       (typeof item.date === "string" &&
         /^\d{4}-\d{2}-\d{2}$/.test(item.date))) &&
@@ -55,11 +57,12 @@ const isValidItem = (item) => {
         /^([01]\d|2[0-3]):[0-5]\d$/.test(item.time))) &&
     typeof item.uncertain === "boolean" &&
     (item.temporalExpression === null ||
-      typeof item.temporalExpression === "string")
+      (typeof item.temporalExpression === "string" &&
+        item.temporalExpression.trim().length > 0))
   );
 };
 
-// Costruisce le istruzioni per Gemini
+// Istruzioni per Gemini.
 const buildSystemInstruction = (currentDate, currentDay) => `
 Sei il Mind Engine di ADHD Daily.
 
@@ -99,6 +102,10 @@ REGOLE GENERALI:
 - Conserva il significato originale.
 - Se la classificazione non è affidabile,
   utilizza THOUGHT e uncertain true.
+- Non generare più di ${MAX_ITEMS} elementi.
+- Ogni titolo deve avere al massimo ${MAX_TITLE_LENGTH} caratteri.
+- Non inventare elementi per raggiungere un numero minimo.
+- Non troncare il significato di un pensiero per rispettare un limite.
 
 REGOLE TEMPORALI:
 
@@ -234,36 +241,33 @@ Ogni elemento deve contenere:
 Non aggiungere testo esterno al JSON.
 `;
 
-// Analizza il testo attraverso Gemini
+// Analizza il pensiero tramite Gemini.
 export const analyzeThought = async (originalText) => {
-  // Controllo dell'input
   if (
     typeof originalText !== "string" ||
     !originalText.trim() ||
-    originalText.length > 10000
+    originalText.length > MAX_TEXT_LENGTH
   ) {
     throw new Error("Testo del Mind Dump non valido");
   }
 
-  // Una sola data di riferimento per tutta l'analisi
+  const cleanText = originalText.trim();
+
   const { currentDate, currentDay } = getCurrentDateContext();
 
-  // Richiesta a Gemini
   const response = await ai.models.generateContent({
     model: "gemini-3.1-flash-lite",
-    contents: originalText,
+    contents: cleanText,
     config: {
       systemInstruction: buildSystemInstruction(currentDate, currentDay),
       responseMimeType: "application/json",
     },
   });
 
-  // Verifica che esista una risposta
   if (!response.text) {
     throw new Error("Gemini non ha restituito alcuna risposta");
   }
 
-  // Conversione del JSON
   let result;
 
   try {
@@ -272,25 +276,25 @@ export const analyzeThought = async (originalText) => {
     throw new Error("Gemini ha restituito un JSON non valido");
   }
 
-  // Validazione strutturale
+  // Nessun dato viene salvato in questa fase.
+  // Controlliamo la risposta prima di inviarla al frontend.
   if (
     !result ||
     typeof result !== "object" ||
     Array.isArray(result) ||
     !Array.isArray(result.items) ||
     result.items.length === 0 ||
-    result.items.length > 30 ||
+    result.items.length > MAX_ITEMS ||
     !result.items.every(isValidItem)
   ) {
     throw new Error("La risposta del Mind Engine non è valida");
   }
 
-  // Validazione temporale
+  // Controlliamo la coerenza delle date e degli orari.
   const validatedItems = result.items.map((item) =>
-    validateItemDate(item, originalText, currentDate),
+    validateItemDate(item, cleanText, currentDate),
   );
 
-  // Restituisce soltanto i dati utilizzati dal frontend
   return {
     items: validatedItems,
   };
