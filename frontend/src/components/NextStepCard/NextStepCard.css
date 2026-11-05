@@ -86,9 +86,6 @@
 
   cursor: pointer;
 }
-/* =========================================
-   DESKTOP — NEXT STEP CARD
-========================================= */
 
 @media (min-width: 1024px) {
   .next-step-card {

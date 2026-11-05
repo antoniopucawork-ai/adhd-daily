@@ -1,12 +1,6 @@
-/* ========================================
-   ADHD DAILY — RISULTATI MIND DUMP
-======================================== */
-
 .mind-result {
   width: 100%;
 }
-
-/* Torniamo al testo senza perdere la bozza. */
 
 .mind-result__back {
   display: inline-flex;
@@ -64,10 +58,6 @@
   font-size: 14px;
   line-height: 1.7;
 }
-
-/* ========================================
-   PENSIERI RICONOSCIUTI
-======================================== */
 
 .mind-result__items {
   display: flex;
@@ -201,10 +191,6 @@
   background: rgba(199, 182, 237, 0.11);
   border-color: rgba(199, 182, 237, 0.38);
 }
-
-/* ========================================
-   CONFERMA
-======================================== */
 
 .mind-result__footer {
   margin-top: 28px;

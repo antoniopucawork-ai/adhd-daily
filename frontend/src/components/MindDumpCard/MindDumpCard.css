@@ -1,13 +1,3 @@
-/* ==========================================
-   ADHD DAILY — MIND DUMP CARD
-   Evoluzione Essenziale
-   Mobile first
-========================================== */
-
-/* ==========================================
-   1. CARD
-========================================== */
-
 .mind-dump-card {
   width: 100%;
   min-width: 0;
@@ -44,10 +34,6 @@
     background 220ms ease;
 }
 
-/* ==========================================
-   2. ICONA
-========================================== */
-
 .mind-dump-card__visual {
   width: 44px;
   height: 44px;
@@ -76,10 +62,6 @@
 
   transform: rotate(90deg);
 }
-
-/* ==========================================
-   3. CONTENUTO
-========================================== */
 
 .mind-dump-card__content {
   display: flex;
@@ -114,10 +96,6 @@
   line-height: 1.45;
 }
 
-/* ==========================================
-   4. FRECCIA
-========================================== */
-
 .mind-dump-card__arrow {
   display: flex;
   align-items: center;
@@ -138,10 +116,6 @@
     transform 220ms ease,
     background 220ms ease;
 }
-
-/* ==========================================
-   5. INTERAZIONI
-========================================== */
 
 @media (hover: hover) {
   .mind-dump-card:hover {
@@ -166,10 +140,6 @@
   outline: 3px solid #a9cdeb;
   outline-offset: 4px;
 }
-
-/* ==========================================
-   6. TELEFONI PICCOLI
-========================================== */
 
 @media (max-width: 350px) {
   .mind-dump-card {
@@ -202,10 +172,6 @@
   }
 }
 
-/* ==========================================
-   7. TABLET
-========================================== */
-
 @media (min-width: 600px) and (max-width: 1023px) {
   .mind-dump-card {
     min-height: 120px;
@@ -234,10 +200,6 @@
     height: 42px;
   }
 }
-
-/* ==========================================
-   8. DESKTOP
-========================================== */
 
 @media (min-width: 1024px) {
   .mind-dump-card {
@@ -281,10 +243,6 @@
     height: 46px;
   }
 }
-
-/* ==========================================
-   9. ACCESSIBILITÀ
-========================================== */
 
 @media (prefers-reduced-motion: reduce) {
   .mind-dump-card,

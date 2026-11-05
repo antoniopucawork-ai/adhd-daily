@@ -30,13 +30,16 @@ export function canCompleteAction(item) {
 
 export function getTodayItems(items, today) {
   return getOpenItems(items).filter(
-    (item) => item.date === today && (item.type === "ACTION" || item.type === "EVENT"),
+    (item) =>
+      item.date === today && (item.type === "ACTION" || item.type === "EVENT"),
   );
 }
 
 export function getNextAction(items, today) {
   const actions = items.filter(canCompleteAction);
-  return actions.find((item) => item.date === today) ??
+  return (
+    actions.find((item) => item.date === today) ??
     actions.find((item) => item.date && item.date < today) ??
-    actions.find((item) => !item.date);
+    actions.find((item) => !item.date)
+  );
 }

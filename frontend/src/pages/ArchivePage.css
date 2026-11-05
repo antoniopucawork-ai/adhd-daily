@@ -1,8 +1,3 @@
-/* =========================================
-   ARCHIVIO — ADHD DAILY
-   Layout responsive, coerente con Quiet Canvas
-   ========================================= */
-
 .archive-page {
   --archive-text: #f4efe6;
   --archive-muted: #b9c1cf;
@@ -35,10 +30,6 @@
   margin: 0 auto;
   padding: 52px 32px calc(120px + env(safe-area-inset-bottom));
 }
-
-/* =========================================
-   INTESTAZIONE
-   ========================================= */
 
 .archive-page__header {
   margin-bottom: 30px;
@@ -76,10 +67,6 @@
   font-size: 15px;
   line-height: 1.7;
 }
-
-/* =========================================
-   ELENCO E CARD
-   ========================================= */
 
 .archive-page__list {
   display: grid;
@@ -155,10 +142,6 @@
   line-height: 1.6;
 }
 
-/* =========================================
-   TESTO ORIGINALE
-   ========================================= */
-
 .archive-page__source {
   margin-top: 22px;
   border-top: 1px solid var(--archive-border);
@@ -194,10 +177,6 @@
   font-size: 13px;
   line-height: 1.6;
 }
-
-/* =========================================
-   PULSANTI MODIFICA ED ELIMINA
-   ========================================= */
 
 .archive-page__actions {
   display: flex;
@@ -249,10 +228,6 @@
 .archive-page__delete:hover:not(:disabled) {
   background: rgba(179, 86, 99, 0.2);
 }
-
-/* =========================================
-   CONFERMA ELIMINAZIONE
-   ========================================= */
 
 .archive-page__confirm {
   box-sizing: border-box;
@@ -330,16 +305,6 @@
 .archive-page__confirm-delete:hover:not(:disabled) {
   background: #a55768;
 }
-
-/* =========================================
-   MODIFICA — VERSIONE DESKTOP
-   ========================================= */
-
-/*
-  MindDumpEdit è condiviso con Svuota la mente.
-  Qui cambiamo solo la sua presentazione
-  all'interno dell'Archivio.
-*/
 
 .archive-page__editor {
   width: 100%;
@@ -428,10 +393,6 @@
   color: #f0a5ad;
 }
 
-/* =========================================
-   CARICAMENTO, ERRORI E STATO VUOTO
-   ========================================= */
-
 .archive-page__message {
   padding: 32px 28px;
 
@@ -478,10 +439,6 @@
   cursor: pointer;
 }
 
-/* =========================================
-   ACCESSIBILITÀ
-   ========================================= */
-
 .archive-page a:focus-visible,
 .archive-page button:focus-visible,
 .archive-page summary:focus-visible,
@@ -498,10 +455,6 @@
   opacity: 0.55;
   cursor: not-allowed;
 }
-
-/* =========================================
-   TABLET E MOBILE
-   ========================================= */
 
 @media (max-width: 600px) {
   .archive-page__container {
@@ -577,10 +530,6 @@
   }
 }
 
-/* =========================================
-   MOBILE PICCOLO — 320 PX
-   ========================================= */
-
 @media (max-width: 360px) {
   .archive-page__container {
     padding-right: 14px;
@@ -611,10 +560,6 @@
     font-size: 25px;
   }
 }
-
-/* =========================================
-   MOVIMENTO RIDOTTO
-   ========================================= */
 
 @media (prefers-reduced-motion: reduce) {
   .archive-page__edit-button,

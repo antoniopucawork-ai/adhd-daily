@@ -1,7 +1,3 @@
-/* ========================================
-   ADHD DAILY — MODIFICA MIND DUMP
-======================================== */
-
 .mind-edit {
   width: 100%;
 }
@@ -58,10 +54,6 @@
   font-size: 14px;
   line-height: 1.7;
 }
-
-/* ========================================
-   FORM DI MODIFICA
-======================================== */
 
 .mind-edit__form {
   display: flex;
@@ -176,10 +168,6 @@
 
   accent-color: #c7b6ed;
 }
-
-/* ========================================
-   SALVATAGGIO DELLE MODIFICHE
-======================================== */
 
 .mind-edit__save {
   display: flex;
