@@ -331,7 +331,14 @@ function DesktopCategories({
               isActive ? "organize__category--active" : ""
             }`}
             style={{ "--category-color": color }}
-            onClick={() => navigate(`/organizza/${id}`)}
+            onClick={() => {
+              navigate(`/organizza/${id}`);
+
+              document.getElementById("organize-results")?.scrollIntoView({
+                behavior: "smooth",
+                block: "start",
+              });
+            }}
             aria-pressed={isActive}
           >
             <Icon
@@ -552,7 +559,12 @@ function OrganizePage() {
       </section>
 
       {/* Pannello degli elementi su desktop */}
-      <section className="organize__content" aria-live="polite">
+      <section
+        id="organize-results"
+        className="organize__content"
+        aria-live="polite"
+      >
+        {" "}
         <div className="organize__content-top">
           <h2>{activeCategory.label}</h2>
 
@@ -571,7 +583,6 @@ function OrganizePage() {
             <strong>{isLoading || error ? "—" : verificationCount}</strong>
           </button>
         </div>
-
         {isLoading ? (
           <p role="status">Recuperiamo i tuoi pensieri...</p>
         ) : error ? (

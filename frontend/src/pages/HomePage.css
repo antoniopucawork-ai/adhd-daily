@@ -339,7 +339,7 @@
   */
 
   .home__dashboard > .next-step-card {
-    min-height: 120px;
+    min-height: 180px;
   }
 }
 
@@ -377,5 +377,25 @@
       center,
       70% center;
     background-repeat: no-repeat;
+  }
+}
+
+/* Feedback visivo delle card della Home */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .home__dashboard > .mind-dump-card,
+  .home__dashboard > .next-step-card,
+  .home__dashboard .today__summary-card,
+  .home__dashboard .today__item {
+    transition:
+      transform 220ms ease,
+      filter 220ms ease;
+  }
+
+  .home__dashboard > .mind-dump-card:hover,
+  .home__dashboard > .next-step-card:hover,
+  .home__dashboard .today__summary-card:hover,
+  .home__dashboard .today__item:hover {
+    transform: translateY(-4px);
+    filter: brightness(1.07);
   }
 }

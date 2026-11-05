@@ -1,12 +1,12 @@
-import {
-  CalendarDays,
-  ListTodo,
-  AlertTriangle,
-} from "lucide-react";
+import { CalendarDays, ListTodo, AlertTriangle } from "lucide-react";
 
 import { useNavigate } from "react-router-dom";
 import { getTodayDate } from "../../utils/date";
-import { canCompleteAction, getOpenItems, getTodayItems } from "../../utils/organizeItems";
+import {
+  canCompleteAction,
+  getOpenItems,
+  getTodayItems,
+} from "../../utils/organizeItems";
 
 import "./TodayList.css";
 
@@ -24,15 +24,20 @@ function TodayList({
   const navigate = useNavigate();
   const todayDate = getTodayDate();
 
+  // Recuperiamo gli elementi di oggi.
   const todayItems = getTodayItems(items, todayDate);
 
+  // Contiamo soltanto le azioni confermate.
   const actionsCount = todayItems.filter(canCompleteAction).length;
 
   const eventsCount = todayItems.filter(
     (item) => item.type === "EVENT" && !item.uncertain,
   ).length;
 
-  const uncertainCount = getOpenItems(items).filter((item) => item.uncertain === true).length;
+  // Da verificare include anche elementi di altri giorni.
+  const uncertainCount = getOpenItems(items).filter(
+    (item) => item.uncertain === true,
+  ).length;
 
   return (
     <section className="today">
@@ -42,34 +47,49 @@ function TodayList({
         <button
           className="today__view-all"
           type="button"
-          onClick={() => navigate("/archivio")}
+          onClick={() => navigate("/organizza")}
         >
           Vedi tutto <span aria-hidden="true">›</span>
         </button>
       </div>
 
       <div className="today__summary">
-        <div className="today__summary-card">
+        <button
+          className="today__summary-card"
+          type="button"
+          onClick={() => navigate("/organizza/da-fare")}
+          aria-label={`Apri le attività in Organizza. ${actionsCount} previste oggi`}
+        >
           <ListTodo size={20} strokeWidth={1.7} aria-hidden="true" />
           <strong>{actionsCount}</strong>
           <span>da fare</span>
-        </div>
+        </button>
 
-        <div className="today__summary-card">
+        <button
+          className="today__summary-card"
+          type="button"
+          onClick={() => navigate("/organizza/in-programma")}
+          aria-label={`Apri gli eventi in Organizza. ${eventsCount} previsti oggi`}
+        >
           <CalendarDays size={20} strokeWidth={1.7} aria-hidden="true" />
           <strong>{eventsCount}</strong>
           <span>eventi</span>
-        </div>
+        </button>
 
-        <div className="today__summary-card">
+        <button
+          className="today__summary-card"
+          type="button"
+          onClick={() => navigate("/organizza/da-verificare")}
+          aria-label={`Apri le informazioni da verificare in Organizza. ${uncertainCount} in totale`}
+        >
           <AlertTriangle size={20} strokeWidth={1.7} aria-hidden="true" />
           <strong>{uncertainCount}</strong>
           <span>da verificare</span>
-        </div>
+        </button>
       </div>
 
       {completionError && (
-        <p role="alert" className="today__error">
+        <p className="today__error" role="alert">
           {completionError}
         </p>
       )}
@@ -82,9 +102,7 @@ function TodayList({
         ) : (
           todayItems.map((item) => {
             const Icon = ICONS[item.type] || ListTodo;
-
             const canComplete = canCompleteAction(item);
-
             const isCompleting = completingId === item.id;
 
             return (

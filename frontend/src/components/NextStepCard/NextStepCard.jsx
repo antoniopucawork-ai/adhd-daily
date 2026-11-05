@@ -40,11 +40,9 @@ function NextStepCard({ items = [] }) {
       <div className="next-step-card__content">
         <span>Il prossimo passo</span>
 
-        <h2>Una cosa alla volta.</h2>
+        <h2>{nextItem.title}</h2>
 
-        <p>
-          Potresti iniziare <strong>“{nextItem.title}”</strong>
-        </p>
+        <p>Puoi iniziare da qui, con calma.</p>
       </div>
 
       <button
