@@ -7,41 +7,24 @@ import {
   Pencil,
 } from "lucide-react";
 
+import { getTomorrowDate, parseCalendarDate } from "../../utils/date";
+import { MAX_TITLE_LENGTH, TYPE_LABELS, isValidTitle } from "../../config/mindDump";
 import "./MindDumpResult.css";
-
-const MAX_TITLE_LENGTH = 200;
-
-const TYPE_LABELS = {
-  ACTION: "Da fare",
-  EVENT: "In programma",
-  INTENTION: "Forse",
-  MEMORY: "Da ricordare",
-  THOUGHT: "Pensieri liberi",
-};
 
 // Mostriamo le date in modo leggibile.
 function formatDate(value) {
   if (!value) return null;
 
-  const date = new Date(`${value}T00:00:00`);
+  const date = parseCalendarDate(value);
 
-  if (Number.isNaN(date.getTime())) {
+  if (!date) {
     return "Data da verificare";
   }
 
-  const today = new Date();
-  const tomorrow = new Date(today);
-
-  tomorrow.setDate(today.getDate() + 1);
-
-  const isTomorrow =
-    date.getFullYear() === tomorrow.getFullYear() &&
-    date.getMonth() === tomorrow.getMonth() &&
-    date.getDate() === tomorrow.getDate();
-
-  if (isTomorrow) return "Domani";
+  if (value === getTomorrowDate()) return "Domani";
 
   return new Intl.DateTimeFormat("it-IT", {
+    timeZone: "UTC",
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -52,7 +35,7 @@ function formatDate(value) {
 function MindDumpResult({ result, onBack, onEdit, onConfirm, isSaving }) {
   // Non permettiamo di confermare titoli troppo lunghi.
   const hasInvalidTitles = result.items.some(
-    (item) => !item.title.trim() || item.title.length > MAX_TITLE_LENGTH,
+    (item) => !isValidTitle(item.title),
   );
 
   return (

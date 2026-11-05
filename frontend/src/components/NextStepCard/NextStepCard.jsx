@@ -1,28 +1,13 @@
 import { Sparkles, ArrowRight, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { getTodayDate } from "../../utils/date";
+import { getNextAction } from "../../utils/organizeItems";
 import "./NextStepCard.css";
 
 function NextStepCard({ items = [] }) {
   const navigate = useNavigate();
 
-  const getTodayDate = () => {
-    const today = new Date();
-
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, "0");
-    const day = String(today.getDate()).padStart(2, "0");
-
-    return `${year}-${month}-${day}`;
-  };
-
-  const todayDate = getTodayDate();
-
-  const nextItem = items.find(
-    (item) =>
-      item.date === todayDate &&
-      item.status !== "DONE" &&
-      item.type === "ACTION",
-  );
+  const nextItem = getNextAction(items, getTodayDate());
 
   if (!nextItem) {
     return (

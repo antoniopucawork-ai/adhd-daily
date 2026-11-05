@@ -2,29 +2,19 @@ import { useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import MindDumpEdit from "./MindDumpEdit/MindDumpEdit";
 import { apiRequest } from "../services/api";
-
-const TYPE_LABELS = {
-  ACTION: "Da fare",
-  EVENT: "In programma",
-  MEMORY: "Da ricordare",
-  INTENTION: "Forse",
-  THOUGHT: "Pensieri liberi",
-};
+import { parseCalendarDate } from "../utils/date";
+import { TYPE_LABELS } from "../config/mindDump";
 
 function formatDate(value) {
   if (!value) return "Senza data";
 
-  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return "Data non valida";
-  }
-
-  const date = new Date(`${value}T00:00:00`);
-
-  if (Number.isNaN(date.getTime())) {
+  const date = parseCalendarDate(value);
+  if (!date) {
     return "Data non valida";
   }
 
   return date.toLocaleDateString("it-IT", {
+    timeZone: "UTC",
     day: "numeric",
     month: "long",
     year: "numeric",

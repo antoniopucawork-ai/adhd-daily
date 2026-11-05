@@ -1,4 +1,5 @@
 import express from "express";
+import { analyzeRateLimit } from "../middleware/rateLimits.js";
 import { verifyToken } from "../middleware/verifyToken.js";
 
 import {
@@ -18,7 +19,7 @@ import {
 const router = express.Router();
 
 // Analizziamo il testo senza salvarlo.
-router.post("/analyze", verifyToken, analyzeMindDump);
+router.post("/analyze", verifyToken, analyzeRateLimit, analyzeMindDump);
 
 // Creiamo e recuperiamo i Mind Dump dell'utente.
 router.post("/", verifyToken, createMindDump);

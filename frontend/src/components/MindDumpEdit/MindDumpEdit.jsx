@@ -1,15 +1,8 @@
 import { useState } from "react";
 import { ArrowLeft, Check } from "lucide-react";
 
+import { MAX_TITLE_LENGTH, TYPE_LABELS, isValidTitle } from "../../config/mindDump";
 import "./MindDumpEdit.css";
-
-const TYPE_OPTIONS = [
-  { value: "ACTION", label: "Da fare" },
-  { value: "EVENT", label: "In programma" },
-  { value: "INTENTION", label: "Forse" },
-  { value: "MEMORY", label: "Da ricordare" },
-  { value: "THOUGHT", label: "Pensieri liberi" },
-];
 
 function MindDumpEdit({ item, onSave, onCancel }) {
   // Partiamo dai dati che Gemini ha già riconosciuto.
@@ -35,7 +28,7 @@ function MindDumpEdit({ item, onSave, onCancel }) {
 
     const title = formData.title.trim();
 
-    if (!title || title.length > 200) return;
+    if (!isValidTitle(formData.title)) return;
 
     // Aggiorniamo solo i dati modificati dall'utente.
     onSave({
@@ -72,7 +65,7 @@ function MindDumpEdit({ item, onSave, onCancel }) {
             name="title"
             value={formData.title}
             onChange={handleChange}
-            maxLength={200}
+            maxLength={MAX_TITLE_LENGTH}
             required
           />
         </label>
@@ -86,9 +79,9 @@ function MindDumpEdit({ item, onSave, onCancel }) {
             onChange={handleChange}
             required
           >
-            {TYPE_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
+            {Object.entries(TYPE_LABELS).map(([type, label]) => (
+              <option key={type} value={type}>
+                {label}
               </option>
             ))}
           </select>
@@ -136,7 +129,7 @@ function MindDumpEdit({ item, onSave, onCancel }) {
         <button
           className="mind-edit__save"
           type="submit"
-          disabled={!formData.title.trim()}
+          disabled={!isValidTitle(formData.title)}
         >
           <span>Salva modifiche</span>
           <Check size={18} aria-hidden="true" />

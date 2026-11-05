@@ -1,37 +1,14 @@
 import MindDump from "../models/MindDump.js";
 import { analyzeThought } from "../services/mindEngineService.js";
-import { isValidDate } from "../services/dateValidation.js";
-
-// Limiti del Mind Dump
-const MAX_TEXT_LENGTH = 10000;
-const MAX_ITEMS = 20;
-const MAX_TITLE_LENGTH = 200;
-
-// Categorie riconosciute dal sistema
-const ALLOWED_TYPES = ["ACTION", "EVENT", "MEMORY", "INTENTION", "THOUGHT"];
-
-// Verifica il testo originale.
-function isValidOriginalText(value) {
-  return (
-    typeof value === "string" &&
-    value.trim().length > 0 &&
-    value.length <= MAX_TEXT_LENGTH
-  );
-}
-
-// Verifica una data.
-// Il valore può essere assente oppure una data reale.
-function isValidItemDate(value) {
-  return value == null || isValidDate(value);
-}
-
-// Verifica un orario nel formato HH:mm.
-function isValidItemTime(value) {
-  return (
-    value == null ||
-    (typeof value === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(value))
-  );
-}
+import {
+  ITEM_TYPES,
+  MAX_ITEMS,
+  MAX_TEXT_LENGTH,
+  isNullableDate,
+  isNullableTime,
+  isValidOriginalText,
+  isValidTitle,
+} from "../services/mindDumpRules.js";
 
 // Controlla ogni elemento prima del salvataggio.
 function isValidItem(item) {
@@ -39,12 +16,10 @@ function isValidItem(item) {
     item !== null &&
     typeof item === "object" &&
     !Array.isArray(item) &&
-    ALLOWED_TYPES.includes(item.type) &&
-    typeof item.title === "string" &&
-    item.title.trim().length > 0 &&
-    item.title.length <= MAX_TITLE_LENGTH &&
-    isValidItemDate(item.date) &&
-    isValidItemTime(item.time) &&
+    ITEM_TYPES.includes(item.type) &&
+    isValidTitle(item.title) &&
+    isNullableDate(item.date ?? null) &&
+    isNullableTime(item.time ?? null) &&
     (item.uncertain == null || typeof item.uncertain === "boolean")
   );
 }
@@ -72,7 +47,7 @@ export const createMindDump = async (req, res) => {
     // Controllo del testo originale
     if (!isValidOriginalText(originalText)) {
       return res.status(400).json({
-        message: "Inserisci un pensiero valido (massimo 10000 caratteri)",
+        message: `Inserisci un pensiero valido (massimo ${MAX_TEXT_LENGTH} caratteri)`,
       });
     }
 
@@ -142,25 +117,32 @@ export const getMindDumps = async (req, res) => {
 // POST /api/mind-dumps/analyze
 // ==========================================
 
-export const analyzeMindDump = async (req, res) => {
-  try {
-    const { originalText } = req.body ?? {};
+const ANALYSIS_TIMEOUT_MS = 15_000;
 
-    // La validazione è la stessa della creazione.
-    if (!isValidOriginalText(originalText)) {
-      return res.status(400).json({
-        message: "Inserisci un pensiero valido (massimo 10000 caratteri)",
+export const analyzeMindDump = async (req, res) => {
+  const { originalText } = req.body ?? {};
+
+  if (!isValidOriginalText(originalText)) {
+    return res.status(400).json({
+      message: `Inserisci un pensiero valido (massimo ${MAX_TEXT_LENGTH} caratteri)`,
+    });
+  }
+
+  const signal = AbortSignal.timeout(ANALYSIS_TIMEOUT_MS);
+  try {
+    // Gemini interpreta il testo senza salvare nulla in MongoDB.
+    const result = await analyzeThought(originalText.trim(), { signal });
+    signal.throwIfAborted();
+
+    return res.status(200).json(result);
+  } catch {
+    if (signal.aborted) {
+      return res.status(504).json({
+        message: "L’analisi ha impiegato troppo tempo. Riprova.",
       });
     }
 
-    // Gemini interpreta il testo.
-    // Questa operazione non salva nulla in MongoDB.
-    const result = await analyzeThought(originalText.trim());
-
-    return res.status(200).json(result);
-  } catch (error) {
-    console.error("Errore analisi Mind Dump:", error.message);
-
+    console.warn("Analisi Mind Dump non riuscita.");
     return res.status(502).json({
       message: "Non è stato possibile analizzare il pensiero. Riprova.",
     });

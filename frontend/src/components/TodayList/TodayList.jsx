@@ -1,21 +1,18 @@
 import {
   CalendarDays,
-  CheckCircle2,
-  Lightbulb,
   ListTodo,
   AlertTriangle,
 } from "lucide-react";
 
 import { useNavigate } from "react-router-dom";
 import { getTodayDate } from "../../utils/date";
+import { canCompleteAction, getOpenItems, getTodayItems } from "../../utils/organizeItems";
 
 import "./TodayList.css";
 
 const ICONS = {
   ACTION: ListTodo,
   EVENT: CalendarDays,
-  MEMORY: CheckCircle2,
-  INTENTION: Lightbulb,
 };
 
 function TodayList({
@@ -27,21 +24,15 @@ function TodayList({
   const navigate = useNavigate();
   const todayDate = getTodayDate();
 
-  const todayItems = items.filter(
-    (item) => item.date === todayDate && item.status !== "DONE",
-  );
+  const todayItems = getTodayItems(items, todayDate);
 
-  const actionsCount = todayItems.filter(
-    (item) => item.type === "ACTION" && !item.uncertain,
-  ).length;
+  const actionsCount = todayItems.filter(canCompleteAction).length;
 
   const eventsCount = todayItems.filter(
     (item) => item.type === "EVENT" && !item.uncertain,
   ).length;
 
-  const uncertainCount = items.filter(
-    (item) => item.uncertain === true && item.status !== "DONE",
-  ).length;
+  const uncertainCount = getOpenItems(items).filter((item) => item.uncertain === true).length;
 
   return (
     <section className="today">
@@ -92,7 +83,7 @@ function TodayList({
           todayItems.map((item) => {
             const Icon = ICONS[item.type] || ListTodo;
 
-            const canComplete = item.type === "ACTION" && !item.uncertain;
+            const canComplete = canCompleteAction(item);
 
             const isCompleting = completingId === item.id;
 

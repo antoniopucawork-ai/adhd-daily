@@ -1,196 +1,130 @@
-import {
-  isValidDate,
-  resolveTemporalExpression,
-  validateTemporalConsistency,
-} from "./dateValidation.js";
+import { MONTH_NAMES, normalizeText, resolveTemporalExpression } from "./dateValidation.js";
 
-const WEEKDAYS = [
-  "lunedi",
-  "martedi",
-  "mercoledi",
-  "giovedi",
-  "venerdi",
-  "sabato",
-  "domenica",
-];
-
-const normalizeText = (text) =>
-  text
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
+const WORD = "[a-z0-9]";
+const WEEKDAY = "(?:lunedi|martedi|mercoledi|giovedi|venerdi|sabato|domenica)";
+const QUALIFIER = "(?:prossim|scors|passat|ventur|quest)\\w*";
+const TEXTUAL_DATE = `\\d{1,2}\\s+(?:${MONTH_NAMES})(?:\\s+\\d{4})?`;
+const NUMERIC_DATE = "(?:\\d{1,2}/\\d{1,2}/\\d{4}|\\d{4}-\\d{2}-\\d{2})";
+const DATE_ALTERNATIVE = `${WEEKDAY}|ieri|oggi|domani|dopodomani|${NUMERIC_DATE}|${TEXTUAL_DATE}`;
+const ALTERNATIVE = "(?:o|oppure)";
+const HOUR = "(?:[01]?\\d|2[0-3])";
+const CLOCK = `(?:${HOUR}(?:[:.][0-5]\\d)?)`;
 
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-// Verifica la presenza dell'espressione completa.
-// Non accettiamo una sottostringa di un'altra parola.
-function isTemporalExpressionInText(originalText, expression) {
-  if (
-    typeof originalText !== "string" ||
-    typeof expression !== "string" ||
-    !expression.trim()
-  ) {
-    return false;
-  }
-
-  const text = normalizeText(originalText);
-  const term = normalizeText(expression);
-
-  const pattern = new RegExp(`(?<![a-z0-9])${escapeRegExp(term)}(?![a-z0-9])`);
-
-  return pattern.test(text);
+function findLiteralMatches(text, value) {
+  const literal = escapeRegExp(value);
+  return [...text.matchAll(new RegExp(`(?<!${WORD})${literal}(?!${WORD})`, "g"))];
 }
 
-// Impedisce di accettare un giorno isolato quando
-// nel testo è accompagnato da un qualificatore.
-//
-// Esempio:
-// Testo: "venerdì prossimo"
-// Gemini: temporalExpression = "venerdì"
-// Risultato: l'espressione non è considerata affidabile.
-function isShortenedWeekday(originalText, expression) {
-  const text = normalizeText(originalText);
-  const weekday = normalizeText(expression);
+function findFragment(text, value) {
+  if (typeof value !== "string" || !value.trim()) return null;
+  const fragment = normalizeText(value);
+  const [match, duplicate] = findLiteralMatches(text, fragment);
+  if (!match || duplicate) return null;
 
-  if (!WEEKDAYS.includes(weekday)) {
+  return { start: match.index, end: match.index + fragment.length };
+}
+
+function isWithin(fragment, start, end) {
+  return fragment && fragment.start <= start && end <= fragment.end;
+}
+
+function isDateSupported(date, expression, text, fragment, referenceDate) {
+  if (!fragment || date === null || typeof expression !== "string") return false;
+
+  const term = normalizeText(expression);
+  if (!term) return false;
+
+  const resolution = resolveTemporalExpression(term, referenceDate);
+  if (resolution.status !== "resolved" || date !== resolution.date) return false;
+
+  const matches = findLiteralMatches(text, term).filter((match) =>
+    isWithin(fragment, match.index, match.index + term.length),
+  );
+  if (matches.length !== 1) return false;
+
+  const start = matches[0].index;
+  const before = text.slice(0, start);
+  const after = text.slice(start + term.length);
+
+  // Controlla anche il testo vicino alla citazione, nel caso in cui Gemini l’abbia troncata.
+  if (/^\s+\d{4}\b/.test(after) || /\d[/-]$/.test(before) || /^[/-]\d/.test(after)) {
     return false;
   }
 
-  const qualifiers =
-    "(?:prossim\\w*|scors\\w*|passat\\w*|ventur\\w*|quest\\w*)";
+  const bareWeekday = new RegExp(`^${WEEKDAY}$`).test(term);
+  if (bareWeekday &&
+      (new RegExp(`\\b${QUALIFIER}\\s+$`).test(before) ||
+       new RegExp(`^\\s+${QUALIFIER}\\b`).test(after))) {
+    return false;
+  }
 
-  const otherWeekdays = WEEKDAYS.join("|");
+  // Una data testuale può condividere mese e anno con l'altro giorno.
+  const sharedMonth = new RegExp(`^(?:(?:il|del)\\s+)?${TEXTUAL_DATE}$`).test(term);
+  const alternatives = sharedMonth ? `${DATE_ALTERNATIVE}|\\d{1,2}` : DATE_ALTERNATIVE;
+  const alternativeDate = `(?:(?:il|del)\\s+)?(?:${alternatives})\\b(?![.:/-]\\d)`;
 
-  const suffixPattern = new RegExp(
-    `\\b${weekday}\\s+(?:${qualifiers}|o\\s+(?:${otherWeekdays}))\\b`,
+  return !new RegExp(`\\b${alternativeDate}\\s+${ALTERNATIVE}\\s+(?:(?:il|del)\\s+)?$`).test(before) &&
+    !new RegExp(`^\\s+${ALTERNATIVE}\\s+${alternativeDate}`).test(after);
+}
+
+function isTimeSupported(time, text, fragment) {
+  if (!fragment) return false;
+
+  const clockPattern = new RegExp(
+    `(?<![a-z0-9.])(?:(?:alle(?: ore)?|ore)\\s+(${HOUR})(?:[:.]([0-5]\\d))?|(${HOUR})[:.]([0-5]\\d))(?![a-z0-9:]|\\.\\d)`,
+    "g",
   );
 
-  const prefixPattern = new RegExp(`\\b${qualifiers}\\s+${weekday}\\b`);
+  const matches = [...text.matchAll(clockPattern)].filter((match) =>
+    isWithin(fragment, match.index, match.index + match[0].length),
+  );
+  const times = new Set(matches.map(([, hour, minutes, bareHour, bareMinutes]) =>
+    `${(hour ?? bareHour).padStart(2, "0")}:${minutes ?? bareMinutes ?? "00"}`,
+  ));
+  if (times.size !== 1 || !times.has(time)) return false;
 
-  return suffixPattern.test(text) || prefixPattern.test(text);
+  const alternativeBefore = new RegExp(`\\b${CLOCK}\\s+${ALTERNATIVE}\\s+$`);
+  const alternativeAfter = new RegExp(
+    `^\\s+${ALTERNATIVE}\\s+(?:(?:alle(?: ore)?|ore)\\s+)?${CLOCK}\\b`,
+  );
+
+  return matches.every((match) =>
+    !alternativeBefore.test(text.slice(0, match.index)) &&
+    !alternativeAfter.test(text.slice(match.index + match[0].length)),
+  );
 }
 
-// Controlla che un orario sia effettivamente
-// riconoscibile nel testo originale.
-//
-// Sono supportati:
-// "18:30", "18.30", "alle 18", "ore 18".
-//
-// Le forme non riconosciute restano da chiarire.
-function isTimeSupportedByText(time, originalText) {
-  if (time === null) {
-    return true;
+function validateWithFragment(item, text, fragment, referenceDate) {
+  const { type, title, temporalExpression } = item;
+  let { date, time, uncertain } = item;
+
+  if ((date !== null || temporalExpression !== null) &&
+      !isDateSupported(date, temporalExpression, text, fragment, referenceDate)) {
+    date = null;
+    uncertain = true;
   }
 
-  if (
-    typeof time !== "string" ||
-    !/^([01]\d|2[0-3]):[0-5]\d$/.test(time) ||
-    typeof originalText !== "string"
-  ) {
-    return false;
+  if (time !== null && !isTimeSupported(time, text, fragment)) {
+    time = null;
+    uncertain = true;
   }
 
+  return { type, title: title.trim(), date, time, uncertain };
+}
+
+export function validateItems(items, originalText, referenceDate) {
   const text = normalizeText(originalText);
-  const [hours, minutes] = time.split(":");
-  const hour = Number(hours);
+  const fragments = items.map((item) => findFragment(text, item.originalFragment));
 
-  // Orario completo, ad esempio 18:30 oppure 18.30.
-  const fullTimePattern = new RegExp(`(?<!\\d)0?${hour}[:.]${minutes}(?!\\d)`);
-
-  if (fullTimePattern.test(text)) {
-    return true;
-  }
-
-  // "Alle 18" equivale a 18:00, non a 18:30.
-  if (minutes === "00") {
-    const hourOnlyPattern = new RegExp(
-      `\\b(?:alle\\s+ore|alle|ore)\\s+0?${hour}(?![\\d:.])`,
+  return items.map((item, index) => {
+    const fragment = fragments[index];
+    const overlaps = fragment && fragments.some((other, otherIndex) =>
+      other && otherIndex !== index &&
+      fragment.start < other.end && other.start < fragment.end,
     );
 
-    return hourOnlyPattern.test(text);
-  }
-
-  return false;
+    return validateWithFragment(item, text, overlaps ? null : fragment, referenceDate);
+  });
 }
-
-const markDateAsUncertain = (item) => ({
-  ...item,
-  date: null,
-  uncertain: true,
-});
-
-// Validazione finale degli elementi prodotti da Gemini.
-export const validateItemDate = (item, originalText, referenceDate) => {
-  const validatedItem = {
-    type: item.type,
-    title: item.title.trim(),
-    date: item.date,
-    time: item.time,
-    uncertain: item.uncertain,
-  };
-
-  // PRIMO CONTROLLO: ORARIO
-
-  if (!isTimeSupportedByText(item.time, originalText)) {
-    validatedItem.time = null;
-    validatedItem.uncertain = true;
-  }
-
-  // SECONDO CONTROLLO: DATA
-
-  const temporalExpression = item.temporalExpression;
-
-  // Gemini ha indicato una data senza citare
-  // alcuna espressione temporale dell'utente.
-  if (temporalExpression === null) {
-    if (item.date !== null) {
-      return markDateAsUncertain(validatedItem);
-    }
-
-    return validatedItem;
-  }
-
-  // Verifichiamo che l'espressione esista nel testo.
-  if (!isTemporalExpressionInText(originalText, temporalExpression)) {
-    return markDateAsUncertain(validatedItem);
-  }
-
-  // Verifichiamo che Gemini non abbia eliminato
-  // un qualificatore importante dal giorno.
-  if (isShortenedWeekday(originalText, temporalExpression)) {
-    return markDateAsUncertain(validatedItem);
-  }
-
-  if (!isValidDate(referenceDate)) {
-    return markDateAsUncertain(validatedItem);
-  }
-
-  const resolution = resolveTemporalExpression(
-    temporalExpression,
-    referenceDate,
-  );
-
-  // Se il validatore non conosce l'espressione,
-  // non accettiamo una data ipotizzata da Gemini.
-  if (resolution.status !== "resolved") {
-    return markDateAsUncertain(validatedItem);
-  }
-
-  if (item.date === null || !isValidDate(item.date)) {
-    return markDateAsUncertain(validatedItem);
-  }
-
-  const validation = validateTemporalConsistency(
-    item.date,
-    temporalExpression,
-    referenceDate,
-  );
-
-  if (!validation.valid) {
-    return markDateAsUncertain(validatedItem);
-  }
-
-  return validatedItem;
-};

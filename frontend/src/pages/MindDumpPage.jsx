@@ -2,18 +2,20 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Feather, LoaderCircle } from "lucide-react";
 
-import BottomNav from "../components/BottomNav/BottomNav";
 import MindDumpResult from "../components/MindDumpResult/MindDumpResult";
 import MindDumpEdit from "../components/MindDumpEdit/MindDumpEdit";
 
 import { useAuth } from "../context/useAuth";
 import { apiRequest } from "../services/api";
 
+import {
+  MAX_ITEMS,
+  MAX_TEXT_LENGTH,
+  MAX_TITLE_LENGTH,
+  TYPE_LABELS,
+  isValidTitle,
+} from "../config/mindDump";
 import "./MindDumpPage.css";
-
-const MAX_TEXT_LENGTH = 10000;
-const MAX_ITEMS = 20;
-const MAX_TITLE_LENGTH = 200;
 
 // Ogni account usa una chiave diversa per la propria bozza.
 function getDraftKey(userId) {
@@ -111,14 +113,11 @@ function MindDumpPage() {
         );
       }
 
-      const validTypes = ["ACTION", "EVENT", "MEMORY", "INTENTION", "THOUGHT"];
-
-      const isValidResult = analysis.items.every(
+        const isValidResult = analysis.items.every(
         (item) =>
           item &&
-          validTypes.includes(item.type) &&
-          typeof item.title === "string" &&
-          item.title.trim().length > 0,
+          Object.hasOwn(TYPE_LABELS, item.type) &&
+          isValidTitle(item.title),
       );
 
       if (!isValidResult) {
@@ -172,11 +171,11 @@ function MindDumpPage() {
     if (!result || isSaving) return;
 
     const hasInvalidTitles = result.items.some(
-      (item) => !item.title.trim() || item.title.length > MAX_TITLE_LENGTH,
+      (item) => !isValidTitle(item.title),
     );
 
     if (hasInvalidTitles) {
-      setError("Controlla i titoli: devono contenere massimo 200 caratteri.");
+      setError(`Controlla i titoli: devono contenere massimo ${MAX_TITLE_LENGTH} caratteri.`);
       return;
     }
 
@@ -353,8 +352,6 @@ function MindDumpPage() {
           />
         )}
       </div>
-
-      <BottomNav />
     </main>
   );
 }

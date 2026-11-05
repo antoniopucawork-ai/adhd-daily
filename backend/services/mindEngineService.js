@@ -1,11 +1,15 @@
 import { GoogleGenAI } from "@google/genai";
-import { validateItemDate } from "./mindEngineValidator.js";
+import { validateItems } from "./mindEngineValidator.js";
 
-const ALLOWED_TYPES = ["ACTION", "EVENT", "MEMORY", "INTENTION", "THOUGHT"];
-
-const MAX_TEXT_LENGTH = 10000;
-const MAX_ITEMS = 20;
-const MAX_TITLE_LENGTH = 200;
+import {
+  ITEM_TYPES,
+  MAX_ITEMS,
+  MAX_TEXT_LENGTH,
+  MAX_TITLE_LENGTH,
+  isNullableTime,
+  isValidOriginalText,
+  isValidTitle,
+} from "./mindDumpRules.js";
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
@@ -45,16 +49,16 @@ const isValidItem = (item) => {
     item !== null &&
     typeof item === "object" &&
     !Array.isArray(item) &&
-    ALLOWED_TYPES.includes(item.type) &&
-    typeof item.title === "string" &&
-    item.title.trim().length > 0 &&
-    item.title.length <= MAX_TITLE_LENGTH &&
+    ITEM_TYPES.includes(item.type) &&
+    isValidTitle(item.title) &&
+    (item.originalFragment === null ||
+      (typeof item.originalFragment === "string" &&
+        item.originalFragment.trim().length > 0 &&
+        item.originalFragment.length <= MAX_TEXT_LENGTH)) &&
     (item.date === null ||
       (typeof item.date === "string" &&
         /^\d{4}-\d{2}-\d{2}$/.test(item.date))) &&
-    (item.time === null ||
-      (typeof item.time === "string" &&
-        /^([01]\d|2[0-3]):[0-5]\d$/.test(item.time))) &&
+    isNullableTime(item.time) &&
     typeof item.uncertain === "boolean" &&
     (item.temporalExpression === null ||
       (typeof item.temporalExpression === "string" &&
@@ -119,6 +123,14 @@ REGOLE TEMPORALI:
 - Se soltanto la data è incerta, conserva l'orario affidabile.
 - Se soltanto l'orario è incerto, conserva la data affidabile.
 
+EVIDENZA PER ELEMENTO:
+
+- originalFragment è una citazione continua e letterale del testo originale.
+- Cita la parte che descrive questo singolo pensiero, insieme ai suoi riferimenti
+  temporali completi. Non copiare il testo degli altri elementi.
+- Conserva qualificatori, anni espliciti e alternative nella citazione.
+- Se non trovi un frammento univoco, usa originalFragment null.
+
 ESPRESSIONI TEMPORALI:
 
 Ogni elemento deve contenere temporalExpression.
@@ -144,6 +156,7 @@ utilizza temporalExpression null.
 
 DATE RELATIVE:
 
+- "ieri" indica il giorno precedente.
 - "oggi" indica la data corrente.
 - "domani" indica il giorno successivo.
 - "dopodomani" indica due giorni dopo.
@@ -181,6 +194,7 @@ Risultato:
 {
   "type": "ACTION",
   "title": "Comprare il latte",
+  "originalFragment": "Devo comprare il latte",
   "date": null,
   "time": null,
   "uncertain": false,
@@ -194,6 +208,7 @@ Risultato:
 {
   "type": "INTENTION",
   "title": "Incontrare Marco",
+  "originalFragment": "Venerdì prossimo forse incontro Marco",
   "date": null,
   "time": null,
   "uncertain": true,
@@ -207,6 +222,7 @@ Risultato:
 {
   "type": "THOUGHT",
   "title": "Ho bisogno di riposarmi",
+  "originalFragment": "Ho bisogno di riposarmi",
   "date": null,
   "time": null,
   "uncertain": false,
@@ -222,6 +238,7 @@ Restituisci esclusivamente un oggetto JSON:
     {
       "type": "ACTION",
       "title": "Descrizione dell'elemento",
+      "originalFragment": null,
       "date": null,
       "time": null,
       "uncertain": false,
@@ -233,6 +250,7 @@ Restituisci esclusivamente un oggetto JSON:
 Ogni elemento deve contenere:
 - type
 - title
+- originalFragment
 - date
 - time
 - uncertain
@@ -242,12 +260,8 @@ Non aggiungere testo esterno al JSON.
 `;
 
 // Analizza il pensiero tramite Gemini.
-export const analyzeThought = async (originalText) => {
-  if (
-    typeof originalText !== "string" ||
-    !originalText.trim() ||
-    originalText.length > MAX_TEXT_LENGTH
-  ) {
+export const analyzeThought = async (originalText, { signal } = {}) => {
+  if (!isValidOriginalText(originalText)) {
     throw new Error("Testo del Mind Dump non valido");
   }
 
@@ -261,6 +275,7 @@ export const analyzeThought = async (originalText) => {
     config: {
       systemInstruction: buildSystemInstruction(currentDate, currentDay),
       responseMimeType: "application/json",
+      abortSignal: signal,
     },
   });
 
@@ -291,9 +306,7 @@ export const analyzeThought = async (originalText) => {
   }
 
   // Controlliamo la coerenza delle date e degli orari.
-  const validatedItems = result.items.map((item) =>
-    validateItemDate(item, cleanText, currentDate),
-  );
+  const validatedItems = validateItems(result.items, cleanText, currentDate);
 
   return {
     items: validatedItems,

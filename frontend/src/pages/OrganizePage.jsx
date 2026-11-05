@@ -16,6 +16,7 @@ import { useMindDumps } from "../hooks/useMindDumps";
 
 import { organizeItems, getCompletedItems } from "../utils/organizeItems";
 
+import { TYPE_LABELS } from "../config/mindDump";
 import "./OrganizePage.css";
 
 // Velocità dei pensieri: più basso = più lento.
@@ -25,31 +26,31 @@ const THOUGHT_SPEED = 0.7;
 const categories = [
   {
     id: "da-fare",
-    label: "Da fare",
+    label: TYPE_LABELS.ACTION,
     icon: ListTodo,
     color: "#ED8194",
   },
   {
     id: "in-programma",
-    label: "In programma",
+    label: TYPE_LABELS.EVENT,
     icon: CalendarDays,
     color: "#C7B6ED",
   },
   {
     id: "forse",
-    label: "Forse",
+    label: TYPE_LABELS.INTENTION,
     icon: Lightbulb,
     color: "#E6B36C",
   },
   {
     id: "da-ricordare",
-    label: "Da ricordare",
+    label: TYPE_LABELS.MEMORY,
     icon: Bookmark,
     color: "#A9CDEB",
   },
   {
     id: "pensieri-liberi",
-    label: "Pensieri liberi",
+    label: TYPE_LABELS.THOUGHT,
     icon: Brain,
     color: "#B8A9E8",
   },

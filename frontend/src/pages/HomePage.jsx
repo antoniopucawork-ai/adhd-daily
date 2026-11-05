@@ -5,6 +5,7 @@ import { useAuth } from "../context/useAuth";
 import { usePreferences } from "../context/usePreferences";
 import { useMindDumps } from "../hooks/useMindDumps";
 import { apiRequest } from "../services/api";
+import { canCompleteAction } from "../utils/organizeItems";
 
 import MindDumpCard from "../components/MindDumpCard/MindDumpCard";
 import TodayList from "../components/TodayList/TodayList";
@@ -43,13 +44,7 @@ function HomePage() {
     const item = items.find((entry) => entry.id === itemId);
 
     // Completiamo soltanto azioni confermate.
-    if (
-      !item ||
-      item.type !== "ACTION" ||
-      item.uncertain ||
-      item.status === "DONE" ||
-      !item.source?.mindDumpId
-    ) {
+    if (!canCompleteAction(item) || !item.source?.mindDumpId) {
       setCompletionError("Questa attività non può essere completata.");
       return;
     }

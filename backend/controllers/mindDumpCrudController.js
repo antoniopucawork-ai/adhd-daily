@@ -1,10 +1,12 @@
 import mongoose from "mongoose";
 import MindDump from "../models/MindDump.js";
-import { isValidDate } from "../services/dateValidation.js";
-
-const ALLOWED_TYPES = ["ACTION", "EVENT", "MEMORY", "INTENTION", "THOUGHT"];
-
-const ALLOWED_STATUS = ["TODO", "DONE"];
+import {
+  ITEM_STATUSES,
+  ITEM_TYPES,
+  isNullableDate,
+  isNullableTime,
+  isValidTitle,
+} from "../services/mindDumpRules.js";
 
 const EDITABLE_FIELDS = [
   "type",
@@ -21,19 +23,6 @@ function isValidId(value) {
     typeof value === "string" &&
     /^[a-fA-F0-9]{24}$/.test(value) &&
     mongoose.isValidObjectId(value)
-  );
-}
-
-// Una data può essere null oppure una data reale.
-function isValidItemDate(value) {
-  return value === null || isValidDate(value);
-}
-
-// Un orario può essere null oppure HH:mm.
-function isValidTime(value) {
-  return (
-    value === null ||
-    (typeof value === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(value))
   );
 }
 
@@ -59,26 +48,22 @@ function isValidUpdate(body) {
 
     switch (field) {
       case "type":
-        return ALLOWED_TYPES.includes(value);
+        return ITEM_TYPES.includes(value);
 
       case "title":
-        return (
-          typeof value === "string" &&
-          value.trim().length > 0 &&
-          value.length <= 200
-        );
+        return isValidTitle(value);
 
       case "date":
-        return isValidItemDate(value);
+        return isNullableDate(value);
 
       case "time":
-        return isValidTime(value);
+        return isNullableTime(value);
 
       case "uncertain":
         return typeof value === "boolean";
 
       case "status":
-        return ALLOWED_STATUS.includes(value);
+        return ITEM_STATUSES.includes(value);
 
       default:
         return false;
@@ -151,6 +136,23 @@ export async function updateMindDumpItem(req, res) {
       });
     }
 
+    const { status, type, uncertain } = req.body;
+    const completing = status === "DONE";
+    if (completing && ((type !== undefined && type !== "ACTION") || uncertain === true)) {
+      return res.status(400).json({
+        message: "Puoi completare soltanto un'azione confermata",
+      });
+    }
+
+    const itemObjectId = new mongoose.Types.ObjectId(itemId);
+    const itemFilter = { _id: itemObjectId };
+    if (completing) {
+      // Controlliamo i valori finali nello stesso aggiornamento atomico.
+      if (type === undefined) itemFilter.type = "ACTION";
+      if (uncertain === undefined) itemFilter.uncertain = { $in: [null, false] };
+    }
+    const ownerFilter = { _id: dumpId, user: req.userId };
+
     // Prepariamo soltanto i campi autorizzati.
     // Il simbolo $ identifica l'elemento
     // corrispondente alla query.
@@ -164,9 +166,8 @@ export async function updateMindDumpItem(req, res) {
     // risalvare l'intero Mind Dump.
     const mindDump = await MindDump.findOneAndUpdate(
       {
-        _id: dumpId,
-        user: req.userId,
-        "items._id": new mongoose.Types.ObjectId(itemId),
+        ...ownerFilter,
+        items: { $elemMatch: itemFilter },
       },
       {
         $set: updates,
@@ -178,6 +179,12 @@ export async function updateMindDumpItem(req, res) {
     );
 
     if (!mindDump) {
+      if (completing && await MindDump.exists({ ...ownerFilter, "items._id": itemObjectId })) {
+        return res.status(409).json({
+          message: "Puoi completare soltanto un'azione confermata",
+        });
+      }
+
       return res.status(404).json({
         message: "Elemento non trovato",
       });

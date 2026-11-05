@@ -26,6 +26,8 @@ const MONTHS = {
   dicembre: 12,
 };
 
+export const MONTH_NAMES = Object.keys(MONTHS).join("|");
+
 const NUMBER_WORDS = {
   uno: 1,
   una: 1,
@@ -54,7 +56,7 @@ const NUMBER_WORDS = {
 const MAX_RELATIVE_DAYS = 365;
 
 // Normalizza accenti, spazi e maiuscole
-const normalizeText = (text) =>
+export const normalizeText = (text) =>
   text
     .toLowerCase()
     .normalize("NFD")
@@ -227,8 +229,9 @@ export const resolveTemporalExpression = (
     return ambiguous();
   }
 
-  // Oggi, domani, dopodomani
+  // Ieri, oggi, domani, dopodomani
   const relativeDays = {
+    ieri: -1,
     oggi: 0,
     domani: 1,
     dopodomani: 2,
@@ -285,10 +288,8 @@ export const resolveTemporalExpression = (
   // Date testuali:
   // "12 novembre"
   // "12 novembre 2026"
-  const monthNames = Object.keys(MONTHS).join("|");
-
   const textualMatch = expression.match(
-    new RegExp(`^(\\d{1,2})\\s+(${monthNames})(?:\\s+(\\d{4}))?$`),
+    new RegExp(`^(\\d{1,2})\\s+(${MONTH_NAMES})(?:\\s+(\\d{4}))?$`),
   );
 
   if (textualMatch) {
@@ -309,50 +310,4 @@ export const resolveTemporalExpression = (
   }
 
   return unsupported();
-};
-
-// Controlla la coerenza della data Gemini
-export const validateTemporalConsistency = (
-  dateString,
-  temporalExpression,
-  referenceDate,
-) => {
-  if (dateString !== null && !isValidDate(dateString)) {
-    return {
-      valid: false,
-      reason: "Data inesistente o non valida",
-    };
-  }
-
-  const resolution = resolveTemporalExpression(
-    temporalExpression,
-    referenceDate,
-  );
-
-  if (resolution.status === "ambiguous") {
-    return {
-      valid: dateString === null,
-      reason: dateString === null ? null : "Espressione temporale ambigua",
-    };
-  }
-
-  if (resolution.status === "unsupported") {
-    return {
-      valid: dateString === null,
-      reason:
-        dateString === null ? null : "Espressione temporale non verificabile",
-    };
-  }
-
-  if (dateString !== resolution.date) {
-    return {
-      valid: false,
-      reason: "La data non corrisponde all'espressione temporale",
-    };
-  }
-
-  return {
-    valid: true,
-    reason: null,
-  };
 };

@@ -1,13 +1,14 @@
 import express from "express";
 import { register, login } from "../controllers/authController.js";
+import { loginRateLimit, registerRateLimit } from "../middleware/rateLimits.js";
 import { verifyToken } from "../middleware/verifyToken.js";
 import User from "../models/User.js";
 import { updatePreferences } from "../controllers/preferencesController.js";
 const router = express.Router();
 
 // Rotte pubbliche
-router.post("/register", register);
-router.post("/login", login);
+router.post("/register", registerRateLimit, register);
+router.post("/login", loginRateLimit, login);
 
 // Recuperiamo le informazioni dell'utente autenticato.
 router.get("/me", verifyToken, async (req, res) => {
