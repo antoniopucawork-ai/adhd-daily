@@ -1,11 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Brain } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useAuth } from "../context/useAuth";
-
-import "./WelcomePage.css";
-import "./LoginPage.css";
-import AdhdDailyLogo from "../logo/AdhdDailyLogo";
+import PublicAccessLayout from "./PublicAccessLayout";
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -32,30 +29,17 @@ function LoginPage() {
   };
 
   return (
-    <main className="welcome-page">
-      <div className="welcome-page__content">
-        <div className="welcome-page__brand">
-          <Brain size={30} strokeWidth={1.5} />
-          <span>ADHD Daily</span>
-          <AdhdDailyLogo></AdhdDailyLogo>
-        </div>
+    <PublicAccessLayout
+      variant="login"
+      eyebrow="Il tuo spazio ti aspetta"
+      title="Bentornato."
+      description="Riprendiamo da dove ci siamo fermati. Un pensiero alla volta."
+    >
+      <section className="access-page__panel" aria-labelledby="login-title">
+        <h2 id="login-title">Accedi</h2>
 
-        <div className="welcome-page__intro">
-          <span className="welcome-page__eyebrow">
-            IL TUO SPAZIO TI ASPETTA
-          </span>
-
-          <h1>Bentornato.</h1>
-
-          <p>
-            Riprendiamo da dove ci siamo fermati.
-            <br />
-            Un pensiero alla volta.
-          </p>
-        </div>
-
-        <form className="auth-form" onSubmit={handleSubmit}>
-          <div className="auth-form__field">
+        <form className="access-form" onSubmit={handleSubmit} aria-labelledby="login-title">
+          <div className="access-form__field">
             <label htmlFor="login-email">Email</label>
             <input
               id="login-email"
@@ -68,7 +52,7 @@ function LoginPage() {
             />
           </div>
 
-          <div className="auth-form__field">
+          <div className="access-form__field">
             <label htmlFor="login-password">Password</label>
             <input
               id="login-password"
@@ -82,37 +66,30 @@ function LoginPage() {
           </div>
 
           {error && (
-            <p className="auth-form__error" role="alert">
+            <p className="access-form__error" role="alert">
               {error}
             </p>
           )}
 
           <button
             type="submit"
-            className="welcome-page__primary"
+            className="access-page__primary"
             disabled={isLoading}
           >
             {isLoading ? "Accesso in corso..." : "Entra nel tuo spazio"}
-            {!isLoading && <ArrowRight size={19} />}
+            {!isLoading && <ArrowRight size={19} aria-hidden="true" />}
           </button>
         </form>
 
-        <div className="welcome-page__actions">
-          <Link to="/registrazione" className="welcome-page__secondary">
-            Non hai un account? Registrati
-          </Link>
-
-          <Link to="/benvenuto" className="welcome-page__secondary">
-            <ArrowLeft size={16} />
-            Torna indietro
-          </Link>
-        </div>
-
-        <div className="welcome-page__footer">
-          <span>Un pensiero alla volta.</span>
-        </div>
-      </div>
-    </main>
+        <p className="access-page__account">
+          Non hai un account? <Link to="/registrazione">Registrati</Link>
+        </p>
+        <Link to="/benvenuto" className="access-page__back">
+          <ArrowLeft size={16} aria-hidden="true" />
+          Torna al benvenuto
+        </Link>
+      </section>
+    </PublicAccessLayout>
   );
 }
 

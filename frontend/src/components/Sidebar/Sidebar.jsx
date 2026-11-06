@@ -4,16 +4,18 @@ import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/useAuth";
 
 import {
-  Cloud,
   House,
   LogOut,
   Archive,
   ListChecks,
   CalendarDays,
   Settings,
+  Cloud,
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
+
+import adhdDailySymbol from "../../assets/adhd-daily-symbol.svg";
 
 import "./Sidebar.css";
 
@@ -43,7 +45,7 @@ function Sidebar() {
       try {
         localStorage.setItem("adhdSidebarCollapsed", String(next));
       } catch {
-        // La sidebar funziona anche senza localStorage.
+        // La navigazione resta disponibile.
       }
 
       return next;
@@ -58,7 +60,12 @@ function Sidebar() {
       <div className="sidebar__brand">
         <div className="sidebar__brand-identity">
           <div className="sidebar__brand-icon">
-            <Cloud size={21} strokeWidth={1.5} />
+            <img
+              src={adhdDailySymbol}
+              alt=""
+              className="sidebar__brand-image"
+              aria-hidden="true"
+            />
           </div>
 
           <div className="sidebar__brand-text">

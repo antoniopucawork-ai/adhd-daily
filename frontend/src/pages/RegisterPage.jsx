@@ -1,10 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Brain } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useAuth } from "../context/useAuth";
-
-import "./WelcomePage.css";
-import "./LoginPage.css";
+import PublicAccessLayout from "./PublicAccessLayout";
 
 function RegisterPage() {
   const navigate = useNavigate();
@@ -50,27 +48,17 @@ function RegisterPage() {
   };
 
   return (
-    <main className="welcome-page">
-      <div className="welcome-page__content">
-        <div className="welcome-page__brand">
-          <Brain size={30} strokeWidth={1.5} />
-          <span>ADHD Daily</span>
-        </div>
+    <PublicAccessLayout
+      variant="register"
+      eyebrow="Uno spazio tutto tuo"
+      title="Inizia con i tuoi tempi."
+      description="Un posto dove raccogliere i tuoi pensieri, come vengono."
+    >
+      <section className="access-page__panel" aria-labelledby="register-title">
+        <h2 id="register-title">Crea un account</h2>
 
-        <div className="welcome-page__intro">
-          <span className="welcome-page__eyebrow">UNO SPAZIO TUTTO TUO</span>
-
-          <h1>Qui inizia il tuo spazio.</h1>
-
-          <p>
-            Un posto dove raccogliere i tuoi pensieri,
-            <br />
-            con i tuoi tempi e le tue esigenze.
-          </p>
-        </div>
-
-        <form className="auth-form" onSubmit={handleSubmit}>
-          <div className="auth-form__field">
+        <form className="access-form" onSubmit={handleSubmit} aria-labelledby="register-title">
+          <div className="access-form__field">
             <label htmlFor="register-name">Come ti chiami?</label>
             <input
               id="register-name"
@@ -83,7 +71,7 @@ function RegisterPage() {
             />
           </div>
 
-          <div className="auth-form__field">
+          <div className="access-form__field">
             <label htmlFor="register-email">Email</label>
             <input
               id="register-email"
@@ -96,21 +84,22 @@ function RegisterPage() {
             />
           </div>
 
-          <div className="auth-form__field">
+          <div className="access-form__field">
             <label htmlFor="register-password">Password</label>
             <input
               id="register-password"
               type="password"
               autoComplete="new-password"
-              placeholder="Almeno 12 caratteri"
+              aria-describedby="register-password-hint"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               minLength={12}
               required
             />
+            <small id="register-password-hint">Almeno 12 caratteri</small>
           </div>
 
-          <div className="auth-form__field">
+          <div className="access-form__field">
             <label htmlFor="register-confirm-password">Conferma password</label>
             <input
               id="register-confirm-password"
@@ -124,33 +113,26 @@ function RegisterPage() {
           </div>
 
           {error && (
-            <p className="auth-form__error" role="alert">
+            <p className="access-form__error" role="alert">
               {error}
             </p>
           )}
 
           <button
             type="submit"
-            className="welcome-page__primary"
+            className="access-page__primary"
             disabled={isLoading}
           >
             {isLoading ? "Creazione in corso..." : "Crea il mio spazio"}
-            {!isLoading && <ArrowRight size={19} />}
+            {!isLoading && <ArrowRight size={19} aria-hidden="true" />}
           </button>
         </form>
 
-        <div className="welcome-page__actions">
-          <Link to="/login" className="welcome-page__secondary">
-            <ArrowLeft size={16} />
-            Hai già un account? Accedi
-          </Link>
-        </div>
-
-        <div className="welcome-page__footer">
-          <span>Un pensiero alla volta.</span>
-        </div>
-      </div>
-    </main>
+        <p className="access-page__account">
+          Hai già un account? <Link to="/login">Accedi</Link>
+        </p>
+      </section>
+    </PublicAccessLayout>
   );
 }
 

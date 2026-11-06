@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Cloud } from "lucide-react";
 
 import { useAuth } from "../context/useAuth";
 import { usePreferences } from "../context/usePreferences";
@@ -10,6 +9,8 @@ import MindDumpCard from "../components/MindDumpCard/MindDumpCard";
 import TodayList from "../components/TodayList/TodayList";
 import NextStepCard from "../components/NextStepCard/NextStepCard";
 import EditableItemQuickPanel from "../components/ItemQuickPanel/EditableItemQuickPanel";
+
+import adhdDailySymbol from "../assets/adhd-daily-symbol.svg";
 
 import "./HomePage.css";
 
@@ -53,19 +54,21 @@ function HomePage() {
     setSelectedItem(item);
   }
 
-  // Rispettiamo ordine e visibilità dei moduli.
+  // Ordine e visibilità dei moduli scelti dall'utente.
   const visibleModules = [...homeModules]
     .filter((module) => module.enabled)
     .sort((a, b) => a.order - b.order);
 
   const moduleProps = {
     mindDump: {},
+
     today: {
       items,
       onComplete: handleCompleteFromPanel,
       completingId,
       completionError,
     },
+
     nextStep: {
       items,
       onOpenItem: handleOpenItem,
@@ -78,18 +81,26 @@ function HomePage() {
   return (
     <main className="home">
       <div className="home__container">
+        {/* Intestazione mobile con logo ADHD Daily */}
         <header className="home__header">
           <div className="home__brand">
-            <Cloud size={18} strokeWidth={1.5} />
+            <img
+              src={adhdDailySymbol}
+              alt=""
+              aria-hidden="true"
+              className="home__brand-logo"
+            />
             <span>ADHD Daily</span>
           </div>
         </header>
 
+        {/* Benvenuto */}
         <section className="home__welcome">
           <h1>Ciao {user?.firstName || "!"}</h1>
           <p>Facciamo una cosa alla volta.</p>
         </section>
 
+        {/* Dashboard personalizzabile */}
         {isLoading ? (
           <p>Prepariamo il tuo spazio...</p>
         ) : loadingError ? (
@@ -100,6 +111,7 @@ function HomePage() {
           <div className="home__dashboard">
             {visibleModules.map((module) => {
               const Component = moduleRegistry[module.id];
+
               if (!Component) return null;
 
               return <Component key={module.id} {...moduleProps[module.id]} />;
@@ -107,6 +119,7 @@ function HomePage() {
           </div>
         )}
 
+        {/* Pannello delle azioni sugli elementi */}
         {selectedItem && (
           <EditableItemQuickPanel
             item={selectedItem}

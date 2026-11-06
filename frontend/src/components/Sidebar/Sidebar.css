@@ -1,118 +1,60 @@
+/* ADHD DAILY — SIDEBAR SUNSET GLASS */
+
 .sidebar {
-  --sidebar-width: 264px;
-  --sidebar-compact-width: 76px;
-
-  --sidebar-text: #f4efe6;
-  --sidebar-muted: rgba(231, 239, 251, 0.78);
-  --sidebar-accent: #a9cdeb;
-
-  --sidebar-duration: 420ms;
-  --sidebar-ease: cubic-bezier(0.4, 0, 0.2, 1);
-
-  --mouse-x: 50%;
-  --mouse-y: 50%;
-  --glow-opacity: 0;
+  --text: #f4efe6;
+  --muted: rgba(231, 239, 251, 0.75);
+  --accent: #a9cdeb;
+  --speed: 350ms;
 
   position: sticky;
   top: 0;
   z-index: 20;
 
-  isolation: isolate;
-
   display: flex;
-  flex-direction: column;
   flex: 0 0 auto;
+  flex-direction: column;
 
-  width: var(--sidebar-width);
-
+  width: 264px;
   height: 100vh;
   height: 100dvh;
-
   padding: 32px 18px 20px;
 
-  color: var(--sidebar-text);
-
-  /* Sunset Glass */
+  color: var(--text);
 
   background:
     radial-gradient(
-      ellipse at 90% 95%,
-      rgba(236, 157, 151, 0.12) 0%,
-      rgba(177, 112, 160, 0.08) 35%,
-      transparent 75%
+      ellipse at 85% 90%,
+      rgba(236, 157, 151, 0.12),
+      transparent 65%
     ),
     radial-gradient(
-      ellipse at 15% 55%,
-      rgba(137, 119, 194, 0.13) 0%,
-      transparent 70%
-    ),
-    radial-gradient(
-      ellipse at 75% 15%,
-      rgba(104, 151, 208, 0.12) 0%,
+      ellipse at 15% 40%,
+      rgba(137, 119, 194, 0.13),
       transparent 65%
     ),
     linear-gradient(
       170deg,
-      rgba(12, 29, 55, 0.66) 0%,
-      rgba(24, 33, 65, 0.58) 40%,
-      rgba(43, 38, 73, 0.52) 70%,
-      rgba(62, 43, 73, 0.46) 100%
+      rgba(12, 29, 55, 0.72),
+      rgba(30, 35, 68, 0.62) 60%,
+      rgba(62, 43, 73, 0.52)
     );
+
+  border-right: 1px solid rgba(255, 235, 224, 0.12);
+  box-shadow: 8px 0 32px rgba(8, 13, 30, 0.08);
 
   -webkit-backdrop-filter: blur(32px) saturate(135%);
   backdrop-filter: blur(32px) saturate(135%);
 
-  border-right: 1px solid rgba(255, 235, 224, 0.12);
-
-  box-shadow:
-    inset -1px 0 0 rgba(255, 255, 255, 0.05),
-    8px 0 32px rgba(8, 13, 30, 0.08);
-
   transition:
-    width var(--sidebar-duration) var(--sidebar-ease),
-    padding var(--sidebar-duration) var(--sidebar-ease);
+    width var(--speed) ease,
+    padding var(--speed) ease;
 }
 
-.sidebar::before {
-  content: "";
-
-  position: absolute;
-  inset: 0;
-
-  z-index: 0;
-
-  background: radial-gradient(
-    circle 210px at var(--mouse-x) var(--mouse-y),
-    rgba(255, 218, 197, 0.16) 0%,
-    rgba(191, 167, 225, 0.09) 35%,
-    transparent 75%
-  );
-
-  opacity: var(--glow-opacity);
-
-  pointer-events: none;
-
-  transition: opacity 350ms ease;
-}
-
-/* Mantiene tutti gli elementi sopra il riflesso */
-
-.sidebar > * {
-  position: relative;
-  z-index: 1;
-}
-
-/* Il pulsante deve mantenere il posizionamento assoluto */
-
-.sidebar > .sidebar__toggle {
-  position: absolute;
-  z-index: 10;
-}
+/* IDENTITÀ E LOGO */
 
 .sidebar__brand {
   display: flex;
   align-items: center;
-
   min-height: 43px;
   margin-bottom: 46px;
 }
@@ -121,26 +63,30 @@
   display: flex;
   align-items: center;
   gap: 12px;
-
-  min-width: 0;
   width: 100%;
+  min-width: 0;
 }
 
 .sidebar__brand-icon {
   display: grid;
   place-items: center;
-
   flex-shrink: 0;
 
   width: 43px;
   height: 43px;
-
-  color: #b8d5f0;
+  overflow: hidden;
 
   background: rgba(232, 205, 226, 0.1);
-
   border: 1px solid rgba(255, 225, 211, 0.18);
   border-radius: 13px;
+}
+
+.sidebar__brand-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transform: scale(1.3);
 }
 
 .sidebar__brand-text {
@@ -150,13 +96,9 @@
 
   min-width: 0;
   overflow: hidden;
-
-  opacity: 1;
   white-space: nowrap;
 
-  transition:
-    opacity 180ms ease,
-    width var(--sidebar-duration) var(--sidebar-ease);
+  transition: opacity 180ms ease;
 }
 
 .sidebar__brand-name {
@@ -171,161 +113,104 @@
   font-size: 10px;
 }
 
+/* PULSANTE COMPRIMI / ESPANDI */
+
 .sidebar__toggle {
   position: absolute;
-
   top: 36px;
   right: 12px;
+  z-index: 2;
 
   display: grid;
   place-items: center;
 
   width: 34px;
   height: 34px;
-
   padding: 0;
 
-  color: #b8d5f0;
-
-  background: rgba(35, 49, 79, 0.55);
-
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-
+  color: var(--accent);
+  background: rgba(35, 49, 79, 0.7);
   border: 1px solid rgba(255, 235, 226, 0.16);
   border-radius: 11px;
 
-  box-shadow:
-    0 4px 14px rgba(0, 0, 0, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
-
   cursor: pointer;
-
-  transition:
-    background 220ms ease,
-    border-color 220ms ease,
-    color 220ms ease,
-    box-shadow 220ms ease;
+  transition: background 200ms ease;
 }
 
 .sidebar__toggle:hover {
-  color: #fff8f2;
-
-  background: rgba(79, 74, 113, 0.48);
-
-  border-color: rgba(255, 235, 226, 0.3);
-
-  box-shadow:
-    0 4px 18px rgba(0, 0, 0, 0.16),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  background: rgba(96, 85, 125, 0.55);
 }
 
-.sidebar__toggle:active {
-  background: rgba(96, 85, 125, 0.5);
-}
+/* NAVIGAZIONE */
 
 .sidebar__content {
   flex: 1;
   min-height: 0;
-
   overflow-x: hidden;
   overflow-y: auto;
-
   scrollbar-width: thin;
-
-  scrollbar-color: rgba(169, 205, 235, 0.15) transparent;
+  scrollbar-color: rgba(169, 205, 235, 0.2) transparent;
 }
 
 .sidebar__section-label {
-  height: 14px;
-
   margin: 0 12px 14px;
 
   color: rgba(192, 211, 235, 0.65);
-
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.13em;
-
   white-space: nowrap;
-  overflow: hidden;
-
-  transition:
-    opacity 180ms ease,
-    margin var(--sidebar-duration) var(--sidebar-ease),
-    height var(--sidebar-duration) var(--sidebar-ease);
 }
 
-.sidebar__section-label--upcoming {
-  margin-top: 36px;
-}
-
-.sidebar__navigation {
+.sidebar__navigation,
+.sidebar__footer {
   display: flex;
   flex-direction: column;
   gap: 5px;
 }
 
 .sidebar__link {
-  position: relative;
-
   display: flex;
   align-items: center;
   gap: 14px;
 
   width: 100%;
   min-height: 47px;
-
   padding: 0 14px;
 
-  color: var(--sidebar-muted);
-
+  color: var(--muted);
   background: transparent;
-
   border: 1px solid transparent;
   border-radius: 13px;
 
+  font: inherit;
   font-size: 13px;
+  text-align: left;
   text-decoration: none;
 
   white-space: nowrap;
   overflow: hidden;
+  cursor: pointer;
 
   transition:
-    color 220ms ease,
-    background 220ms ease,
-    border-color 220ms ease,
-    box-shadow 220ms ease,
-    padding var(--sidebar-duration) var(--sidebar-ease),
-    gap var(--sidebar-duration) var(--sidebar-ease);
+    color 200ms ease,
+    background 200ms ease,
+    border-color 200ms ease;
 }
 
 .sidebar__link-icon {
   flex-shrink: 0;
-
   color: #b8d5f0;
 }
 
 .sidebar__link-text {
-  display: block;
-
   min-width: 0;
-
-  opacity: 1;
   overflow: hidden;
-
-  transition:
-    opacity 160ms ease,
-    transform var(--sidebar-duration) var(--sidebar-ease);
 }
 
-/* Hover */
-
-.sidebar__link:hover:not(.sidebar__link--disabled) {
+.sidebar__link:hover {
   color: #fff8f2;
-
   background: rgba(205, 190, 231, 0.12);
-
   border-color: rgba(255, 235, 226, 0.12);
 }
 
@@ -339,80 +224,22 @@
   );
 
   border-color: rgba(255, 235, 226, 0.19);
-
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.13),
-    0 4px 18px rgba(10, 15, 35, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
-.sidebar__link--disabled {
-  opacity: 0.58;
-  cursor: default;
-}
+/* IMPOSTAZIONI ED ESCI */
 
 .sidebar__footer {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-
+  flex-shrink: 0;
+  gap: 12px;
   padding-top: 18px;
-
   border-top: 1px solid rgba(244, 239, 230, 0.1);
 }
 
-.sidebar__profile {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-
-  padding: 14px 10px 4px;
-
-  overflow: hidden;
-}
-
-.sidebar__avatar {
-  display: grid;
-  place-items: center;
-
-  flex-shrink: 0;
-
-  width: 38px;
-  height: 38px;
-
-  color: #b8d5f0;
-
-  background: rgba(232, 205, 226, 0.1);
-
-  border: 1px solid rgba(255, 225, 211, 0.18);
-  border-radius: 12px;
-}
-
-.sidebar__profile-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-
-  min-width: 0;
-  overflow: hidden;
-
-  white-space: nowrap;
-
-  transition:
-    opacity 180ms ease,
-    transform var(--sidebar-duration) var(--sidebar-ease);
-}
-
-.sidebar__profile-info span {
-  font-size: 12px;
-}
-
-.sidebar__profile-info small {
-  color: rgba(244, 239, 230, 0.55);
-  font-size: 10px;
-}
+/* SIDEBAR COMPRESSA */
 
 .sidebar--collapsed {
-  width: var(--sidebar-compact-width);
+  width: 76px;
   padding-inline: 12px;
 }
 
@@ -425,26 +252,18 @@
   margin-bottom: 104px;
 }
 
-.sidebar--collapsed .sidebar__brand-text {
-  width: 0;
-  opacity: 0;
-}
-
 .sidebar--collapsed .sidebar__brand-identity {
   gap: 0;
 }
 
-.sidebar--collapsed .sidebar__section-label {
-  height: 0;
-
-  margin-top: 0;
-  margin-bottom: 0;
-
+.sidebar--collapsed .sidebar__brand-text,
+.sidebar--collapsed .sidebar__link-text {
+  width: 0;
   opacity: 0;
 }
 
-.sidebar--collapsed .sidebar__section-label--upcoming {
-  margin-top: 30px;
+.sidebar--collapsed .sidebar__section-label {
+  display: none;
 }
 
 .sidebar--collapsed .sidebar__link {
@@ -452,47 +271,25 @@
   padding-inline: 15px;
 }
 
-.sidebar--collapsed .sidebar__link-text {
-  opacity: 0;
-  transform: translateX(-8px);
-}
-
-.sidebar--collapsed .sidebar__profile {
-  padding-inline: 7px;
-}
-
-.sidebar--collapsed .sidebar__profile-info {
-  opacity: 0;
-  transform: translateX(-8px);
-}
+/* ACCESSIBILITÀ E RESPONSIVE */
 
 .sidebar__link:focus-visible,
 .sidebar__toggle:focus-visible {
-  outline: 2px solid var(--sidebar-accent);
+  outline: 2px solid var(--accent);
   outline-offset: 3px;
-}
-
-/* Movimento ridotto */
-
-@media (prefers-reduced-motion: reduce) {
-  .sidebar,
-  .sidebar::before,
-  .sidebar__toggle,
-  .sidebar__brand-text,
-  .sidebar__section-label,
-  .sidebar__link,
-  .sidebar__link-text,
-  .sidebar__profile-info {
-    transition: none;
-  }
-
-  .sidebar::before {
-    display: none;
-  }
 }
 
 @media (max-width: 1023px) {
   .sidebar {
     display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar,
+  .sidebar__toggle,
+  .sidebar__link,
+  .sidebar__brand-text {
+    transition: none;
   }
 }
