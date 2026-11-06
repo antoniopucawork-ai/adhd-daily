@@ -1,15 +1,15 @@
 import { useState } from "react";
-import { Bell, Cloud } from "lucide-react";
+import { Cloud } from "lucide-react";
 
 import { useAuth } from "../context/useAuth";
 import { usePreferences } from "../context/usePreferences";
 import { useMindDumps } from "../hooks/useMindDumps";
-import { apiRequest } from "../services/api";
-import { canCompleteAction } from "../utils/organizeItems";
+import { useMindDumpItemActions } from "../hooks/useMindDumpItemActions";
 
 import MindDumpCard from "../components/MindDumpCard/MindDumpCard";
 import TodayList from "../components/TodayList/TodayList";
 import NextStepCard from "../components/NextStepCard/NextStepCard";
+import EditableItemQuickPanel from "../components/ItemQuickPanel/EditableItemQuickPanel";
 
 import "./HomePage.css";
 
@@ -20,7 +20,7 @@ const moduleRegistry = {
 };
 
 function HomePage() {
-  const { user, token } = useAuth();
+  const { user } = useAuth();
 
   const {
     homeModules,
@@ -35,75 +35,40 @@ function HomePage() {
     error: itemsError,
   } = useMindDumps();
 
-  const [completingId, setCompletingId] = useState(null);
-  const [completionError, setCompletionError] = useState("");
+  const [selectedItem, setSelectedItem] = useState(null);
 
-  async function handleCompleteItem(itemId) {
-    if (completingId !== null) return;
+  const { completeItem, completingId, completionError, clearCompletionError } =
+    useMindDumpItemActions({ items, reload });
 
-    const item = items.find((entry) => entry.id === itemId);
+  async function handleCompleteFromPanel(itemId) {
+    const completed = await completeItem(itemId);
 
-    // Completiamo soltanto azioni confermate.
-    if (!canCompleteAction(item) || !item.source?.mindDumpId) {
-      setCompletionError("Questa attività non può essere completata.");
-      return;
-    }
-
-    setCompletingId(itemId);
-    setCompletionError("");
-
-    try {
-      const response = await apiRequest(
-        `/api/mind-dumps/${encodeURIComponent(
-          item.source.mindDumpId,
-        )}/items/${encodeURIComponent(item.id)}`,
-        {
-          method: "PATCH",
-          token,
-          body: JSON.stringify({
-            status: "DONE",
-          }),
-        },
-      );
-
-      // Verifichiamo che il server abbia aggiornato
-      // proprio l'elemento richiesto.
-      if (
-        String(response?.item?._id) !== String(item.id) ||
-        response.item.status !== "DONE"
-      ) {
-        throw new Error("Il server non ha confermato il completamento.");
-      }
-
-      // Rileggiamo i dati dal backend.
-      reload();
-    } catch (error) {
-      if (error.name === "AbortError" || error.status === 401) {
-        return;
-      }
-
-      setCompletionError("Non riesco a completare l'attività. Riprova.");
-    } finally {
-      setCompletingId(null);
+    if (completed) {
+      setSelectedItem((current) => (current?.id === itemId ? null : current));
     }
   }
 
+  function handleOpenItem(item) {
+    clearCompletionError();
+    setSelectedItem(item);
+  }
+
+  // Rispettiamo ordine e visibilità dei moduli.
   const visibleModules = [...homeModules]
     .filter((module) => module.enabled)
     .sort((a, b) => a.order - b.order);
 
   const moduleProps = {
     mindDump: {},
-
     today: {
       items,
-      onComplete: handleCompleteItem,
+      onComplete: handleCompleteFromPanel,
       completingId,
       completionError,
     },
-
     nextStep: {
       items,
+      onOpenItem: handleOpenItem,
     },
   };
 
@@ -114,18 +79,10 @@ function HomePage() {
     <main className="home">
       <div className="home__container">
         <header className="home__header">
-          <div className="home__brand home__brand--mobile">
+          <div className="home__brand">
             <Cloud size={18} strokeWidth={1.5} />
             <span>ADHD Daily</span>
           </div>
-
-          <button
-            className="home__notification"
-            type="button"
-            aria-label="Apri le notifiche"
-          >
-            <Bell size={19} strokeWidth={1.5} />
-          </button>
         </header>
 
         <section className="home__welcome">
@@ -143,12 +100,22 @@ function HomePage() {
           <div className="home__dashboard">
             {visibleModules.map((module) => {
               const Component = moduleRegistry[module.id];
-
               if (!Component) return null;
 
               return <Component key={module.id} {...moduleProps[module.id]} />;
             })}
           </div>
+        )}
+
+        {selectedItem && (
+          <EditableItemQuickPanel
+            item={selectedItem}
+            onClose={() => setSelectedItem(null)}
+            reload={reload}
+            onComplete={handleCompleteFromPanel}
+            isCompleting={completingId !== null}
+            completionError={completionError}
+          />
         )}
       </div>
     </main>

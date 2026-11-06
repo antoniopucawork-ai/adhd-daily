@@ -1,0 +1,322 @@
+/* ADHD DAILY — CALENDARIO
+   Sunset Glass | Mobile First */
+
+.calendar-page {
+  min-height: 100dvh;
+  padding: 28px 16px calc(110px + env(safe-area-inset-bottom));
+  color: #f4efe6;
+  background:
+    radial-gradient(
+      ellipse at 85% 5%,
+      rgba(230, 179, 108, 0.12),
+      transparent 45%
+    ),
+    linear-gradient(155deg, #101e39, #071120);
+}
+
+/* Intestazione */
+
+.calendar-page__header {
+  margin-bottom: 28px;
+}
+
+.calendar-page__header > span {
+  color: #e6b36c;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+}
+
+.calendar-page__header h1 {
+  margin: 10px 0;
+  font-family: Georgia, serif;
+  font-size: clamp(32px, 5vw, 46px);
+  font-weight: 400;
+}
+
+.calendar-page__header p {
+  margin: 0;
+  color: #b9c1cf;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* Superfici */
+
+.calendar-page__card,
+.calendar-page__agenda {
+  min-width: 0;
+  padding: 18px;
+
+  background: rgba(25, 40, 69, 0.72);
+  border: 1px solid rgba(255, 218, 164, 0.2);
+  border-radius: 22px;
+
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+}
+
+/* Navigazione mensile */
+
+.calendar-page__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.calendar-page__toolbar h2 {
+  margin: 0;
+  font-family: Georgia, serif;
+  font-size: 21px;
+  font-weight: 400;
+  text-transform: capitalize;
+}
+
+.calendar-page__controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.calendar-page__controls button {
+  display: grid;
+  place-items: center;
+  min-width: 38px;
+  min-height: 38px;
+  padding: 8px;
+
+  color: #f4efe6;
+  background: rgba(244, 239, 230, 0.07);
+  border: 1px solid rgba(244, 239, 230, 0.12);
+  border-radius: 11px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.calendar-page__controls button:hover {
+  background: rgba(244, 239, 230, 0.15);
+}
+
+/* Griglia dei giorni */
+
+.calendar-page__grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.calendar-page__weekday {
+  padding: 10px 0;
+  color: #aebbd0;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.calendar-page__day {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+
+  min-width: 0;
+  min-height: 44px;
+  padding: 5px 2px;
+
+  color: #f4efe6;
+  background: rgba(244, 239, 230, 0.04);
+  border: 1px solid transparent;
+  border-radius: 11px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.calendar-page__day:hover {
+  background: rgba(244, 239, 230, 0.12);
+}
+
+.calendar-page__day--today {
+  border-color: rgba(230, 179, 108, 0.65);
+}
+
+.calendar-page__day--selected {
+  color: #162039;
+  background: #e8c69b;
+  border-color: #f4d5aa;
+  box-shadow: 0 0 16px rgba(244, 174, 113, 0.24);
+}
+
+.calendar-page__day--selected:hover {
+  background: #f4d5aa;
+}
+
+/* Numero degli impegni */
+
+.calendar-page__day small {
+  display: grid;
+  place-items: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+
+  color: #f4d5aa;
+  background: rgba(230, 179, 108, 0.18);
+  border-radius: 8px;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.calendar-page__day--selected small {
+  color: #162039;
+  background: rgba(22, 32, 57, 0.12);
+}
+
+/* Agenda del giorno selezionato */
+
+.calendar-page__agenda {
+  margin-top: 18px;
+}
+
+.calendar-page__agenda-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  color: #e8c69b;
+}
+
+.calendar-page__agenda-header h2 {
+  margin: 0;
+  color: #f4efe6;
+  font-family: Georgia, serif;
+  font-size: 21px;
+  font-weight: 400;
+}
+
+.calendar-page__agenda > p {
+  margin: 0;
+  color: #b9c1cf;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.calendar-page__events {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.calendar-page__events li {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 15px;
+
+  background: rgba(169, 205, 235, 0.06);
+  border: 1px solid rgba(169, 205, 235, 0.12);
+  border-radius: 13px;
+}
+
+.calendar-page__events li span {
+  color: #e8c69b;
+  font-size: 12px;
+}
+
+.calendar-page__events li strong {
+  font-size: 15px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.calendar-page__events li small {
+  color: #b9c1cf;
+  font-size: 11px;
+}
+
+/* Tastiera */
+
+.calendar-page button:focus-visible {
+  outline: 2px solid #a9cdeb;
+  outline-offset: 3px;
+}
+
+/* Desktop */
+
+@media (min-width: 1024px) {
+  .calendar-page {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(300px, 1fr);
+    align-content: start;
+    align-items: start;
+    gap: 24px;
+
+    padding: 48px clamp(32px, 5vw, 80px);
+  }
+
+  .calendar-page__header {
+    grid-column: 1 / -1;
+    margin-bottom: 8px;
+  }
+
+  .calendar-page__card,
+  .calendar-page__agenda {
+    padding: 28px;
+  }
+
+  .calendar-page__agenda {
+    margin-top: 0;
+  }
+
+  .calendar-page__day {
+    min-height: 60px;
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 359px) {
+  .calendar-page {
+    padding-inline: 10px;
+  }
+
+  .calendar-page__card,
+  .calendar-page__agenda {
+    padding: 12px;
+  }
+
+  .calendar-page__grid {
+    gap: 3px;
+  }
+}
+
+.calendar-page__event-open {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  border: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.calendar-page__event-open:focus-visible {
+  outline: 2px solid #a9cdeb;
+  outline-offset: 4px;
+  border-radius: 4px;
+}

@@ -4,25 +4,15 @@ import { apiRequest } from "../services/api";
 import { DEFAULT_HOME_MODULES } from "../config/homeModules";
 import { PreferencesContext } from "./preferencesStore";
 
-// Qui gestiamo le preferenze dell'utente.
-// Le recuperiamo dal backend e le condividiamo con il resto dell'app.
-
 export function PreferencesProvider({ children }) {
   const { token, isAuthenticated } = useAuth();
-
-  // Teniamo insieme i dati e il token a cui appartengono.
-  // Così non mostriamo le preferenze di un altro account.
   const [result, setResult] = useState(null);
 
   useEffect(() => {
-    // Senza autenticazione non dobbiamo fare richieste.
-    if (!isAuthenticated || !token) {
-      return;
-    }
+    if (!isAuthenticated || !token) return;
 
     let cancelled = false;
 
-    // Recuperiamo le preferenze salvate su MongoDB.
     async function loadPreferences() {
       try {
         const data = await apiRequest("/api/auth/preferences", {
@@ -30,11 +20,7 @@ export function PreferencesProvider({ children }) {
         });
 
         if (!cancelled) {
-          setResult({
-            token,
-            preferences: data,
-            error: "",
-          });
+          setResult({ token, preferences: data, error: "" });
         }
       } catch {
         if (!cancelled) {
@@ -49,34 +35,58 @@ export function PreferencesProvider({ children }) {
 
     loadPreferences();
 
-    // Ignoriamo la risposta se il componente viene smontato
-    // oppure cambia la sessione.
     return () => {
       cancelled = true;
     };
   }, [isAuthenticated, token]);
 
-  // Usiamo i dati soltanto se appartengono alla sessione attuale.
+  // Utilizziamo soltanto i dati della sessione corrente.
   const currentResult =
-    isAuthenticated && token && result?.token === token ? result : null;
+    isAuthenticated && result?.token === token ? result : null;
 
   const preferences = currentResult?.preferences ?? null;
-  const error = currentResult?.error ?? "";
-
-  // Aspettiamo la risposta del backend prima di mostrare la Home.
-  const isLoading = Boolean(isAuthenticated && token && !currentResult);
-
-  // La configurazione iniziale serve come valore di riferimento.
-  // Se il caricamento fallisce, mostreremo l'errore nella Home.
   const homeModules = preferences?.homeModules ?? DEFAULT_HOME_MODULES;
+
+  async function saveHomeModules(modules) {
+    if (!token || !preferences) {
+      throw new Error("Preferenze non disponibili.");
+    }
+
+    const response = await apiRequest("/api/auth/preferences", {
+      method: "PATCH",
+      token,
+      body: JSON.stringify({
+        onboardingCompleted: preferences.onboardingCompleted ?? false,
+        homeModules: modules,
+      }),
+    });
+
+    if (!Array.isArray(response?.preferences?.homeModules)) {
+      throw new Error("Salvataggio non confermato.");
+    }
+
+    // Aggiorniamo la Home senza dover ricaricare la pagina.
+    setResult((previous) =>
+      previous?.token === token
+        ? {
+            token,
+            preferences: response.preferences,
+            error: "",
+          }
+        : previous,
+    );
+
+    return response.preferences.homeModules;
+  }
 
   return (
     <PreferencesContext.Provider
       value={{
         preferences,
         homeModules,
-        isLoading,
-        error,
+        saveHomeModules,
+        isLoading: Boolean(isAuthenticated && token && !currentResult),
+        error: currentResult?.error ?? "",
       }}
     >
       {children}

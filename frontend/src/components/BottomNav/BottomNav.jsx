@@ -1,66 +1,47 @@
 import { useEffect, useState } from "react";
+import { NavLink, useLocation } from "react-router-dom";
+
 import { useAuth } from "../../context/useAuth";
-import { NavLink } from "react-router-dom";
 
 import {
   House,
   LogOut,
   Cloud,
   ListChecks,
+  CalendarDays,
   Archive,
+  Settings,
   Menu,
   X,
-  CircleDot,
-  BookOpen,
-  Settings,
-  UserRound,
-  ChevronDown,
 } from "lucide-react";
 
 import "./BottomNav.css";
 
-// Le quattro sezioni realmente disponibili.
+// Le quattro destinazioni principali.
 const mainNavigation = [
   { path: "/", label: "Home", icon: House, end: true },
   { path: "/svuota", label: "Svuota", icon: Cloud },
   { path: "/organizza", label: "Organizza", icon: ListChecks },
-  { path: "/archivio", label: "Archivio", icon: Archive },
+  { path: "/calendario", label: "Calendario", icon: CalendarDays },
 ];
 
-// Le sezioni future rimangono visibili, ma non fingono di funzionare.
-const upcomingNavigation = [
-  {
-    id: "focus",
-    label: "Focus",
-    icon: CircleDot,
-    description: "La modalità Focus non è ancora disponibile.",
-  },
-  {
-    id: "diario",
-    label: "Diario",
-    icon: BookOpen,
-    description: "Il Diario arriverà in una versione successiva.",
-  },
-  {
-    id: "impostazioni",
-    label: "Impostazioni",
-    icon: Settings,
-    description: "Le impostazioni personali sono ancora in sviluppo.",
-  },
-  {
-    id: "profilo",
-    label: "Profilo",
-    icon: UserRound,
-    description: "La pagina del profilo non è ancora disponibile.",
-  },
+// Le altre pagine realmente disponibili.
+const moreNavigation = [
+  { path: "/archivio", label: "Archivio", icon: Archive },
+  { path: "/impostazioni", label: "Impostazioni", icon: Settings },
 ];
 
 function BottomNav() {
   const { logout } = useAuth();
-  const [isMoreOpen, setIsMoreOpen] = useState(false);
-  const [expandedItem, setExpandedItem] = useState(null);
+  const location = useLocation();
 
-  // Permettiamo di chiudere il pannello anche con Escape.
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
+
+  // Evidenziamo Altro quando siamo in una delle sue pagine.
+  const isMoreActive =
+    isMoreOpen ||
+    moreNavigation.some((item) => item.path === location.pathname);
+
   useEffect(() => {
     if (!isMoreOpen) return;
 
@@ -79,7 +60,6 @@ function BottomNav() {
 
   function closeMore() {
     setIsMoreOpen(false);
-    setExpandedItem(null);
   }
 
   return (
@@ -115,59 +95,38 @@ function BottomNav() {
               </button>
             </div>
 
-            <button type="button" className="bottom-nav__upcoming-button" onClick={logout}>
-              <LogOut size={19} aria-hidden="true" />
-              <span>Esci</span>
-            </button>
             <p className="bottom-nav__panel-intro">
-              Queste funzionalità sono previste, ma non sono ancora disponibili.
+              Accedi al tuo archivio e personalizza il tuo spazio.
             </p>
 
-            <div className="bottom-nav__upcoming">
-              {upcomingNavigation.map((item) => {
-                const Icon = item.icon;
-                const isExpanded = expandedItem === item.id;
+            <nav className="bottom-nav__upcoming" aria-label="Altre sezioni">
+              {moreNavigation.map(({ path, label, icon: Icon }) => (
+                <div className="bottom-nav__upcoming-card" key={path}>
+                  <NavLink
+                    to={path}
+                    onClick={closeMore}
+                    className="bottom-nav__upcoming-button"
+                    style={{ textDecoration: "none" }}
+                  >
+                    <Icon size={19} aria-hidden="true" />
 
-                return (
-                  <div className="bottom-nav__upcoming-card" key={item.id}>
-                    <button
-                      type="button"
-                      className="bottom-nav__upcoming-button"
-                      aria-expanded={isExpanded}
-                      onClick={() =>
-                        setExpandedItem(isExpanded ? null : item.id)
-                      }
-                    >
-                      <Icon size={19} aria-hidden="true" />
+                    <span className="bottom-nav__upcoming-label">{label}</span>
+                  </NavLink>
+                </div>
+              ))}
 
-                      <span className="bottom-nav__upcoming-label">
-                        {item.label}
-                      </span>
+              <div className="bottom-nav__upcoming-card">
+                <button
+                  type="button"
+                  className="bottom-nav__upcoming-button"
+                  onClick={logout}
+                >
+                  <LogOut size={19} aria-hidden="true" />
 
-                      <span className="bottom-nav__upcoming-status">
-                        Prossimamente
-                      </span>
-
-                      <ChevronDown
-                        className={
-                          isExpanded
-                            ? "bottom-nav__chevron bottom-nav__chevron--open"
-                            : "bottom-nav__chevron"
-                        }
-                        size={16}
-                        aria-hidden="true"
-                      />
-                    </button>
-
-                    {isExpanded && (
-                      <p className="bottom-nav__upcoming-description">
-                        {item.description}
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                  <span className="bottom-nav__upcoming-label">Esci</span>
+                </button>
+              </div>
+            </nav>
           </section>
         </>
       )}
@@ -184,6 +143,7 @@ function BottomNav() {
             }
           >
             <Icon size={20} strokeWidth={1.6} aria-hidden="true" />
+
             <span>{label}</span>
           </NavLink>
         ))}
@@ -191,19 +151,14 @@ function BottomNav() {
         <button
           type="button"
           className={`bottom-nav__item ${
-            isMoreOpen ? "bottom-nav__item--active" : ""
+            isMoreActive ? "bottom-nav__item--active" : ""
           }`}
           aria-expanded={isMoreOpen}
           aria-controls="bottom-nav-more"
-          onClick={() => {
-            if (isMoreOpen) {
-              closeMore();
-            } else {
-              setIsMoreOpen(true);
-            }
-          }}
+          onClick={() => setIsMoreOpen((previous) => !previous)}
         >
           <Menu size={20} strokeWidth={1.6} aria-hidden="true" />
+
           <span>Altro</span>
         </button>
       </nav>

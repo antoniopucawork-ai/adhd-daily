@@ -4,7 +4,13 @@ import { ArrowLeft, Check } from "lucide-react";
 import { MAX_TITLE_LENGTH, TYPE_LABELS, isValidTitle } from "../../config/mindDump";
 import "./MindDumpEdit.css";
 
-function MindDumpEdit({ item, onSave, onCancel }) {
+function MindDumpEdit({
+  item,
+  onSave,
+  onCancel,
+  cancelLabel = "Torna ai risultati",
+  isSaving = false,
+}) {
   // Partiamo dai dati che Gemini ha già riconosciuto.
   const [formData, setFormData] = useState({
     type: item.type,
@@ -28,7 +34,7 @@ function MindDumpEdit({ item, onSave, onCancel }) {
 
     const title = formData.title.trim();
 
-    if (!isValidTitle(formData.title)) return;
+    if (isSaving || !isValidTitle(formData.title)) return;
 
     // Aggiorniamo solo i dati modificati dall'utente.
     onSave({
@@ -43,9 +49,14 @@ function MindDumpEdit({ item, onSave, onCancel }) {
 
   return (
     <section className="mind-edit">
-      <button className="mind-edit__back" type="button" onClick={onCancel}>
+      <button
+        className="mind-edit__back"
+        type="button"
+        onClick={onCancel}
+        disabled={isSaving}
+      >
         <ArrowLeft size={18} aria-hidden="true" />
-        <span>Torna ai risultati</span>
+        <span>{cancelLabel}</span>
       </button>
 
       <header className="mind-edit__header">
@@ -56,7 +67,7 @@ function MindDumpEdit({ item, onSave, onCancel }) {
         <p>Correggi quello che l'IA non ha interpretato come volevi.</p>
       </header>
 
-      <form className="mind-edit__form" onSubmit={handleSubmit}>
+      <form className="mind-edit__form" onSubmit={handleSubmit} inert={isSaving}>
         <label className="mind-edit__field">
           <span>Titolo</span>
 
@@ -129,12 +140,13 @@ function MindDumpEdit({ item, onSave, onCancel }) {
         <button
           className="mind-edit__save"
           type="submit"
-          disabled={!isValidTitle(formData.title)}
+          disabled={isSaving || !isValidTitle(formData.title)}
         >
           <span>Salva modifiche</span>
           <Check size={18} aria-hidden="true" />
         </button>
       </form>
+      {isSaving && <p role="status">Salvataggio in corso...</p>}
     </section>
   );
 }

@@ -55,6 +55,34 @@ test("mantiene la modifica ordinaria di categoria", async (context) => {
   }));
   assert.equal((await patch({ type: "EVENT" })).statusCode, 200);
   const [filter, update] = query.mock.calls[0].arguments;
-  assert.deepEqual(Object.keys(filter.items.$elemMatch), ["_id"]);
+  assert.deepEqual(filter.items.$elemMatch.status, { $ne: "DONE" });
   assert.deepEqual(update.$set, { "items.$.type": "EVENT" });
+});
+
+test("blocca modifiche incompatibili su elementi completati nella query atomica", async (context) => {
+  const query = context.mock.method(MindDump, "findOneAndUpdate", async () => null);
+  const exists = context.mock.method(MindDump, "exists", async () => ({ _id: dumpId }));
+
+  for (const changes of [{ type: "EVENT" }, { uncertain: true }]) {
+    assert.equal((await patch(changes)).statusCode, 409);
+    const [filter] = query.mock.calls.at(-1).arguments;
+    assert.equal(filter.user, userId);
+    assert.equal(String(filter.items.$elemMatch._id), itemId);
+    assert.deepEqual(filter.items.$elemMatch.status, { $ne: "DONE" });
+  }
+
+  exists.mock.mockImplementation(async () => null);
+  assert.equal((await patch({ uncertain: true })).statusCode, 404);
+});
+
+test("consente modifiche compatibili e cambi di categoria con riapertura esplicita", async (context) => {
+  const query = context.mock.method(MindDump, "findOneAndUpdate", async () => ({
+    items: { id: () => ({ _id: itemId }) },
+  }));
+
+  for (const changes of [{ title: "Titolo corretto" }, { status: "TODO", type: "EVENT" }]) {
+    assert.equal((await patch(changes)).statusCode, 200);
+    const [filter] = query.mock.calls.at(-1).arguments;
+    assert.deepEqual(Object.keys(filter.items.$elemMatch), ["_id"]);
+  }
 });

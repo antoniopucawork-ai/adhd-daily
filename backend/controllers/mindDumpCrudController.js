@@ -138,7 +138,10 @@ export async function updateMindDumpItem(req, res) {
 
     const { status, type, uncertain } = req.body;
     const completing = status === "DONE";
-    if (completing && ((type !== undefined && type !== "ACTION") || uncertain === true)) {
+    const incompatibleWithDone =
+      (type !== undefined && type !== "ACTION") || uncertain === true;
+
+    if (completing && incompatibleWithDone) {
       return res.status(400).json({
         message: "Puoi completare soltanto un'azione confermata",
       });
@@ -151,6 +154,9 @@ export async function updateMindDumpItem(req, res) {
       if (type === undefined) itemFilter.type = "ACTION";
       if (uncertain === undefined) itemFilter.uncertain = { $in: [null, false] };
     }
+    const mustBeOpen = status === undefined && incompatibleWithDone;
+    if (mustBeOpen) itemFilter.status = { $ne: "DONE" };
+
     const ownerFilter = { _id: dumpId, user: req.userId };
 
     // Prepariamo soltanto i campi autorizzati.
@@ -179,9 +185,14 @@ export async function updateMindDumpItem(req, res) {
     );
 
     if (!mindDump) {
-      if (completing && await MindDump.exists({ ...ownerFilter, "items._id": itemObjectId })) {
+      if (
+        (completing || mustBeOpen) &&
+        await MindDump.exists({ ...ownerFilter, "items._id": itemObjectId })
+      ) {
         return res.status(409).json({
-          message: "Puoi completare soltanto un'azione confermata",
+          message: completing
+            ? "Puoi completare soltanto un'azione confermata"
+            : "Un elemento completato deve restare un'azione confermata",
         });
       }
 

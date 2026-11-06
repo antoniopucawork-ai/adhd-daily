@@ -1,0 +1,379 @@
+/* ==========================================
+   ADHD DAILY — ITEM QUICK PANEL
+   Sunset Glass | Mobile First
+========================================== */
+
+.item-quick-panel {
+  box-sizing: border-box;
+
+  position: fixed;
+  inset: 0;
+
+  width: min(520px, calc(100% - 32px));
+  max-width: none;
+  max-height: min(85dvh, 700px);
+
+  margin: auto;
+  padding: 30px;
+
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+
+  color: #f4efe6;
+
+  background:
+    radial-gradient(
+      ellipse at 100% 0%,
+      rgba(244, 174, 113, 0.13),
+      transparent 50%
+    ),
+    linear-gradient(145deg, rgba(30, 44, 78, 0.97), rgba(11, 23, 45, 0.98));
+
+  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
+
+  border: 1px solid rgba(255, 218, 164, 0.55);
+  border-radius: 24px;
+
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.5),
+    0 0 35px rgba(244, 174, 113, 0.15),
+    inset 0 1px 0 rgba(255, 245, 225, 0.1);
+}
+
+.item-quick-panel,
+.item-quick-panel * {
+  box-sizing: border-box;
+}
+
+/* Sfondo dietro il pannello */
+
+.item-quick-panel::backdrop {
+  background: rgba(3, 10, 24, 0.75);
+
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+/* ==========================================
+   INTESTAZIONE
+========================================== */
+
+.item-quick-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.item-quick-panel__eyebrow {
+  color: #e6b36c;
+
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.item-quick-panel__close {
+  display: grid;
+  place-items: center;
+
+  flex-shrink: 0;
+
+  width: 44px;
+  height: 44px;
+  padding: 0;
+
+  color: rgba(244, 239, 230, 0.8);
+  background: rgba(244, 239, 230, 0.06);
+
+  border: 1px solid rgba(244, 239, 230, 0.12);
+  border-radius: 50%;
+
+  cursor: pointer;
+
+  transition:
+    background 200ms ease,
+    transform 200ms ease;
+}
+
+.item-quick-panel__close:hover {
+  background: rgba(244, 239, 230, 0.14);
+  transform: rotate(90deg);
+}
+
+/* ==========================================
+   TITOLO E DESCRIZIONE
+========================================== */
+
+.item-quick-panel__title {
+  margin: 0 0 12px;
+
+  color: #fff5e8;
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(26px, 4vw, 34px);
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+
+  overflow-wrap: anywhere;
+}
+
+.item-quick-panel__description {
+  margin: 0 0 28px;
+
+  color: rgba(244, 239, 230, 0.65);
+
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ==========================================
+   DATA E ORARIO
+========================================== */
+
+.item-quick-panel__details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  margin-bottom: 24px;
+  padding: 18px;
+
+  background: rgba(169, 205, 235, 0.05);
+
+  border: 1px solid rgba(169, 205, 235, 0.1);
+  border-radius: 16px;
+}
+
+.item-quick-panel__details p {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  margin: 0;
+
+  color: rgba(244, 239, 230, 0.85);
+
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.item-quick-panel__details svg {
+  flex-shrink: 0;
+  color: #d9cdb2;
+}
+
+/* ==========================================
+   AVVISI E STATO COMPLETATO
+========================================== */
+
+.item-quick-panel__warning,
+.item-quick-panel__completed {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+
+  margin: 0 0 24px;
+  padding: 14px;
+
+  border-radius: 12px;
+
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.item-quick-panel__warning {
+  color: #f4d5aa;
+  background: rgba(230, 179, 108, 0.08);
+  border: 1px solid rgba(230, 179, 108, 0.22);
+}
+
+.item-quick-panel__completed {
+  color: #b7e5cb;
+  background: rgba(119, 194, 151, 0.08);
+  border: 1px solid rgba(119, 194, 151, 0.2);
+}
+
+.item-quick-panel__warning svg,
+.item-quick-panel__completed svg {
+  flex-shrink: 0;
+}
+
+/* ==========================================
+   PULSANTI AZIONE
+========================================== */
+
+.item-quick-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  margin-top: 28px;
+}
+
+.item-quick-panel__actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+
+  flex: 1 1 150px;
+
+  min-height: 48px;
+  padding: 12px 18px;
+
+  border-radius: 13px;
+
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    transform 200ms ease,
+    background 200ms ease,
+    box-shadow 200ms ease;
+}
+
+/* Modifica */
+
+.item-quick-panel__edit {
+  color: #f4efe6;
+  background: rgba(244, 239, 230, 0.06);
+
+  border: 1px solid rgba(244, 239, 230, 0.2);
+}
+
+.item-quick-panel__edit:hover {
+  background: rgba(244, 239, 230, 0.12);
+  transform: translateY(-2px);
+}
+
+/* Elimina */
+
+.item-quick-panel__delete {
+  color: #ffd6db;
+  background: rgba(179, 86, 99, 0.16);
+  border: 1px solid rgba(233, 166, 172, 0.35);
+}
+
+.item-quick-panel__delete:hover:not(:disabled) {
+  background: rgba(179, 86, 99, 0.3);
+}
+
+/* Completa */
+
+.item-quick-panel__complete {
+  color: #172238;
+  background: #e8c69b;
+
+  border: 1px solid rgba(255, 235, 205, 0.8);
+
+  box-shadow: 0 0 18px rgba(244, 174, 113, 0.2);
+}
+
+.item-quick-panel__complete:hover {
+  background: #f4d5aa;
+
+  transform: translateY(-2px);
+
+  box-shadow: 0 0 24px rgba(244, 174, 113, 0.35);
+}
+
+.item-quick-panel__actions button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+  transform: none;
+}
+
+/* Accessibilità tastiera */
+
+.item-quick-panel button:focus-visible {
+  outline: 2px solid #a9cdeb;
+  outline-offset: 4px;
+}
+
+/* ==========================================
+   SMARTPHONE — BOTTOM SHEET
+========================================== */
+
+@media (max-width: 599px) {
+  .item-quick-panel {
+    inset: auto 0 0;
+
+    width: 100%;
+    max-height: 88dvh;
+
+    margin: 0;
+    padding: 28px 22px calc(28px + env(safe-area-inset-bottom));
+
+    border-radius: 24px 24px 0 0;
+
+    border-bottom: none;
+  }
+
+  .item-quick-panel__header {
+    margin-bottom: 20px;
+  }
+
+  .item-quick-panel__description {
+    margin-bottom: 22px;
+  }
+
+  .item-quick-panel__actions {
+    margin-top: 24px;
+  }
+}
+
+/* ==========================================
+   ANIMAZIONE DI APERTURA
+========================================== */
+
+@media (prefers-reduced-motion: no-preference) {
+  .item-quick-panel[open] {
+    animation: panel-appear 240ms ease-out both;
+  }
+
+  @keyframes panel-appear {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (max-width: 599px) {
+    .item-quick-panel[open] {
+      animation: panel-slide-up 280ms ease-out both;
+    }
+
+    @keyframes panel-slide-up {
+      from {
+        opacity: 0;
+        transform: translateY(100%);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item-quick-panel button {
+    transition: none;
+  }
+}

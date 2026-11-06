@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion, useReducedMotion } from "motion/react";
 
@@ -12,6 +13,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
+import EditableItemQuickPanel from "../components/ItemQuickPanel/EditableItemQuickPanel";
 import { useMindDumps } from "../hooks/useMindDumps";
 
 import { organizeItems, getCompletedItems } from "../utils/organizeItems";
@@ -275,7 +277,7 @@ function MindConnections({ activeCategoryId }) {
 }
 
 // Lista condivisa fra desktop e mobile.
-function ThoughtList({ items, isVerification = false }) {
+function ThoughtList({ items, onOpenItem, isVerification = false }) {
   if (items.length === 0) {
     return (
       <p>
@@ -289,21 +291,26 @@ function ThoughtList({ items, isVerification = false }) {
   return (
     <ul className="organize__list">
       {items.map((item) => (
-        <li key={item.id} className="organize__item">
-          <div>
+        <li key={item.id}>
+          <button
+            type="button"
+            className="organize__item organize__item-open"
+            onClick={() => onOpenItem(item)}
+            aria-haspopup="dialog"
+          >
             <strong>{item.title}</strong>
 
-            {item.date && <p>Data: {item.date}</p>}
+            {item.date && <span>Data: {item.date}</span>}
 
-            {item.time && <p>Ora: {item.time}</p>}
+            {item.time && <span>Ora: {item.time}</span>}
 
             {item.uncertain === true && (
-              <p className="organize__uncertain">
+              <span className="organize__uncertain">
                 <AlertTriangle size={14} strokeWidth={1.6} aria-hidden="true" />
                 Informazione da chiarire
-              </p>
+              </span>
             )}
-          </div>
+          </button>
         </li>
       ))}
     </ul>
@@ -368,6 +375,7 @@ function MobileCategoryGroup({
   isLoading,
   error,
   navigate,
+  onOpenItem,
 }) {
   const { id, label, icon: Icon, color } = section;
 
@@ -417,6 +425,7 @@ function MobileCategoryGroup({
         {!isLoading && !error && (
           <ThoughtList
             items={sectionItems}
+            onOpenItem={onOpenItem}
             isVerification={id === verificationFilter.id}
           />
         )}
@@ -432,6 +441,7 @@ function MobileCategories({
   isLoading,
   error,
   navigate,
+  onOpenItem,
 }) {
   return (
     <nav
@@ -459,6 +469,7 @@ function MobileCategories({
           isLoading={isLoading}
           error={error}
           navigate={navigate}
+          onOpenItem={onOpenItem}
         />
       ))}
 
@@ -473,6 +484,7 @@ function MobileCategories({
         isLoading={isLoading}
         error={error}
         navigate={navigate}
+        onOpenItem={onOpenItem}
       />
     </nav>
   );
@@ -483,7 +495,8 @@ function OrganizePage() {
   const navigate = useNavigate();
   const { category } = useParams();
 
-  const { items, isLoading, error } = useMindDumps();
+  const { items, isLoading, error, reload } = useMindDumps();
+  const [selectedItem, setSelectedItem] = useState(null);
 
   // Tutti i gruppi derivano dai dati MongoDB.
   const organizedItems = organizeItems(items);
@@ -555,6 +568,7 @@ function OrganizePage() {
           isLoading={isLoading}
           error={error}
           navigate={navigate}
+          onOpenItem={setSelectedItem}
         />
       </section>
 
@@ -590,6 +604,7 @@ function OrganizePage() {
         ) : (
           <ThoughtList
             items={organizedItems[activeCategory.id] ?? []}
+            onOpenItem={setSelectedItem}
             isVerification={isVerificationActive}
           />
         )}
@@ -638,6 +653,13 @@ function OrganizePage() {
           </div>
         </details>
       </section>
+      {selectedItem && (
+        <EditableItemQuickPanel
+          item={selectedItem}
+          onClose={() => setSelectedItem(null)}
+          reload={reload}
+        />
+      )}
     </main>
   );
 }

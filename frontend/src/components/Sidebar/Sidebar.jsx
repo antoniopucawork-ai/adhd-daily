@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { useAuth } from "../../context/useAuth";
 import { NavLink } from "react-router-dom";
+
+import { useAuth } from "../../context/useAuth";
 
 import {
   Cloud,
@@ -8,10 +9,8 @@ import {
   LogOut,
   Archive,
   ListChecks,
-  CircleDot,
-  BookOpen,
+  CalendarDays,
   Settings,
-  UserRound,
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
@@ -22,16 +21,13 @@ const navigation = [
   { label: "Home", path: "/", icon: House },
   { label: "Svuota la mente", path: "/svuota", icon: Cloud },
   { label: "Organizza", path: "/organizza", icon: ListChecks },
+  { label: "Calendario", path: "/calendario", icon: CalendarDays },
   { label: "Archivio", path: "/archivio", icon: Archive },
-];
-
-const upcoming = [
-  { label: "Focus", icon: CircleDot },
-  { label: "Diario", icon: BookOpen },
 ];
 
 function Sidebar() {
   const { logout } = useAuth();
+
   const [isCollapsed, setIsCollapsed] = useState(() => {
     try {
       return localStorage.getItem("adhdSidebarCollapsed") === "true";
@@ -40,19 +36,19 @@ function Sidebar() {
     }
   });
 
-  const toggleSidebar = () => {
+  function toggleSidebar() {
     setIsCollapsed((previous) => {
       const next = !previous;
 
       try {
         localStorage.setItem("adhdSidebarCollapsed", String(next));
       } catch {
-        // La navigazione rimane utilizzabile anche senza localStorage.
+        // La sidebar funziona anche senza localStorage.
       }
 
       return next;
     });
-  };
+  }
 
   return (
     <aside
@@ -93,8 +89,6 @@ function Sidebar() {
       <div className="sidebar__content">
         <p className="sidebar__section-label">IL TUO SPAZIO</p>
 
-        {/* NAVIGAZIONE PRINCIPALE */}
-
         <nav
           className="sidebar__navigation"
           aria-label="Navigazione principale desktop"
@@ -114,66 +108,45 @@ function Sidebar() {
                 className="sidebar__link-icon"
                 size={19}
                 strokeWidth={1.6}
+                aria-hidden="true"
               />
 
               <span className="sidebar__link-text">{label}</span>
             </NavLink>
           ))}
         </nav>
-
-        <p className="sidebar__section-label sidebar__section-label--upcoming">
-          PROSSIMAMENTE
-        </p>
-
-        <div className="sidebar__navigation sidebar__upcoming">
-          {upcoming.map(({ label, icon: Icon }) => (
-            <div
-              className="sidebar__link sidebar__link--disabled"
-              key={label}
-              title={isCollapsed ? `${label} — Prossimamente` : undefined}
-            >
-              <Icon
-                className="sidebar__link-icon"
-                size={19}
-                strokeWidth={1.6}
-              />
-
-              <span className="sidebar__link-text">{label}</span>
-            </div>
-          ))}
-        </div>
       </div>
 
       <div className="sidebar__footer">
-        {/* IMPOSTAZIONI */}
-
-        <div className="sidebar__link sidebar__link--disabled">
+        <NavLink
+          to="/impostazioni"
+          aria-label="Impostazioni"
+          title={isCollapsed ? "Impostazioni" : undefined}
+          className={({ isActive }) =>
+            `sidebar__link ${isActive ? "sidebar__link--active" : ""}`
+          }
+        >
           <Settings
             className="sidebar__link-icon"
             size={19}
             strokeWidth={1.6}
+            aria-hidden="true"
           />
 
           <span className="sidebar__link-text">Impostazioni</span>
-        </div>
+        </NavLink>
 
-        <button type="button" className="sidebar__link" onClick={logout} aria-label="Esci" title="Esci">
+        <button
+          className="sidebar__link"
+          type="button"
+          onClick={logout}
+          aria-label="Esci"
+          title="Esci"
+        >
           <LogOut className="sidebar__link-icon" size={19} aria-hidden="true" />
+
           <span className="sidebar__link-text">Esci</span>
         </button>
-
-        {/* PROFILO */}
-
-        <div className="sidebar__profile">
-          <div className="sidebar__avatar">
-            <UserRound size={20} strokeWidth={1.5} />
-          </div>
-
-          <div className="sidebar__profile-info">
-            <span>Il tuo profilo</span>
-            <small>Spazio personale</small>
-          </div>
-        </div>
       </div>
     </aside>
   );

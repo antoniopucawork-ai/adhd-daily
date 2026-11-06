@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import MindDumpEdit from "./MindDumpEdit/MindDumpEdit";
 import { apiRequest } from "../services/api";
+import { deleteMindDumpItem } from "../services/mindDumpItems";
 import { parseCalendarDate } from "../utils/date";
 import { TYPE_LABELS } from "../config/mindDump";
 
@@ -79,9 +80,10 @@ export default function ArchiveCard({
             throw new Error("Il server non ha confermato la modifica.");
           }
         }
-      } else if (action === "deleteDump" || action === "deleteItem") {
-        const url = action === "deleteDump" ? dumpUrl : itemUrl;
-        await apiRequest(url, { method: "DELETE", token });
+      } else if (action === "deleteItem") {
+        await deleteMindDumpItem({ dumpId: dump._id, itemId: item._id, token });
+      } else if (action === "deleteDump") {
+        await apiRequest(dumpUrl, { method: "DELETE", token });
       } else {
         return;
       }

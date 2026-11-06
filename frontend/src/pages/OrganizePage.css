@@ -427,6 +427,24 @@
   line-height: 1.5;
 }
 
+.organize__item-open {
+  display: block;
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.organize__item-open:focus-visible {
+  outline: 2px solid #e6b36c;
+  outline-offset: 2px;
+}
+
+.organize__item-open > span {
+  display: block;
+}
+
+.organize__item-open > span,
 .organize__item p {
   margin: 5px 0 0;
 

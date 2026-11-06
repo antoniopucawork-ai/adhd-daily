@@ -138,3 +138,17 @@
     height: 40px;
   }
 }
+
+/* La card diventa un pulsante interamente cliccabile. */
+
+button.next-step-card {
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+button.next-step-card:focus-visible {
+  outline: 2px solid #a9cdeb;
+  outline-offset: 5px;
+}
