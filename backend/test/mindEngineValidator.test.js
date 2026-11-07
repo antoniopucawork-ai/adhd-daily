@@ -120,3 +120,32 @@ for (const [alternatives, candidate, day] of [
     });
   });
 }
+
+
+test("mantiene la data composta verificata e l'orario del singolo elemento", () => {
+  const originalFragment = "Dentista Lunedì 9 novembre 2026 alle 9";
+  const result = validateItemDate({
+    ...dentist, originalFragment, date: "2026-11-09", temporalExpression: "Lunedì 9 novembre 2026",
+  }, originalFragment, "2026-11-07");
+  assert.deepEqual(result, {
+    type: "EVENT", title: "Dentista", date: "2026-11-09", time: "09:00", uncertain: false,
+  });
+});
+
+for (const [name, text, fragment, expression, date] of [
+  ["giorno contraddittorio", "Dentista Martedì 9 novembre 2026 alle 9", "Dentista Martedì 9 novembre 2026 alle 9", "Martedì 9 novembre 2026", "2026-11-09"],
+  ["data proposta errata", "Dentista Lunedì 9 novembre 2026 alle 9", "Dentista Lunedì 9 novembre 2026 alle 9", "Lunedì 9 novembre 2026", "2026-11-10"],
+  ["espressione inventata", "Dentista alle 9", "Dentista alle 9", "Lunedì 9 novembre 2026", "2026-11-09"],
+  ["data fuori dal frammento", "Dentista alle 9, palestra Lunedì 9 novembre 2026", "Dentista alle 9", "Lunedì 9 novembre 2026", "2026-11-09"],
+  ["prima data alternativa", "Dentista Lunedì 9 novembre 2026 o Martedì 10 novembre 2026 alle 9", "Dentista Lunedì 9 novembre 2026 o Martedì 10 novembre 2026 alle 9", "Lunedì 9 novembre 2026", "2026-11-09"],
+  ["seconda data alternativa", "Dentista Lunedì 9 novembre 2026 o Martedì 10 novembre 2026 alle 9", "Dentista Lunedì 9 novembre 2026 o Martedì 10 novembre 2026 alle 9", "Martedì 10 novembre 2026", "2026-11-10"],
+]) {
+  test(`data composta: rifiuta ${name} e conserva l'orario verificato`, () => {
+    const result = validateItemDate({
+      ...dentist, originalFragment: fragment, date, temporalExpression: expression,
+    }, text, "2026-11-07");
+    assert.deepEqual(result, {
+      type: "EVENT", title: "Dentista", date: null, time: "09:00", uncertain: true,
+    });
+  });
+}

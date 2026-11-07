@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/useAuth";
+import { useMindDumpInvalidation } from "../context/mindDumpInvalidationStore";
 import { apiRequest } from "../services/api";
 
 export function useMindDumps() {
@@ -7,7 +8,7 @@ export function useMindDumps() {
 
   const [result, setResult] = useState(null);
 
-  const [revision, setRevision] = useState(0);
+  const { revision, reload } = useMindDumpInvalidation();
 
   useEffect(() => {
     if (!token) return;
@@ -68,7 +69,7 @@ export function useMindDumps() {
 
   return {
     dumps: currentResult?.dumps ?? [],
-    reload: () => setRevision((current) => current + 1),
+    reload,
     items: currentResult?.items ?? [],
     isLoading: Boolean(token && !currentResult),
     error: currentResult?.error ?? "",

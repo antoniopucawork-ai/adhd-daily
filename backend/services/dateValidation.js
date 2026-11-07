@@ -285,6 +285,20 @@ export const resolveTemporalExpression = (
     return date ? resolved(date) : unsupported();
   }
 
+  // Data esplicita con giorno della settimana: "Lunedì 9 novembre 2026".
+  const weekdayDateMatch = expression.match(
+    new RegExp(`^(${Object.keys(WEEKDAYS).join("|")})\\s+(\\d{1,2})\\s+(${MONTH_NAMES})\\s+(\\d{4})$`),
+  );
+
+  if (weekdayDateMatch) {
+    const [, weekday, day, month, year] = weekdayDateMatch;
+    const date = createISODate(Number(year), MONTHS[month], Number(day));
+
+    return date && getWeekdayFromDate(date) === WEEKDAYS[weekday]
+      ? resolved(date)
+      : unsupported();
+  }
+
   // Date testuali:
   // "12 novembre"
   // "12 novembre 2026"

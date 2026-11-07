@@ -4,9 +4,15 @@ import { ArrowRight, Feather, LoaderCircle } from "lucide-react";
 
 import MindDumpResult from "../components/MindDumpResult/MindDumpResult";
 import MindDumpEdit from "../components/MindDumpEdit/MindDumpEdit";
+import MindDumpAnalysisWaiting from "../components/MindDumpAnalysisWaiting";
 
 import { useAuth } from "../context/useAuth";
 import { apiRequest } from "../services/api";
+import {
+  clearSavedMindDumpDraft,
+  readMindDumpDraft,
+  writeMindDumpDraft,
+} from "../services/mindDumpDraft";
 
 import {
   MAX_ITEMS,
@@ -22,30 +28,11 @@ function getDraftKey(userId) {
   return userId ? `adhdDailyDraft:${userId}` : null;
 }
 
-// Recuperiamo la bozza dal browser quando apriamo la pagina.
-function readDraft(key) {
-  if (!key) {
-    return { text: "", error: "" };
-  }
-
-  try {
-    return {
-      text: localStorage.getItem(key) || "",
-      error: "",
-    };
-  } catch {
-    return {
-      text: "",
-      error: "Non riesco a recuperare la bozza dal browser.",
-    };
-  }
-}
-
 function MindDumpPage() {
   const { token, user } = useAuth();
   const draftKey = getDraftKey(user?.id);
 
-  const [draft, setDraft] = useState(() => readDraft(draftKey));
+  const [draft, setDraft] = useState(() => readMindDumpDraft(draftKey));
   const [result, setResult] = useState(null);
   const [editingItem, setEditingItem] = useState(null);
 
@@ -62,23 +49,7 @@ function MindDumpPage() {
   function handleMindDumpChange(event) {
     const text = event.target.value;
 
-    let draftError = "";
-
-    try {
-      if (draftKey) {
-        if (text.length > 0) {
-          localStorage.setItem(draftKey, text);
-        } else {
-          localStorage.removeItem(draftKey);
-        }
-      } else {
-        draftError = "Non riesco a identificare la bozza dell'utente.";
-      }
-    } catch {
-      draftError = "Non riesco a salvare la bozza nel browser.";
-    }
-
-    setDraft({ text, error: draftError });
+    setDraft(writeMindDumpDraft(draftKey, text));
     setError("");
     setSuccessMessage("");
   }
@@ -130,6 +101,7 @@ function MindDumpPage() {
         id: crypto.randomUUID(),
         createdAt: new Date().toISOString(),
         originalText: mindDump,
+        draftSnapshot: { text: draft.text, version: draft.version },
         items: analysis.items.map((item) => ({
           ...item,
           id: crypto.randomUUID(),
@@ -202,19 +174,8 @@ function MindDumpPage() {
         throw new Error("Il server non ha confermato il salvataggio.");
       }
 
-      let draftError = "";
-
-      // Cancelliamo la bozza soltanto dopo il salvataggio riuscito.
-      try {
-        if (draftKey) {
-          localStorage.removeItem(draftKey);
-        }
-      } catch {
-        draftError =
-          "Il pensiero è salvato, ma non sono riuscito a cancellare la bozza dal browser.";
-      }
-
-      setDraft({ text: "", error: draftError });
+      // Una risposta precedente può cancellare soltanto la bozza che ha salvato.
+      setDraft(clearSavedMindDumpDraft(draftKey, result.draftSnapshot));
       setResult(null);
       setEditingItem(null);
       setSuccessMessage("Il tuo pensiero è stato salvato.");
@@ -302,6 +263,7 @@ function MindDumpPage() {
                     </span>
                   )}
                 </div>
+                {isAnalyzing && <MindDumpAnalysisWaiting />}
               </div>
 
               <div className="mind-dump-page__actions">

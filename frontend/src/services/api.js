@@ -40,5 +40,17 @@ export async function apiRequest(endpoint, options = {}) {
     throw error;
   }
 
+  // La creazione non passa da useMindDumps: notifichiamo solo il POST confermato.
+  if (
+    token &&
+    endpoint === "/api/mind-dumps" &&
+    fetchOptions.method === "POST" &&
+    data?.mindDump?._id
+  ) {
+    window.dispatchEvent(new CustomEvent("adhd:mind-dump-created", {
+      detail: { token, sessionSignal },
+    }));
+  }
+
   return data;
 }
