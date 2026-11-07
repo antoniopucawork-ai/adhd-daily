@@ -145,7 +145,7 @@ test("il timeout annulla il trasporto SDK e gli errori non rivelano dettagli int
   const post = await startApi(context);
   const send = () => post("/api/mind-dumps/analyze", { originalText }, bearer(userC));
   const timedOut = await send();
-  assert.equal(configuredTimeout, 15_000);
+  assert.equal(configuredTimeout, 60_000);
   assert.equal(aborted, true);
   assert.equal(timedOut.status, 504);
   assert.deepEqual(await timedOut.json(), { message: "L’analisi ha impiegato troppo tempo. Riprova." });

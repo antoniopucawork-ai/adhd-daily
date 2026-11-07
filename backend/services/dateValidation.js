@@ -240,7 +240,14 @@ export const resolveTemporalExpression = (
   if (Object.hasOwn(relativeDays, expression)) {
     return resolved(addDays(referenceDate, relativeDays[expression]));
   }
+  // Riconosce il momento della giornata senza inventare un orario.
+  const dayPeriodMatch = expression.match(
+    /^(ieri|oggi|domani|dopodomani)\s+(mattina|pomeriggio|sera)$/,
+  );
 
+  if (dayPeriodMatch) {
+    return resolved(addDays(referenceDate, relativeDays[dayPeriodMatch[1]]));
+  }
   // Giorni della settimana
   if (Object.hasOwn(WEEKDAYS, expression)) {
     return resolved(getNextWeekdayDate(referenceDate, WEEKDAYS[expression]));
@@ -287,7 +294,9 @@ export const resolveTemporalExpression = (
 
   // Data esplicita con giorno della settimana: "Lunedì 9 novembre 2026".
   const weekdayDateMatch = expression.match(
-    new RegExp(`^(${Object.keys(WEEKDAYS).join("|")})\\s+(\\d{1,2})\\s+(${MONTH_NAMES})\\s+(\\d{4})$`),
+    new RegExp(
+      `^(${Object.keys(WEEKDAYS).join("|")})\\s+(\\d{1,2})\\s+(${MONTH_NAMES})\\s+(\\d{4})$`,
+    ),
   );
 
   if (weekdayDateMatch) {

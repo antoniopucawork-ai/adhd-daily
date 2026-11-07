@@ -42,3 +42,13 @@ test("conserva il riconoscimento separato del giorno e della data testuale", () 
     });
   }
 });
+
+test("riconosce domani mattina senza inventare un orario", () => {
+  assert.deepEqual(
+    resolveTemporalExpression("domani mattina", referenceDate),
+    {
+      date: "2026-11-08",
+      status: "resolved",
+    },
+  );
+});
