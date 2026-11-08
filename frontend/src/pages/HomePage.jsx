@@ -65,6 +65,7 @@ function HomePage() {
     today: {
       items,
       onComplete: handleCompleteFromPanel,
+      onOpenItem: handleOpenItem,
       completingId,
       completionError,
     },

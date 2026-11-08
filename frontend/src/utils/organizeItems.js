@@ -43,3 +43,11 @@ export function getNextAction(items, today) {
     actions.find((item) => !item.date)
   );
 }
+export function getOverdueActions(items, today) {
+  return items.filter(
+    (item) =>
+      canCompleteAction(item) &&
+      typeof item.date === "string" &&
+      item.date < today,
+  );
+}

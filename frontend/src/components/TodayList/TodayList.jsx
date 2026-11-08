@@ -1,11 +1,12 @@
 import { CalendarDays, ListTodo, AlertTriangle } from "lucide-react";
-
 import { useNavigate } from "react-router-dom";
+
 import { getTodayDate } from "../../utils/date";
 import {
   canCompleteAction,
   getOpenItems,
   getTodayItems,
+  getOverdueActions,
 } from "../../utils/organizeItems";
 
 import "./TodayList.css";
@@ -15,32 +16,40 @@ const ICONS = {
   EVENT: CalendarDays,
 };
 
+// Converte una data ISO in formato italiano.
+function formatDate(date) {
+  const [year, month, day] = date.split("-");
+  return `${day}/${month}/${year}`;
+}
+
 function TodayList({
   items = [],
   onComplete,
+  onOpenItem,
   completingId = null,
   completionError = "",
 }) {
   const navigate = useNavigate();
   const todayDate = getTodayDate();
 
-  // Recuperiamo gli elementi di oggi.
+  // 1. Selezione degli elementi
   const todayItems = getTodayItems(items, todayDate);
+  const overdueActions = getOverdueActions(items, todayDate);
 
-  // Contiamo soltanto le azioni confermate.
+  // 2. Riepilogo della giornata
   const actionsCount = todayItems.filter(canCompleteAction).length;
 
   const eventsCount = todayItems.filter(
     (item) => item.type === "EVENT" && !item.uncertain,
   ).length;
 
-  // Da verificare include anche elementi di altri giorni.
   const uncertainCount = getOpenItems(items).filter(
     (item) => item.uncertain === true,
   ).length;
 
   return (
     <section className="today">
+      {/* INTESTAZIONE */}
       <div className="today__header">
         <h2>Oggi</h2>
 
@@ -53,6 +62,7 @@ function TodayList({
         </button>
       </div>
 
+      {/* RIEPILOGO */}
       <div className="today__summary">
         <button
           className="today__summary-card"
@@ -88,12 +98,14 @@ function TodayList({
         </button>
       </div>
 
+      {/* ERRORI */}
       {completionError && (
         <p className="today__error" role="alert">
           {completionError}
         </p>
       )}
 
+      {/* ATTIVITÀ DI OGGI */}
       <div className="today__list">
         {todayItems.length === 0 ? (
           <div className="today__empty">
@@ -140,6 +152,46 @@ function TodayList({
           })
         )}
       </div>
+
+      {/* AZIONI ARRETRATE DA RIVEDERE */}
+      {overdueActions.length > 0 && (
+        <div className="today__overdue">
+          <div className="today__header">
+            <h2>Da rivedere ({overdueActions.length})</h2>
+          </div>
+
+          <div className="today__list">
+            {overdueActions.map((item) => (
+              <div className="today__item" key={item.id}>
+                <div className="today__icon">
+                  <AlertTriangle
+                    size={17}
+                    strokeWidth={1.5}
+                    aria-hidden="true"
+                  />
+                </div>
+
+                <div className="today__content">
+                  <h3>{item.title}</h3>
+
+                  <p>Prevista per il {formatDate(item.date)}</p>
+
+                  <button
+                    className="today__view-all"
+                    type="button"
+                    onClick={() => onOpenItem?.(item)}
+                    aria-label={`Rivedi attività: ${item.title}`}
+                  >
+                    Rivedi attività
+                  </button>
+                </div>
+
+                <span aria-hidden="true" />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </section>
   );
 }

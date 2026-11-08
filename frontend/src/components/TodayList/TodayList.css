@@ -400,3 +400,9 @@
     transition: none;
   }
 }
+
+/* Sezione delle attività arretrate */
+
+.today__overdue {
+  margin-top: 24px;
+}

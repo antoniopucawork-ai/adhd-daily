@@ -7,10 +7,16 @@ import {
   getNextAction,
   getTodayItems,
   organizeItems,
+  getOverdueActions,
 } from "../src/utils/organizeItems.js";
 
 const today = "2026-11-05";
-const action = { type: "ACTION", status: "TODO", uncertain: false, date: today };
+const action = {
+  type: "ACTION",
+  status: "TODO",
+  uncertain: false,
+  date: today,
+};
 
 test("usa il giorno di Roma e calcola domani a cavallo dell'anno", () => {
   const instant = new Date("2026-12-31T23:30:00Z");
@@ -25,9 +31,15 @@ test("Oggi mostra azioni e appuntamenti del giorno senza includere i completati"
   const intention = { ...action, type: "INTENTION", uncertain: true };
   const thought = { ...action, type: "THOUGHT" };
   const done = { ...action, status: "DONE" };
-  assert.deepEqual(getTodayItems([event, memory, intention, thought, done, action], today), [event, action]);
+  assert.deepEqual(
+    getTodayItems([event, memory, intention, thought, done, action], today),
+    [event, action],
+  );
   assert.deepEqual(getCompletedItems([action, done]), [done]);
-  assert.deepEqual(organizeItems([memory, intention, thought, done, action])["da-verificare"], [intention]);
+  assert.deepEqual(
+    organizeItems([memory, intention, thought, done, action])["da-verificare"],
+    [intention],
+  );
 });
 
 test("Prossimo passo preferisce oggi, poi gli arretrati e infine le azioni senza data", () => {
@@ -40,9 +52,18 @@ test("Prossimo passo preferisce oggi, poi gli arretrati e infine le azioni senza
 
   assert.equal(getNextAction([undated, overdue, action], today), action);
   assert.equal(getNextAction([uncertain, undated, overdue], today), overdue);
-  assert.equal(getNextAction([future, futureEvent, done, uncertain, undated], today), undated);
-  assert.equal(getNextAction([future, futureEvent, done, uncertain], today), undefined);
-  assert.deepEqual(organizeItems([overdue, undated, futureEvent])["da-fare"], [overdue, undated]);
+  assert.equal(
+    getNextAction([future, futureEvent, done, uncertain, undated], today),
+    undated,
+  );
+  assert.equal(
+    getNextAction([future, futureEvent, done, uncertain], today),
+    undefined,
+  );
+  assert.deepEqual(organizeItems([overdue, undated, futureEvent])["da-fare"], [
+    overdue,
+    undated,
+  ]);
   assert.deepEqual(organizeItems([futureEvent])["in-programma"], [futureEvent]);
 });
 
@@ -53,4 +74,20 @@ test("solo le azioni aperte e confermate sono completabili", () => {
   assert.equal(canCompleteAction({ ...action, status: "DONE" }), false);
   assert.equal(canCompleteAction({ ...action, type: "EVENT" }), false);
   assert.equal(canCompleteAction(undefined), false);
+});
+test("le azioni arretrate restano aperte e vengono individuate", () => {
+  const overdue = { ...action, date: "2026-11-03" };
+  const done = { ...overdue, status: "DONE" };
+  const uncertain = { ...overdue, uncertain: true };
+  const event = { ...overdue, type: "EVENT" };
+  const undated = { ...action, date: null };
+  const future = { ...action, date: "2026-11-06" };
+
+  assert.deepEqual(
+    getOverdueActions(
+      [overdue, done, uncertain, event, undated, future, action],
+      today,
+    ),
+    [overdue],
+  );
 });
