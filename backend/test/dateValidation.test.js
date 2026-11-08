@@ -52,3 +52,25 @@ test("riconosce domani mattina senza inventare un orario", () => {
     },
   );
 });
+
+test("non sposta automaticamente all'anno successivo una data senza anno già passata", () => {
+  assert.deepEqual(
+    resolveTemporalExpression("5 novembre", "2026-11-08"),
+    { date: null, status: "ambiguous" },
+  );
+
+  assert.deepEqual(
+    resolveTemporalExpression("10 novembre", "2026-11-08"),
+    { date: "2026-11-10", status: "resolved" },
+  );
+
+  assert.deepEqual(
+    resolveTemporalExpression("5 novembre 2026", "2026-11-08"),
+    { date: "2026-11-05", status: "resolved" },
+  );
+
+  assert.deepEqual(
+    resolveTemporalExpression("2 gennaio", "2026-12-29"),
+    { date: null, status: "ambiguous" },
+  );
+});

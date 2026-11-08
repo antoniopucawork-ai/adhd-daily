@@ -185,7 +185,7 @@ const resolveDayAndMonth = (day, month, referenceDate) => {
     const candidate = createISODate(year, month, day);
 
     if (candidate !== null && candidate >= referenceDate) {
-      return resolved(candidate);
+      return year === referenceYear ? resolved(candidate) : ambiguous();
     }
   }
 
