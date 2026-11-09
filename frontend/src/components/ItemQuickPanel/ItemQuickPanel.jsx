@@ -8,7 +8,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-
+import { getGoogleCalendarUrl } from "../../utils/googleCalendar";
 import { TYPE_LABELS } from "../../config/mindDump";
 import { canCompleteAction } from "../../utils/organizeItems";
 
@@ -62,6 +62,7 @@ function ItemQuickPanel({
   if (!item) return null;
 
   const canComplete = canCompleteAction(item);
+  const googleCalendarUrl = getGoogleCalendarUrl(item);
 
   return (
     <dialog
@@ -137,6 +138,18 @@ function ItemQuickPanel({
           )}
 
           <div className="item-quick-panel__actions">
+            {googleCalendarUrl && (
+              <a
+                className="item-quick-panel__calendar"
+                href={googleCalendarUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <CalendarDays size={18} aria-hidden="true" />
+                Google Calendar
+              </a>
+            )}
+
             {onEdit && (
               <button
                 ref={editButtonRef}

@@ -351,7 +351,6 @@
   }
 }
 
-
 /* Attesa del Mind Dump: un piccolo gesto dal disordine alla calma. */
 .mind-dump-page__analysis {
   position: absolute;
@@ -367,8 +366,16 @@
   border-radius: inherit;
   pointer-events: none;
   background:
-    radial-gradient(ellipse at 65% 42%, rgba(199, 182, 237, 0.12), transparent 56%),
-    radial-gradient(ellipse at 25% 56%, rgba(169, 205, 235, 0.09), transparent 52%),
+    radial-gradient(
+      ellipse at 65% 42%,
+      rgba(199, 182, 237, 0.12),
+      transparent 56%
+    ),
+    radial-gradient(
+      ellipse at 25% 56%,
+      rgba(169, 205, 235, 0.09),
+      transparent 52%
+    ),
     var(--color-background-secondary);
 }
 
@@ -383,7 +390,6 @@
   text-align: center;
   text-wrap: balance;
 }
-
 
 .mind-dump-page__thought-gathering {
   display: block;
@@ -405,14 +411,28 @@
   animation: mind-dump-gather 7.2s ease-in-out infinite;
 }
 
-.mind-dump-page__thought-line--lavender { stroke: #c7b6ed; }
-.mind-dump-page__thought-line--rose { stroke: #e9b8d3; }
-.mind-dump-page__thought-line--blue { stroke: #a9cdeb; }
+.mind-dump-page__thought-line--lavender {
+  stroke: #c7b6ed;
+}
+.mind-dump-page__thought-line--rose {
+  stroke: #e9b8d3;
+}
+.mind-dump-page__thought-line--blue {
+  stroke: #a9cdeb;
+}
 
-.mind-dump-page__thought-line:nth-child(2) { animation-delay: -0.28s; }
-.mind-dump-page__thought-line:nth-child(3) { animation-delay: -0.56s; }
-.mind-dump-page__thought-line:nth-child(4) { animation-delay: -0.84s; }
-.mind-dump-page__thought-line:nth-child(5) { animation-delay: -1.12s; }
+.mind-dump-page__thought-line:nth-child(2) {
+  animation-delay: -0.28s;
+}
+.mind-dump-page__thought-line:nth-child(3) {
+  animation-delay: -0.56s;
+}
+.mind-dump-page__thought-line:nth-child(4) {
+  animation-delay: -0.84s;
+}
+.mind-dump-page__thought-line:nth-child(5) {
+  animation-delay: -1.12s;
+}
 
 .mind-dump-page__thought-core {
   fill: var(--color-accent);
@@ -420,7 +440,8 @@
 }
 
 @keyframes mind-dump-gather {
-  0%, 8% {
+  0%,
+  8% {
     transform: scale(1);
     opacity: 0.6;
   }
@@ -428,7 +449,8 @@
     transform: scale(0.14);
     opacity: 0.2;
   }
-  72%, 88% {
+  72%,
+  88% {
     transform: scale(0.1);
     opacity: 0;
   }
@@ -443,8 +465,15 @@
 }
 
 @keyframes mind-dump-settle {
-  0%, 30%, 100% { transform: scale(1); }
-  62%, 72% { transform: scale(1.1); }
+  0%,
+  30%,
+  100% {
+    transform: scale(1);
+  }
+  62%,
+  72% {
+    transform: scale(1.1);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -456,5 +485,61 @@
   .mind-dump-page__thought-line {
     transform: scale(0.6);
     opacity: 0.45;
+  }
+}
+
+/* Pulsante per la dettatura vocale */
+
+.voice-dictation-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+
+  min-height: 40px;
+  padding: 9px 15px;
+
+  border: 1px solid rgba(199, 182, 237, 0.3);
+  border-radius: 12px;
+
+  background: rgba(199, 182, 237, 0.1);
+  color: #e4d8fa;
+
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
+
+  cursor: pointer;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease;
+}
+
+.voice-dictation-button:hover:not(:disabled) {
+  background: rgba(199, 182, 237, 0.2);
+  border-color: rgba(199, 182, 237, 0.55);
+}
+
+.voice-dictation-button--active {
+  background: rgba(237, 129, 148, 0.14);
+  border-color: rgba(237, 129, 148, 0.5);
+  color: #f1b4c2;
+}
+
+.voice-dictation-button:focus-visible {
+  outline: 2px solid #a9cdeb;
+  outline-offset: 3px;
+}
+
+.voice-dictation-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .voice-dictation-button {
+    transition: none;
   }
 }

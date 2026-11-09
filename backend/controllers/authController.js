@@ -1,7 +1,7 @@
 import User from "../models/User.js";
 import bcrypt from "bcrypt";
-
 import jwt from "jsonwebtoken";
+import { verifyGoogleUser } from "../services/googleAuthService.js";
 // REGISTRAZIONE UTENTE
 
 export const register = async (req, res) => {
@@ -63,7 +63,7 @@ export const register = async (req, res) => {
       passwordHash: passwordHash,
     });
 
-    // 9. Restituiamo la risposta senza la password
+    // 9. Restituiamo i dati pubblici dell'utente
     return res.status(201).json({
       message: "Registrazione completata con successo",
       user: {
@@ -114,8 +114,9 @@ export const login = async (req, res) => {
       email: normalizedEmail,
     }).select("+passwordHash");
 
-    // 5. Controlliamo se l'utente esiste
-    if (!user) {
+    // 5. Controlliamo che l'utente esista
+    // e che abbia una password per il login tradizionale
+    if (!user || typeof user.passwordHash !== "string") {
       return res.status(401).json({
         message: "Email o password non corrette",
       });
@@ -131,9 +132,7 @@ export const login = async (req, res) => {
       });
     }
 
-    // 8. Le credenziali sono corrette
-
-    // Generiamo un token JWT per identificare l'utente
+    // 8. Generiamo il token JWT
     const token = jwt.sign(
       { sub: user._id.toString() },
       process.env.JWT_SECRET,
@@ -143,7 +142,7 @@ export const login = async (req, res) => {
       },
     );
 
-    // Restituiamo il token e i dati pubblici dell'utente
+    // 9. Restituiamo il token e i dati pubblici dell'utente
     return res.status(200).json({
       message: "Login effettuato con successo",
       token,
@@ -154,9 +153,92 @@ export const login = async (req, res) => {
       },
     });
   } catch (error) {
-    // 9. Gestiamo gli errori imprevisti
+    // 10. Gestiamo gli errori imprevisti
     return res.status(500).json({
       message: "Errore durante il login",
+    });
+  }
+};
+
+ // LOGIN CON GOOGLE
+
+export const googleLogin = async (req, res) => {
+  // 1. Recuperiamo la credenziale Google
+  const { credential } = req.body ?? {};
+
+  if (typeof credential !== "string" || !credential.trim()) {
+    return res.status(400).json({
+      message: "Credenziale Google mancante",
+    });
+  }
+
+  // 2. Verifichiamo la credenziale
+  let googleUser;
+
+  try {
+    googleUser = await verifyGoogleUser(credential);
+  } catch (error) {
+    return res.status(401).json({
+      message: "Accesso Google non valido",
+    });
+  }
+
+  try {
+    // 3. Cerchiamo un account collegato a Google
+    let user = await User.findOne({
+      googleId: googleUser.googleId,
+    });
+
+    // 4. Se non esiste, controlliamo l'email
+    if (!user) {
+      const existingUser = await User.findOne({
+        email: googleUser.email,
+      });
+
+      // Non colleghiamo automaticamente account differenti
+      if (existingUser) {
+        return res.status(409).json({
+          message: "Email già registrata. Accedi con email e password.",
+        });
+      }
+
+      // 5. Creiamo un nuovo account Google
+      user = await User.create({
+        firstName: googleUser.firstName,
+        email: googleUser.email,
+        googleId: googleUser.googleId,
+      });
+    }
+
+    // 6. Generiamo il nostro JWT
+    const token = jwt.sign(
+      { sub: user._id.toString() },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "1h",
+        algorithm: "HS256",
+      },
+    );
+
+    // 7. Restituiamo la stessa struttura del login normale
+    return res.status(200).json({
+      message: "Login effettuato con successo",
+      token,
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        email: user.email,
+      },
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({
+        message: "Impossibile completare l'accesso Google",
+      });
+    }
+
+    return res.status(500).json({
+      message: "Errore durante il login Google",
     });
   }
 };

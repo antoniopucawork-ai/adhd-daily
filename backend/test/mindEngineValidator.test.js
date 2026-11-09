@@ -149,3 +149,128 @@ for (const [name, text, fragment, expression, date] of [
     });
   });
 }
+
+
+for (const [clock, proposed, expected] of [
+  ["8", "08:00", "08:00"],
+  ["20", "20:00", "20:00"],
+  ["8 di mattina", "08:00", "08:00"],
+  ["8 di mattina", "20:00", null],
+  ["8 di sera", "20:00", "20:00"],
+  ["8 di sera", "08:00", null],
+  ["3 di pomeriggio", "15:00", "15:00"],
+  ["3 di pomeriggio", "03:00", null],
+  ["20 di sera", "20:00", "20:00"],
+  ["15 di pomeriggio", "15:00", "15:00"],
+  ["20 di mattina", "20:00", null],
+  ["8:30 di sera", "20:30", "20:30"],
+  ["8.30 di sera.", "20:30", "20:30"],
+  ["8:30 di mattina", "08:30", "08:30"],
+  ["3:15 di pomeriggio", "15:15", "15:15"],
+  ["8:30 di sera", "20:00", null],
+  ["12", "12:00", "12:00"],
+  ["12", "00:00", null],
+  ["12 di pomeriggio", "12:00", "12:00"],
+  ["12 di pomeriggio", "00:00", null],
+  ["12:30 di pomeriggio", "12:30", "12:30"],
+  ["12 di mattina", "12:00", null],
+  ["12 di mattina", "00:00", null],
+  ["12:30 di mattina", "12:30", null],
+  ["12:30 di mattina", "00:30", null],
+  ["12 di sera", "12:00", null],
+  ["12 di sera", "00:00", null],
+  ["12:30 di sera", "00:30", null],
+  ["12:30 di sera", "12:30", null],
+  ["0", "00:00", "00:00"],
+  ["0 di mattina", "00:00", "00:00"],
+  ["0 di sera", "00:00", null],
+]) {
+  test(`qualificatori: "alle ${clock}" con proposta ${proposed}`, () => {
+    const originalFragment = `Domani dentista alle ${clock}`;
+    const result = validateItemDate({
+      ...dentist, originalFragment, time: proposed,
+    }, originalFragment, referenceDate);
+
+    assert.deepEqual(result, {
+      type: "EVENT", title: "Dentista", date: "2026-11-06",
+      time: expected, uncertain: expected === null,
+    });
+  });
+}
+
+for (const [text, fragment, proposed] of [
+  ["Domani dentista alle 8 di sera", "Domani dentista alle 8", "08:00"],
+  ["Domani dentista alle 8 di sera", "Domani dentista alle 8", "20:00"],
+  ["Domani dentista alle 8 di mattina o di sera", "Domani dentista alle 8 di mattina o di sera", "08:00"],
+  ["Domani dentista alle 8 di mattina oppure di sera", "Domani dentista alle 8 di mattina", "08:00"],
+  ["Domani dentista alle 8 di mattina o alle 9 di sera", "Domani dentista alle 8 di mattina o alle 9 di sera", "08:00"],
+  ["Domani dentista alle 8 di mattina o alle 9 di sera", "Domani dentista alle 8 di mattina", "08:00"],
+  ["Domani dentista alle 8 di mattina o 9:00 di sera", "9:00 di sera", "21:00"],
+]) {
+  test(`qualificatori: citazione "${fragment}" non risolve l'ambiguità in "${text}" (${proposed})`, () => {
+    const result = validateItemDate({
+      ...dentist, originalFragment: fragment, time: proposed,
+    }, text, referenceDate);
+    assert.equal(result.time, null);
+    assert.equal(result.uncertain, true);
+    // Una citazione senza la data non deve ereditarla da altri frammenti.
+    assert.equal(result.date, fragment.includes("Domani") ? "2026-11-06" : null);
+  });
+}
+
+test("qualificatori: mantiene l'incertezza preesistente e non inventa un orario assente", () => {
+  const originalFragment = "Domani dentista alle 8 di sera";
+  for (const [time, uncertain] of [["20:00", true], [null, false]]) {
+    const result = validateItemDate({
+      ...dentist, originalFragment, time, uncertain,
+    }, originalFragment, referenceDate);
+    assert.equal(result.time, time);
+    assert.equal(result.uncertain, uncertain);
+    assert.equal(result.date, "2026-11-06");
+  }
+});
+
+for (const proposed of ["08:00", "20:00"]) {
+  test(`qualificatori: proposta ${proposed} preserva gli altri elementi e gli input`, () => {
+    const firstFragment = "Domani dentista alle 8 di sera";
+    const secondFragment = "Palestra il 14 novembre 2026 alle 18";
+    const originalText = `${firstFragment}. ${secondFragment}. Devo comprare il latte.`;
+    const items = [
+      { ...dentist, originalFragment: firstFragment, time: proposed },
+      { ...dentist, title: "Palestra", originalFragment: secondFragment,
+        date: "2026-11-14", time: "18:00", temporalExpression: "14 novembre 2026" },
+      { ...dentist, type: "ACTION", title: "Comprare il latte", originalFragment: "Devo comprare il latte",
+        date: null, time: null, temporalExpression: null },
+    ];
+    const snapshot = structuredClone(items);
+    const result = validateItems(items, originalText, referenceDate);
+
+    assert.deepEqual(result[0], {
+      type: "EVENT", title: "Dentista", date: "2026-11-06",
+      time: proposed === "20:00" ? "20:00" : null, uncertain: proposed !== "20:00",
+    });
+    assert.deepEqual(result.slice(1), [
+      { type: "EVENT", title: "Palestra", date: "2026-11-14", time: "18:00", uncertain: false },
+      { type: "ACTION", title: "Comprare il latte", date: null, time: null, uncertain: false },
+    ]);
+    assert.deepEqual(items, snapshot);
+    assert.equal(originalText, `${firstFragment}. ${secondFragment}. Devo comprare il latte.`);
+  });
+}
+
+
+for (const originalFragment of [
+  "Domani dentista ore 8:30 di sera",
+  "Domani dentista alle ore 8:30 di sera",
+  "Domani dentista 8:30 di sera",
+  "DOMANI DENTISTA ALLE 8:30 DI SERA",
+]) {
+  test(`qualificatori: conserva formato e normalizzazione in "${originalFragment}"`, () => {
+    const result = validateItemDate({
+      ...dentist, originalFragment, time: "20:30",
+    }, originalFragment, referenceDate);
+    assert.deepEqual(result, {
+      type: "EVENT", title: "Dentista", date: "2026-11-06", time: "20:30", uncertain: false,
+    });
+  });
+}

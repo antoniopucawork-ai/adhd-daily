@@ -5,9 +5,12 @@ import { ArrowRight, Feather, LoaderCircle } from "lucide-react";
 import MindDumpResult from "../components/MindDumpResult/MindDumpResult";
 import MindDumpEdit from "../components/MindDumpEdit/MindDumpEdit";
 import MindDumpAnalysisWaiting from "../components/MindDumpAnalysisWaiting";
+import VoiceDictationButton from "../components/VoiceDictationButton";
 
 import { useAuth } from "../context/useAuth";
+import { useVoiceDictation } from "../hooks/useVoiceDictation";
 import { apiRequest } from "../services/api";
+
 import {
   clearSavedMindDumpDraft,
   readMindDumpDraft,
@@ -21,9 +24,10 @@ import {
   TYPE_LABELS,
   isValidTitle,
 } from "../config/mindDump";
+
 import "./MindDumpPage.css";
 
-// Ogni account usa una chiave diversa per la propria bozza.
+// Ogni utente ha una bozza personale.
 function getDraftKey(userId) {
   return userId ? `adhdDailyDraft:${userId}` : null;
 }
@@ -33,6 +37,7 @@ function MindDumpPage() {
   const draftKey = getDraftKey(user?.id);
 
   const [draft, setDraft] = useState(() => readMindDumpDraft(draftKey));
+
   const [result, setResult] = useState(null);
   const [editingItem, setEditingItem] = useState(null);
 
@@ -45,20 +50,53 @@ function MindDumpPage() {
   const mindDump = draft.text;
   const hasContent = mindDump.trim().length > 0;
 
-  // Aggiorniamo il testo e conserviamo la bozza nel browser.
+  // Aggiorna il testo scritto e conserva la bozza.
   function handleMindDumpChange(event) {
     const text = event.target.value;
 
     setDraft(writeMindDumpDraft(draftKey, text));
+
     setError("");
     setSuccessMessage("");
   }
 
-  // Analizziamo il testo senza salvarlo nel database.
+  // Aggiunge le parole dettate al testo già presente.
+  function handleVoiceTranscript(transcript) {
+    if (!transcript.trim()) return;
+
+    setDraft((currentDraft) => {
+      const currentText = currentDraft.text;
+
+      const separator = currentText && !/\s$/.test(currentText) ? " " : "";
+
+      const updatedText = (currentText + separator + transcript).slice(
+        0,
+        MAX_TEXT_LENGTH,
+      );
+
+      return writeMindDumpDraft(draftKey, updatedText);
+    });
+
+    setError("");
+    setSuccessMessage("");
+  }
+
+  // Gestione del riconoscimento vocale.
+  const {
+    isSupported,
+    isListening,
+    voiceError,
+    startListening,
+    stopListening,
+  } = useVoiceDictation(handleVoiceTranscript);
+
+  // Analizza il testo senza salvarlo in MongoDB.
   async function handleOrganize(event) {
     event.preventDefault();
 
-    if (!hasContent || isAnalyzing || isSaving) return;
+    if (!hasContent || isAnalyzing || isSaving || isListening) {
+      return;
+    }
 
     setError("");
     setSuccessMessage("");
@@ -73,7 +111,6 @@ function MindDumpPage() {
         }),
       });
 
-      // Il backend accetta al massimo 20 elementi al salvataggio.
       if (!Array.isArray(analysis?.items) || analysis.items.length === 0) {
         throw new Error("Non sono riuscito a interpretare il testo. Riprova.");
       }
@@ -84,7 +121,7 @@ function MindDumpPage() {
         );
       }
 
-        const isValidResult = analysis.items.every(
+      const isValidResult = analysis.items.every(
         (item) =>
           item &&
           Object.hasOwn(TYPE_LABELS, item.type) &&
@@ -101,7 +138,10 @@ function MindDumpPage() {
         id: crypto.randomUUID(),
         createdAt: new Date().toISOString(),
         originalText: mindDump,
-        draftSnapshot: { text: draft.text, version: draft.version },
+        draftSnapshot: {
+          text: draft.text,
+          version: draft.version,
+        },
         items: analysis.items.map((item) => ({
           ...item,
           id: crypto.randomUUID(),
@@ -116,13 +156,13 @@ function MindDumpPage() {
     }
   }
 
-  // Apriamo la modifica del pensiero selezionato.
+  // Apre la modifica di un elemento.
   function handleEditItem(item) {
     setError("");
     setEditingItem(item);
   }
 
-  // Aggiorniamo l'elemento prima della conferma definitiva.
+  // Aggiorna un elemento prima della conferma.
   function handleSaveItem(updatedItem) {
     setResult((current) => {
       if (!current) return current;
@@ -138,7 +178,7 @@ function MindDumpPage() {
     setEditingItem(null);
   }
 
-  // Salviamo in MongoDB solo dopo la conferma dell'utente.
+  // Salva soltanto dopo la conferma dell'utente.
   async function handleConfirm() {
     if (!result || isSaving) return;
 
@@ -147,7 +187,9 @@ function MindDumpPage() {
     );
 
     if (hasInvalidTitles) {
-      setError(`Controlla i titoli: devono contenere massimo ${MAX_TITLE_LENGTH} caratteri.`);
+      setError(
+        `Controlla i titoli: devono contenere massimo ${MAX_TITLE_LENGTH} caratteri.`,
+      );
       return;
     }
 
@@ -174,10 +216,11 @@ function MindDumpPage() {
         throw new Error("Il server non ha confermato il salvataggio.");
       }
 
-      // Una risposta precedente può cancellare soltanto la bozza che ha salvato.
       setDraft(clearSavedMindDumpDraft(draftKey, result.draftSnapshot));
+
       setResult(null);
       setEditingItem(null);
+
       setSuccessMessage("Il tuo pensiero è stato salvato.");
     } catch (requestError) {
       setError(
@@ -188,7 +231,7 @@ function MindDumpPage() {
     }
   }
 
-  // Torniamo al testo originale senza perdere la bozza.
+  // Torna alla scrittura senza cancellare la bozza.
   function handleBack() {
     setResult(null);
     setEditingItem(null);
@@ -207,6 +250,12 @@ function MindDumpPage() {
         {error && (
           <p className="mind-dump-page__alert" role="alert">
             {error}
+          </p>
+        )}
+
+        {voiceError && (
+          <p className="mind-dump-page__alert" role="alert">
+            {voiceError}
           </p>
         )}
 
@@ -239,7 +288,15 @@ function MindDumpPage() {
                 <div className="mind-dump-page__sheet-top">
                   <span>Uno spazio solo tuo</span>
 
-                  <Feather size={19} strokeWidth={1.5} aria-hidden="true" />
+                  {isSupported ? (
+                    <VoiceDictationButton
+                      onClick={isListening ? stopListening : startListening}
+                      disabled={isAnalyzing || isSaving}
+                      isListening={isListening}
+                    />
+                  ) : (
+                    <Feather size={19} strokeWidth={1.5} aria-hidden="true" />
+                  )}
                 </div>
 
                 <textarea
@@ -255,7 +312,11 @@ function MindDumpPage() {
                 />
 
                 <div className="mind-dump-page__sheet-bottom">
-                  <span id="mind-dump-hint">Nessun ordine necessario.</span>
+                  <span id="mind-dump-hint">
+                    {isListening
+                      ? "Microfono attivo. Parla liberamente."
+                      : "Nessun ordine necessario."}
+                  </span>
 
                   {mindDump.length >= 9000 && (
                     <span className="mind-dump-page__counter">
@@ -263,6 +324,7 @@ function MindDumpPage() {
                     </span>
                   )}
                 </div>
+
                 {isAnalyzing && <MindDumpAnalysisWaiting />}
               </div>
 
@@ -270,7 +332,7 @@ function MindDumpPage() {
                 <button
                   className="mind-dump-page__organize"
                   type="submit"
-                  disabled={!hasContent || isAnalyzing}
+                  disabled={!hasContent || isAnalyzing || isListening}
                   aria-busy={isAnalyzing}
                 >
                   <span>

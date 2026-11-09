@@ -1,5 +1,5 @@
 import express from "express";
-import { register, login } from "../controllers/authController.js";
+import { register, login, googleLogin } from "../controllers/authController.js";
 import { loginRateLimit, registerRateLimit } from "../middleware/rateLimits.js";
 import { verifyToken } from "../middleware/verifyToken.js";
 import User from "../models/User.js";
@@ -9,6 +9,7 @@ const router = express.Router();
 // Rotte pubbliche
 router.post("/register", registerRateLimit, register);
 router.post("/login", loginRateLimit, login);
+router.post("/google", loginRateLimit, googleLogin);
 
 // Recuperiamo le informazioni dell'utente autenticato.
 router.get("/me", verifyToken, async (req, res) => {

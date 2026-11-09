@@ -72,27 +72,42 @@ function isDateSupported(date, expression, text, fragment, referenceDate) {
 function isTimeSupported(time, text, fragment) {
   if (!fragment) return false;
 
+  const periodPattern = "(?:mattina|pomeriggio|sera)";
   const clockPattern = new RegExp(
-    `(?<![a-z0-9.])(?:(?:alle(?: ore)?|ore)\\s+(${HOUR})(?:[:.]([0-5]\\d))?|(${HOUR})[:.]([0-5]\\d))(?![a-z0-9:]|\\.\\d)`,
+    `(?<![a-z0-9.])(?:(?:alle(?: ore)?|ore)\\s+(${HOUR})(?:[:.]([0-5]\\d))?|(${HOUR})[:.]([0-5]\\d))(?![a-z0-9:]|\\.\\d)(?:\\s+di\\s+(${periodPattern})\\b)?`,
     "g",
   );
 
+  // Il qualificatore fa parte dell'evidenza: non accettiamo citazioni troncate.
   const matches = [...text.matchAll(clockPattern)].filter((match) =>
     isWithin(fragment, match.index, match.index + match[0].length),
   );
-  const times = new Set(matches.map(([, hour, minutes, bareHour, bareMinutes]) =>
-    `${(hour ?? bareHour).padStart(2, "0")}:${minutes ?? bareMinutes ?? "00"}`,
-  ));
-  if (times.size !== 1 || !times.has(time)) return false;
+  const times = new Set(matches.map(([, hour, minutes, bareHour, bareMinutes, period]) => {
+    let supportedHour = Number(hour ?? bareHour);
+    if (period === "mattina") {
+      // Le dodici di mattina non distinguono con sicurezza mezzogiorno e mezzanotte.
+      if (supportedHour >= 12) return null;
+    } else if (period) {
+      if (supportedHour === 0 || (supportedHour === 12 && period === "sera")) return null;
+      if (supportedHour < 12) supportedHour += 12;
+    }
+    return `${String(supportedHour).padStart(2, "0")}:${minutes ?? bareMinutes ?? "00"}`;
+  }));
+  if (times.has(null) || times.size !== 1 || !times.has(time)) return false;
 
-  const alternativeBefore = new RegExp(`\\b${CLOCK}\\s+${ALTERNATIVE}\\s+$`);
+  const qualifiedClock = `${CLOCK}(?:\\s+di\\s+${periodPattern}\\b)?`;
+  const alternativeBefore = new RegExp(`\\b${qualifiedClock}\\s+${ALTERNATIVE}\\s+$`);
   const alternativeAfter = new RegExp(
     `^\\s+${ALTERNATIVE}\\s+(?:(?:alle(?: ore)?|ore)\\s+)?${CLOCK}\\b`,
+  );
+  const alternativePeriodAfter = new RegExp(
+    `^\\s+${ALTERNATIVE}\\s+(?:di\\s+)?${periodPattern}\\b`,
   );
 
   return matches.every((match) =>
     !alternativeBefore.test(text.slice(0, match.index)) &&
-    !alternativeAfter.test(text.slice(match.index + match[0].length)),
+    !alternativeAfter.test(text.slice(match.index + match[0].length)) &&
+    !(match[5] && alternativePeriodAfter.test(text.slice(match.index + match[0].length))),
   );
 }
 
