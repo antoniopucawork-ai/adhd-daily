@@ -1,20 +1,43 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+
 import { useAuth } from "../context/useAuth";
 import PublicAccessLayout from "./PublicAccessLayout";
 
+// CLIENT ID GOOGLE
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
 function LoginPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
 
+  // DATI DEL FORM
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  // STATO DELLA PAGINA
   const [error, setError] = useState("");
+  const [googleError, setGoogleError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (event) => {
+  // RIFERIMENTI GOOGLE
+  const googleButtonRef = useRef(null);
+  const googleLoginRef = useRef(loginWithGoogle);
+  const loginInProgressRef = useRef(false);
+
+  // Manteniamo aggiornata la funzione di login.
+  useEffect(() => {
+    googleLoginRef.current = loginWithGoogle;
+  }, [loginWithGoogle]);
+
+  // LOGIN TRADIZIONALE
+  async function handleSubmit(event) {
     event.preventDefault();
+
+    if (loginInProgressRef.current) return;
+
+    loginInProgressRef.current = true;
     setError("");
     setIsLoading(true);
 
@@ -24,9 +47,114 @@ function LoginPage() {
     } catch (err) {
       setError(err.message || "Impossibile effettuare l'accesso.");
     } finally {
+      loginInProgressRef.current = false;
       setIsLoading(false);
     }
-  };
+  }
+
+  // INIZIALIZZAZIONE GOOGLE
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID) return;
+
+    let active = true;
+
+    // Riceve la credenziale restituita da Google.
+    async function handleGoogleCredential(response) {
+      if (!active || !response?.credential || loginInProgressRef.current) {
+        return;
+      }
+
+      loginInProgressRef.current = true;
+      setError("");
+      setIsLoading(true);
+
+      try {
+        // Il backend verifica Google e restituisce il nostro JWT.
+        await googleLoginRef.current(response.credential);
+
+        if (active) {
+          navigate("/", { replace: true });
+        }
+      } catch (err) {
+        if (active) {
+          setError(err.message || "Accesso Google non riuscito.");
+        }
+      } finally {
+        loginInProgressRef.current = false;
+
+        if (active) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    // Mostra il pulsante ufficiale Google.
+    function initializeGoogle() {
+      if (!active || !window.google?.accounts?.id || !googleButtonRef.current) {
+        return;
+      }
+
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleCredential,
+        ux_mode: "popup",
+      });
+
+      // Evita pulsanti duplicati.
+      googleButtonRef.current.replaceChildren();
+
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        type: "standard",
+        theme: "outline_dark",
+        size: "large",
+        text: "continue_with",
+        shape: "rectangular",
+        logo_alignment: "left",
+        width: Math.min(340, googleButtonRef.current.clientWidth),
+        locale: "it",
+      });
+    }
+
+    // Gestione di un errore nel caricamento dello script.
+    function handleScriptError() {
+      if (active) {
+        setGoogleError(
+          "Impossibile caricare Google. Ricarica la pagina e riprova.",
+        );
+      }
+    }
+
+    // Cerchiamo uno script Google già presente.
+    let script = document.querySelector("script[data-adhd-google-identity]");
+
+    // Se non esiste, lo creiamo.
+    if (!script) {
+      script = document.createElement("script");
+
+      script.src = "https://accounts.google.com/gsi/client";
+      script.async = true;
+      script.dataset.adhdGoogleIdentity = "true";
+    }
+
+    // Registriamo gli eventi di caricamento.
+    script.addEventListener("load", initializeGoogle);
+    script.addEventListener("error", handleScriptError);
+
+    // Se Google è già disponibile, inizializziamo subito.
+    if (window.google?.accounts?.id) {
+      initializeGoogle();
+    } else if (!script.isConnected) {
+      document.head.appendChild(script);
+    }
+
+    // Pulizia quando lasciamo la pagina.
+    return () => {
+      active = false;
+
+      script.removeEventListener("load", initializeGoogle);
+      script.removeEventListener("error", handleScriptError);
+    };
+  }, [navigate]);
 
   return (
     <PublicAccessLayout
@@ -38,9 +166,15 @@ function LoginPage() {
       <section className="access-page__panel" aria-labelledby="login-title">
         <h2 id="login-title">Accedi</h2>
 
-        <form className="access-form" onSubmit={handleSubmit} aria-labelledby="login-title">
+        {/* LOGIN EMAIL E PASSWORD */}
+        <form
+          className="access-form"
+          onSubmit={handleSubmit}
+          aria-labelledby="login-title"
+        >
           <div className="access-form__field">
             <label htmlFor="login-email">Email</label>
+
             <input
               id="login-email"
               type="email"
@@ -54,6 +188,7 @@ function LoginPage() {
 
           <div className="access-form__field">
             <label htmlFor="login-password">Password</label>
+
             <input
               id="login-password"
               type="password"
@@ -77,13 +212,52 @@ function LoginPage() {
             disabled={isLoading}
           >
             {isLoading ? "Accesso in corso..." : "Entra nel tuo spazio"}
+
             {!isLoading && <ArrowRight size={19} aria-hidden="true" />}
           </button>
         </form>
 
+        {/* LOGIN GOOGLE */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "12px",
+            marginTop: "20px",
+          }}
+        >
+          <span>oppure</span>
+
+          {GOOGLE_CLIENT_ID ? (
+            <div
+              ref={googleButtonRef}
+              style={{
+                width: "100%",
+                maxWidth: "400px",
+                opacity: isLoading ? 0.6 : 1,
+                pointerEvents: isLoading ? "none" : "auto",
+              }}
+            />
+          ) : (
+            <p className="access-form__error" role="alert">
+              Accesso Google non configurato.
+            </p>
+          )}
+
+          {googleError && (
+            <p className="access-form__error" role="alert">
+              {googleError}
+            </p>
+          )}
+        </div>
+
+        {/* REGISTRAZIONE */}
         <p className="access-page__account">
           Non hai un account? <Link to="/registrazione">Registrati</Link>
         </p>
+
+        {/* RITORNO */}
         <Link to="/benvenuto" className="access-page__back">
           <ArrowLeft size={16} aria-hidden="true" />
           Torna al benvenuto
