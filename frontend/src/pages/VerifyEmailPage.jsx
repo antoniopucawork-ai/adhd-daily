@@ -7,7 +7,7 @@ function VerifyEmailPage() {
   const location = useLocation();
 
   const [email, setEmail] = useState(location.state?.email || "");
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(location.state?.message || "");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -38,7 +38,7 @@ function VerifyEmailPage() {
       variant="register"
       eyebrow="Ci siamo quasi"
       title="Verifica la tua email."
-      description="Ti abbiamo inviato un link per attivare il tuo account."
+      description="Controlla la tua casella email oppure richiedi un nuovo link di verifica."
     >
       <section className="access-page__panel">
         <h2>Controlla la tua casella email</h2>

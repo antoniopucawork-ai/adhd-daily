@@ -5,71 +5,85 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useAuth } from "../context/useAuth";
 import PublicAccessLayout from "./PublicAccessLayout";
 
-// CLIENT ID GOOGLE
+// Recuperiamo il Client ID di Google
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 function LoginPage() {
   const navigate = useNavigate();
   const { login, loginWithGoogle } = useAuth();
 
-  // DATI DEL FORM
+  // Dati inseriti dall'utente
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // STATO DELLA PAGINA
+  // Gestiamo gli stati della pagina
   const [error, setError] = useState("");
   const [googleError, setGoogleError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [needsEmailVerification, setNeedsEmailVerification] = useState(false);
 
-  // RIFERIMENTI GOOGLE
+  // Riferimenti utilizzati per il login Google
   const googleButtonRef = useRef(null);
   const googleLoginRef = useRef(loginWithGoogle);
   const loginInProgressRef = useRef(false);
 
-  // Manteniamo aggiornata la funzione di login.
+  // Manteniamo aggiornato il riferimento al login Google
   useEffect(() => {
     googleLoginRef.current = loginWithGoogle;
   }, [loginWithGoogle]);
 
-  // LOGIN TRADIZIONALE
+  // LOGIN CON EMAIL E PASSWORD
+
   async function handleSubmit(event) {
     event.preventDefault();
 
+    // Evitiamo richieste di login contemporanee
     if (loginInProgressRef.current) return;
 
     loginInProgressRef.current = true;
+
     setError("");
+    setNeedsEmailVerification(false);
     setIsLoading(true);
 
     try {
+      // Chiediamo al backend di effettuare il login
       await login(email.trim(), password);
+
+      // Se il login riesce, entriamo nell'app
       navigate("/", { replace: true });
     } catch (err) {
       setError(err.message || "Impossibile effettuare l'accesso.");
+
+      // Un account PENDING deve prima verificare l'email
+      setNeedsEmailVerification(err.status === 403);
     } finally {
       loginInProgressRef.current = false;
       setIsLoading(false);
     }
   }
 
-  // INIZIALIZZAZIONE GOOGLE
+  // LOGIN CON GOOGLE
+
   useEffect(() => {
     if (!GOOGLE_CLIENT_ID) return;
 
     let active = true;
 
-    // Riceve la credenziale restituita da Google.
+    // Riceviamo la credenziale restituita da Google
     async function handleGoogleCredential(response) {
       if (!active || !response?.credential || loginInProgressRef.current) {
         return;
       }
 
       loginInProgressRef.current = true;
+
       setError("");
+      setNeedsEmailVerification(false);
       setIsLoading(true);
 
       try {
-        // Il backend verifica Google e restituisce il nostro JWT.
+        // Il backend verifica Google e restituisce il nostro JWT
         await googleLoginRef.current(response.credential);
 
         if (active) {
@@ -88,7 +102,7 @@ function LoginPage() {
       }
     }
 
-    // Mostra il pulsante ufficiale Google.
+    // Prepariamo il pulsante ufficiale Google
     function initializeGoogle() {
       if (!active || !window.google?.accounts?.id || !googleButtonRef.current) {
         return;
@@ -100,7 +114,7 @@ function LoginPage() {
         ux_mode: "popup",
       });
 
-      // Evita pulsanti duplicati.
+      // Evitiamo di creare pulsanti duplicati
       googleButtonRef.current.replaceChildren();
 
       window.google.accounts.id.renderButton(googleButtonRef.current, {
@@ -115,7 +129,7 @@ function LoginPage() {
       });
     }
 
-    // Gestione di un errore nel caricamento dello script.
+    // Mostriamo un errore se lo script Google non viene caricato
     function handleScriptError() {
       if (active) {
         setGoogleError(
@@ -124,30 +138,29 @@ function LoginPage() {
       }
     }
 
-    // Cerchiamo uno script Google già presente.
+    // Controlliamo se lo script Google è già presente
     let script = document.querySelector("script[data-adhd-google-identity]");
 
-    // Se non esiste, lo creiamo.
+    // Se non esiste, lo creiamo
     if (!script) {
       script = document.createElement("script");
-
       script.src = "https://accounts.google.com/gsi/client";
       script.async = true;
       script.dataset.adhdGoogleIdentity = "true";
     }
 
-    // Registriamo gli eventi di caricamento.
+    // Gestiamo il caricamento dello script
     script.addEventListener("load", initializeGoogle);
     script.addEventListener("error", handleScriptError);
 
-    // Se Google è già disponibile, inizializziamo subito.
+    // Inizializziamo Google quando è disponibile
     if (window.google?.accounts?.id) {
       initializeGoogle();
     } else if (!script.isConnected) {
       document.head.appendChild(script);
     }
 
-    // Pulizia quando lasciamo la pagina.
+    // Rimuoviamo gli eventi quando lasciamo la pagina
     return () => {
       active = false;
 
@@ -166,7 +179,8 @@ function LoginPage() {
       <section className="access-page__panel" aria-labelledby="login-title">
         <h2 id="login-title">Accedi</h2>
 
-        {/* LOGIN EMAIL E PASSWORD */}
+        {/* LOGIN CON EMAIL E PASSWORD */}
+
         <form
           className="access-form"
           onSubmit={handleSubmit}
@@ -200,9 +214,22 @@ function LoginPage() {
             />
           </div>
 
+          {/* Mostriamo eventuali errori di accesso */}
+
           {error && (
             <p className="access-form__error" role="alert">
               {error}
+            </p>
+          )}
+
+          {/* Permettiamo di richiedere una nuova email di verifica */}
+
+          {needsEmailVerification && (
+            <p className="access-page__account">
+              Non hai ricevuto l'email?{" "}
+              <Link to="/verifica-email" state={{ email: email.trim() }}>
+                Richiedi un nuovo link
+              </Link>
             </p>
           )}
 
@@ -218,6 +245,7 @@ function LoginPage() {
         </form>
 
         {/* LOGIN GOOGLE */}
+
         <div
           style={{
             display: "flex",
@@ -252,12 +280,14 @@ function LoginPage() {
           )}
         </div>
 
-        {/* REGISTRAZIONE */}
+        {/* LINK ALLA REGISTRAZIONE */}
+
         <p className="access-page__account">
           Non hai un account? <Link to="/registrazione">Registrati</Link>
         </p>
 
-        {/* RITORNO */}
+        {/* RITORNO ALLA PAGINA DI BENVENUTO */}
+
         <Link to="/benvenuto" className="access-page__back">
           <ArrowLeft size={16} aria-hidden="true" />
           Torna al benvenuto

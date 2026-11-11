@@ -32,13 +32,15 @@ function RegisterPage() {
     setIsLoading(true);
 
     try {
-      await register(firstName.trim(), email.trim(), password);
-
+      // Recuperiamo il risultato della registrazione
+      const result = await register(firstName.trim(), email.trim(), password);
       // Dopo la registrazione mostriamo la pagina di verifica
+      // Mostriamo la pagina di verifica e il messaggio del backend
       navigate("/verifica-email", {
         replace: true,
         state: {
           email: email.trim(),
+          message: result.message,
         },
       });
     } catch (err) {
