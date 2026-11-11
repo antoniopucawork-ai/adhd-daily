@@ -31,6 +31,25 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
 
+    status: {
+      type: String,
+      enum: ["ACTIVE", "PENDING"],
+      default: "ACTIVE",
+    },
+
+    emailVerificationTokenHash: {
+      type: String,
+      select: false,
+    },
+
+    emailVerificationExpiresAt: {
+      type: Date,
+    },
+
+    emailVerificationSentAt: {
+      type: Date,
+    },
+
     // Qui salviamo le preferenze dell'utente.
     // Ci serviranno per ricordare come ha organizzato la sua Home.
     preferences: {

@@ -1,15 +1,18 @@
 import User from "../models/User.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { randomBytes, createHash } from "node:crypto";
 import { verifyGoogleUser } from "../services/googleAuthService.js";
+import { sendVerificationEmail } from "../services/emailService.js";
+
 // REGISTRAZIONE UTENTE
 
 export const register = async (req, res) => {
   try {
-    // 1. Recuperiamo i dati dalla richiesta
+    // Recuperiamo i dati inseriti dall'utente
     const { firstName, email, password } = req.body ?? {};
 
-    // 2. Controlliamo che i dati siano presenti
+    // Controlliamo che tutti i campi siano presenti
     if (
       typeof firstName !== "string" ||
       !firstName.trim() ||
@@ -23,7 +26,7 @@ export const register = async (req, res) => {
       });
     }
 
-    // 3. Controlliamo il formato dell'email
+    // Controlliamo il formato dell'email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!emailRegex.test(email.trim())) {
@@ -32,17 +35,17 @@ export const register = async (req, res) => {
       });
     }
 
-    // 4. Controlliamo la lunghezza della password
+    // Controlliamo la lunghezza della password
     if (password.length < 12 || Buffer.byteLength(password, "utf8") > 72) {
       return res.status(400).json({
         message: "La password non rispetta i requisiti di sicurezza",
       });
     }
 
-    // 5. Normalizziamo l'email
+    // Normalizziamo l'email
     const normalizedEmail = email.trim().toLowerCase();
 
-    // 6. Controlliamo se l'email è già registrata
+    // Controlliamo se l'email è già registrata
     const existingUser = await User.findOne({
       email: normalizedEmail,
     });
@@ -53,19 +56,45 @@ export const register = async (req, res) => {
       });
     }
 
-    // 7. Generiamo l'hash della password
+    // Proteggiamo la password con bcrypt
     const passwordHash = await bcrypt.hash(password, 12);
 
-    // 8. Creiamo l'utente nel database
+    // Generiamo un token casuale per verificare l'email
+    const verificationToken = randomBytes(32).toString("hex");
+
+    // Salviamo soltanto l'hash del token
+    const verificationTokenHash = createHash("sha256")
+      .update(verificationToken)
+      .digest("hex");
+
+    // Il link di verifica scade dopo 5 minuti
+    const verificationExpiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+    // Creiamo l'account in attesa di verifica
     const newUser = await User.create({
       firstName: firstName.trim(),
       email: normalizedEmail,
       passwordHash: passwordHash,
+      status: "PENDING",
+      emailVerificationTokenHash: verificationTokenHash,
+      emailVerificationExpiresAt: verificationExpiresAt,
+      emailVerificationSentAt: new Date(),
     });
 
-    // 9. Restituiamo i dati pubblici dell'utente
+    // Proviamo a inviare l'email tramite Brevo
+    let emailSent = true;
+
+    try {
+      await sendVerificationEmail(newUser.email, verificationToken);
+    } catch (error) {
+      emailSent = false;
+    }
+
+    // Comunichiamo il risultato della registrazione
     return res.status(201).json({
-      message: "Registrazione completata con successo",
+      message: emailSent
+        ? "Account creato. Controlla la tua email per attivarlo."
+        : "Account creato, ma email non inviata. Riprova tra un minuto.",
       user: {
         id: newUser._id,
         firstName: newUser.firstName,
@@ -73,14 +102,14 @@ export const register = async (req, res) => {
       },
     });
   } catch (error) {
-    // 10. Gestiamo le email duplicate
+    // Gestiamo le email già registrate
     if (error.code === 11000) {
       return res.status(409).json({
         message: "Impossibile completare la registrazione",
       });
     }
 
-    // 11. Gestiamo gli errori imprevisti
+    // Gestiamo eventuali errori del server
     return res.status(500).json({
       message: "Errore durante la registrazione",
     });
@@ -91,10 +120,10 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    // 1. Recuperiamo email e password
+    // Recuperiamo email e password
     const { email, password } = req.body ?? {};
 
-    // 2. Controlliamo che i dati siano presenti
+    // Controlliamo che i dati siano presenti
     if (
       typeof email !== "string" ||
       !email.trim() ||
@@ -106,33 +135,38 @@ export const login = async (req, res) => {
       });
     }
 
-    // 3. Normalizziamo l'email
+    // Normalizziamo l'email
     const normalizedEmail = email.trim().toLowerCase();
 
-    // 4. Cerchiamo l'utente nel database
+    // Cerchiamo l'utente nel database
     const user = await User.findOne({
       email: normalizedEmail,
     }).select("+passwordHash");
 
-    // 5. Controlliamo che l'utente esista
-    // e che abbia una password per il login tradizionale
+    // Controlliamo che l'utente esista
     if (!user || typeof user.passwordHash !== "string") {
       return res.status(401).json({
         message: "Email o password non corrette",
       });
     }
 
-    // 6. Verifichiamo la password con bcrypt
+    // Verifichiamo la password con bcrypt
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 
-    // 7. Controlliamo se la password è corretta
     if (!isPasswordValid) {
       return res.status(401).json({
         message: "Email o password non corrette",
       });
     }
 
-    // 8. Generiamo il token JWT
+    // Blocchiamo gli account che non hanno verificato l'email
+    if (user.status === "PENDING") {
+      return res.status(403).json({
+        message: "Devi verificare la tua email prima di accedere",
+      });
+    }
+
+    // Generiamo il token JWT
     const token = jwt.sign(
       { sub: user._id.toString() },
       process.env.JWT_SECRET,
@@ -142,7 +176,7 @@ export const login = async (req, res) => {
       },
     );
 
-    // 9. Restituiamo il token e i dati pubblici dell'utente
+    // Restituiamo il token e i dati dell'utente
     return res.status(200).json({
       message: "Login effettuato con successo",
       token,
@@ -153,17 +187,16 @@ export const login = async (req, res) => {
       },
     });
   } catch (error) {
-    // 10. Gestiamo gli errori imprevisti
     return res.status(500).json({
       message: "Errore durante il login",
     });
   }
 };
 
- // LOGIN CON GOOGLE
+// LOGIN CON GOOGLE
 
 export const googleLogin = async (req, res) => {
-  // 1. Recuperiamo la credenziale Google
+  // Recuperiamo la credenziale Google
   const { credential } = req.body ?? {};
 
   if (typeof credential !== "string" || !credential.trim()) {
@@ -172,7 +205,7 @@ export const googleLogin = async (req, res) => {
     });
   }
 
-  // 2. Verifichiamo la credenziale
+  // Verifichiamo la credenziale ricevuta
   let googleUser;
 
   try {
@@ -184,25 +217,25 @@ export const googleLogin = async (req, res) => {
   }
 
   try {
-    // 3. Cerchiamo un account collegato a Google
+    // Cerchiamo un account collegato a Google
     let user = await User.findOne({
       googleId: googleUser.googleId,
     });
 
-    // 4. Se non esiste, controlliamo l'email
+    // Se non esiste, controlliamo che l'email sia libera
     if (!user) {
       const existingUser = await User.findOne({
         email: googleUser.email,
       });
 
-      // Non colleghiamo automaticamente account differenti
+      // Non colleghiamo automaticamente account diversi
       if (existingUser) {
         return res.status(409).json({
           message: "Email già registrata. Accedi con email e password.",
         });
       }
 
-      // 5. Creiamo un nuovo account Google
+      // Creiamo il nuovo account Google
       user = await User.create({
         firstName: googleUser.firstName,
         email: googleUser.email,
@@ -210,7 +243,7 @@ export const googleLogin = async (req, res) => {
       });
     }
 
-    // 6. Generiamo il nostro JWT
+    // Generiamo il JWT della nostra applicazione
     const token = jwt.sign(
       { sub: user._id.toString() },
       process.env.JWT_SECRET,
@@ -220,7 +253,7 @@ export const googleLogin = async (req, res) => {
       },
     );
 
-    // 7. Restituiamo la stessa struttura del login normale
+    // Restituiamo il token e i dati dell'utente
     return res.status(200).json({
       message: "Login effettuato con successo",
       token,

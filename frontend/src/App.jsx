@@ -14,7 +14,8 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 
 import ProtectedRoute from "./routes/ProtectedRoute";
-
+import VerifyEmailPage from "./pages/VerifyEmailPage";
+import VerifyAccountPage from "./pages/VerifyAccountPage";
 function App() {
   return (
     <Routes>
@@ -22,7 +23,8 @@ function App() {
       <Route path="/benvenuto" element={<WelcomePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/registrazione" element={<RegisterPage />} />
-
+      <Route path="/verifica-email" element={<VerifyEmailPage />} />
+      <Route path="/verify-account" element={<VerifyAccountPage />} />
       {/* Pagine accessibili solo dopo il login */}
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>

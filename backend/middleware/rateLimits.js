@@ -61,3 +61,14 @@ export const analyzeRateLimit = rateLimit({
     message: "Troppe richieste di analisi. Riprova più tardi.",
   },
 });
+
+// REINVIO EMAIL DI VERIFICA
+// Massimo 5 richieste ogni 15 minuti per IP.
+export const resendVerificationRateLimit = rateLimit({
+  ...byIp,
+  windowMs: 15 * MINUTE,
+  limit: 5,
+  message: {
+    message: "Troppe richieste di verifica. Riprova più tardi.",
+  },
+});

@@ -34,10 +34,11 @@ function RegisterPage() {
     try {
       await register(firstName.trim(), email.trim(), password);
 
-      navigate("/login", {
+      // Dopo la registrazione mostriamo la pagina di verifica
+      navigate("/verifica-email", {
         replace: true,
         state: {
-          registrationSuccess: true,
+          email: email.trim(),
         },
       });
     } catch (err) {
@@ -57,7 +58,11 @@ function RegisterPage() {
       <section className="access-page__panel" aria-labelledby="register-title">
         <h2 id="register-title">Crea un account</h2>
 
-        <form className="access-form" onSubmit={handleSubmit} aria-labelledby="register-title">
+        <form
+          className="access-form"
+          onSubmit={handleSubmit}
+          aria-labelledby="register-title"
+        >
           <div className="access-form__field">
             <label htmlFor="register-name">Come ti chiami?</label>
             <input
