@@ -171,8 +171,14 @@ const unsupported = () => ({
   status: "unsupported",
 });
 
-// Trova la prossima occorrenza di giorno e mese
-const resolveDayAndMonth = (day, month, referenceDate) => {
+// Trova giorno e mese. allowNextYear permette la prima data futura valida,
+// anche oltre un anno se il 29 febbraio richiede un anno bisestile.
+const resolveDayAndMonth = (
+  day,
+  month,
+  referenceDate,
+  allowNextYear = false,
+) => {
   const referenceYear = Number(referenceDate.slice(0, 4));
 
   // Cerchiamo la prossima data valida.
@@ -185,17 +191,115 @@ const resolveDayAndMonth = (day, month, referenceDate) => {
     const candidate = createISODate(year, month, day);
 
     if (candidate !== null && candidate >= referenceDate) {
-      return year === referenceYear ? resolved(candidate) : ambiguous();
+      const canResolve = year === referenceYear || allowNextYear;
+
+      return canResolve ? resolved(candidate) : ambiguous();
     }
   }
 
   return unsupported();
 };
 
+// Riferimenti elementari: i gruppi adiacenti descrivono la stessa data.
+// Le parole dell'impegno e i confini tra frasi separano riferimenti distinti.
+const DATE_REFERENCE = [
+  "\\d{4}-\\d{2}-\\d{2}",
+  "\\d{1,2}/\\d{1,2}/\\d{4}",
+  `\\d{1,2}\\s+(?:${MONTH_NAMES})(?:\\s+\\d{4})?`,
+  `(?:${Object.keys(WEEKDAYS).join("|")})\\s+\\d{1,2}\\b(?!\\s+(?:${MONTH_NAMES})\\b)`,
+  "(?:dopodomani|domani|oggi|ieri)(?:\\s+(?:mattina|pomeriggio|sera))?",
+  ...Object.keys(WEEKDAYS),
+].join("|");
+// Un orario esplicito può comparire tra due riferimenti alla stessa data.
+// Non attraversiamo verbi, alternative o punti di fine frase.
+const dateConnector =
+  /^[\s,():]*(?:(?:alle(?: ore)?|ore)\s+(?:[01]?\d|2[0-3])(?:[:.][0-5]\d)?[\s,():]*)?(?:(?:il|del)\s+|(?:l|dell)['’]\s*)?$/;
+
+export function findTemporalReferences(text, fragments = []) {
+  const pattern = new RegExp(
+    `(?<![a-z0-9/\\-])(?:${DATE_REFERENCE})(?![a-z0-9/\\-])`,
+    "g",
+  );
+  const groups = [];
+  for (const match of text.matchAll(pattern)) {
+    const previous = groups.at(-1);
+    const end = match.index + match[0].length;
+    const crossesItems =
+      previous &&
+      fragments.some(
+        (left) =>
+          left.start <= previous.start &&
+          previous.end <= left.end &&
+          fragments.some(
+            (right) =>
+              right !== left && right.start <= match.index && end <= right.end,
+          ),
+      );
+    if (
+      previous &&
+      !crossesItems &&
+      dateConnector.test(text.slice(previous.end, match.index))
+    ) {
+      previous.end = end;
+      previous.expression = text.slice(previous.start, end);
+    } else {
+      groups.push({ start: match.index, end, expression: match[0] });
+    }
+  }
+  return groups;
+}
+
+function resolveCompoundDate(expression, referenceDate, allowNextYear) {
+  const pattern = new RegExp(`(?:${DATE_REFERENCE})`, "g");
+  const parts = [...expression.matchAll(pattern)];
+  if (parts.length < 2) return null;
+
+  let end = 0;
+  for (const part of parts) {
+    if (!dateConnector.test(expression.slice(end, part.index))) return null;
+    end = part.index + part[0].length;
+  }
+  if (!/^[\s,()]*$/.test(expression.slice(end))) return null;
+
+  const terms = parts.map((part) => part[0]);
+  const dates = terms.filter((term) => !Object.hasOwn(WEEKDAYS, term));
+  // Un anno esplicito o un relativo può ancorare anche giorno e mese senza anno.
+  const anchor =
+    dates.find((term) => /\d{4}/.test(term)) ??
+    dates.find((term) => /^(ieri|oggi|domani|dopodomani)\b/.test(term)) ??
+    dates[0];
+  if (!anchor) return ambiguous();
+  const resolution = resolveTemporalExpression(
+    anchor,
+    referenceDate,
+    allowNextYear,
+  );
+  if (resolution.status !== "resolved") return resolution;
+
+  for (const term of terms) {
+    if (Object.hasOwn(WEEKDAYS, term)) {
+      if (getWeekdayFromDate(resolution.date) !== WEEKDAYS[term])
+        return ambiguous();
+      continue;
+    }
+    const dayMonth = term.match(new RegExp(`^(\\d{1,2})\\s+(${MONTH_NAMES})$`));
+    const candidate = dayMonth
+      ? createISODate(
+          Number(resolution.date.slice(0, 4)),
+          MONTHS[dayMonth[2]],
+          Number(dayMonth[1]),
+        )
+      : resolveTemporalExpression(term, referenceDate, allowNextYear).date;
+    if (candidate !== resolution.date) return ambiguous();
+  }
+  return resolution;
+}
+
 // Interpreta le espressioni temporali supportate
 export const resolveTemporalExpression = (
   temporalExpression,
   referenceDate,
+  allowNextYear = false,
 ) => {
   if (
     typeof temporalExpression !== "string" ||
@@ -205,7 +309,9 @@ export const resolveTemporalExpression = (
     return unsupported();
   }
 
-  let expression = normalizeText(temporalExpression);
+  let expression = normalizeText(temporalExpression)
+    .replace(/[.,;]+$/, "")
+    .trim();
 
   // Rimuove soltanto un eventuale orario finale valido.
   // L'orario resta gestito dal campo time.
@@ -215,14 +321,23 @@ export const resolveTemporalExpression = (
 
   // Rimuove un eventuale articolo iniziale
   // nelle date esplicite.
-  expression = expression.replace(/^(?:il|del)\s+/, "");
+  expression = expression.replace(/^(?:(?:il|del)\s+|(?:l|dell)['’]\s*)/, "");
 
+  const compound = resolveCompoundDate(
+    expression,
+    referenceDate,
+    allowNextYear,
+  );
+  if (compound) return compound;
+
+  // Riconosce le espressioni ambigue
+  // prima di interpretare i singoli giorni.
   // Riconosce le espressioni ambigue
   // prima di interpretare i singoli giorni.
   if (
     /\bprossim[oaie]\b/.test(expression) ||
     /\bsettimana\b/.test(expression) ||
-    /\b(?:lunedi|martedi|mercoledi|giovedi|venerdi|sabato|domenica)\s+o\s+(?:lunedi|martedi|mercoledi|giovedi|venerdi|sabato|domenica)\b/.test(
+    /\b(?:lunedi|martedi|mercoledi|giovedi|venerdi|sabato|domenica)(?:\s+\d{1,2})?\s+(?:o|oppure)\s+(?:lunedi|martedi|mercoledi|giovedi|venerdi|sabato|domenica)(?:\s+\d{1,2})?\b/.test(
       expression,
     )
   ) {
@@ -251,6 +366,17 @@ export const resolveTemporalExpression = (
   // Giorni della settimana
   if (Object.hasOwn(WEEKDAYS, expression)) {
     return resolved(getNextWeekdayDate(referenceDate, WEEKDAYS[expression]));
+  }
+
+  const weekdayAndDay = expression.match(
+    new RegExp(`^(${Object.keys(WEEKDAYS).join("|")})\\s+(\\d{1,2})$`),
+  );
+  if (weekdayAndDay) {
+    const [, weekday, day] = weekdayAndDay;
+    const candidate = getNextWeekdayDate(referenceDate, WEEKDAYS[weekday]);
+    return Number(candidate.slice(8, 10)) === Number(day)
+      ? resolved(candidate)
+      : ambiguous();
   }
 
   // "Tra tre giorni", "fra 5 giorni"
@@ -292,22 +418,6 @@ export const resolveTemporalExpression = (
     return date ? resolved(date) : unsupported();
   }
 
-  // Data esplicita con giorno della settimana: "Lunedì 9 novembre 2026".
-  const weekdayDateMatch = expression.match(
-    new RegExp(
-      `^(${Object.keys(WEEKDAYS).join("|")})\\s+(\\d{1,2})\\s+(${MONTH_NAMES})\\s+(\\d{4})$`,
-    ),
-  );
-
-  if (weekdayDateMatch) {
-    const [, weekday, day, month, year] = weekdayDateMatch;
-    const date = createISODate(Number(year), MONTHS[month], Number(day));
-
-    return date && getWeekdayFromDate(date) === WEEKDAYS[weekday]
-      ? resolved(date)
-      : unsupported();
-  }
-
   // Date testuali:
   // "12 novembre"
   // "12 novembre 2026"
@@ -328,8 +438,8 @@ export const resolveTemporalExpression = (
       return date ? resolved(date) : unsupported();
     }
 
-    // Anno assente: prossima occorrenza futura
-    return resolveDayAndMonth(day, month, referenceDate);
+    // Il chiamante autorizza il cambio d'anno solo con evidenza di un impegno futuro.
+    return resolveDayAndMonth(day, month, referenceDate, allowNextYear);
   }
 
   return unsupported();

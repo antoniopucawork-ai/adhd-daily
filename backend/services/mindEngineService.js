@@ -166,6 +166,22 @@ DATE RELATIVE:
 - Se l'utente indica una data esplicita,
   rispettala nel significato, ma non inventarla.
 
+ANNO ASSENTE E CONTESTO:
+
+- Per giorno e mese senza anno, leggi il contesto del singolo pensiero.
+- Un impegno futuro, anche espresso al presente ("ho una visita", "devo fare
+  un controllo"), usa la prima occorrenza futura coerente, anche nel nuovo anno.
+- Calcola rispetto alla data corrente fornita, senza usare un anno fisso.
+- Un ricordo come "sono stato dal dentista" non autorizza un anno futuro.
+- Non dedurre l'anno dalla sola categoria: anche una classificazione può essere errata.
+- Se il contesto non chiarisce l'anno, usa date null e uncertain true.
+- Un anno esplicito va rispettato, anche per una data passata.
+- Conserva nella citazione i verbi che distinguono passato e futuro.
+- Una possibilità futura può avere una data precisa: conserva INTENTION
+  e l'incertezza senza trasformarla in un impegno confermato.
+- L'orario mancante resta null e non invalida una data affidabile.
+- L'assenza di una data o di un orario non rende da sola incerto un pensiero.
+
 DATE AMBIGUE:
 
 Espressioni come "venerdì prossimo" e
