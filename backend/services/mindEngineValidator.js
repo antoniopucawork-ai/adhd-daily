@@ -232,7 +232,7 @@ function isDateSupported(
   );
 }
 
-function isTimeSupported(time, text, fragment) {
+function isTimeSupported(time, text, fragment, fragments) {
   if (!fragment) return false;
 
   const periodPattern = "(?:mattina|pomeriggio|sera)";
@@ -245,6 +245,21 @@ function isTimeSupported(time, text, fragment) {
   const matches = [...text.matchAll(clockPattern)].filter((match) =>
     isWithin(fragment, match.index, match.index + match[0].length),
   );
+
+  // Una citazione troncata non deve nascondere una correzione incerta.
+  // Ci fermiamo prima del frammento di qualsiasi altro elemento.
+  let continuationEnd = text.length;
+  for (const other of fragments) {
+    if (other.start >= fragment.end) {
+      continuationEnd = Math.min(continuationEnd, other.start);
+    }
+  }
+  const continuation = text.slice(fragment.end, continuationEnd);
+  const [nextTime] = continuation.matchAll(clockPattern);
+  if (
+    nextTime &&
+    /^[\s,]*anzi[\s,]+forse\s+$/.test(continuation.slice(0, nextTime.index))
+  ) return false;
 
   const effectiveMatches = matches.filter((match, index) => {
     const next = matches[index + 1];
@@ -334,7 +349,7 @@ function validateWithFragment(
     uncertain = true;
   }
 
-  if (time !== null && !isTimeSupported(time, text, fragment)) {
+  if (time !== null && !isTimeSupported(time, text, fragment, fragments)) {
     time = null;
     uncertain = true;
   }

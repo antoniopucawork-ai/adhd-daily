@@ -1458,3 +1458,86 @@ test("conserva la risposta reale di Gemini con il solo frammento corretto", () =
   assert.equal(result[0].time, "17:00");
   assert.equal(result[0].uncertain, false);
 });
+
+
+test("non conferma l'orario se il frammento omette anzi forse", () => {
+  const fragment = "Sabato 21 novembre alle 16 ho il dentista";
+  const result = validateItems(
+    [{
+      type: "EVENT",
+      title: "Dentista",
+      originalFragment: fragment,
+      temporalExpression: "Sabato 21 novembre",
+      date: "2026-11-21",
+      time: "16:00",
+      uncertain: false,
+    }],
+    `${fragment}, anzi forse alle 17, non sono sicuro.`,
+    "2026-11-14",
+  );
+  assert.deepEqual(result, [{
+    type: "EVENT",
+    title: "Dentista",
+    date: "2026-11-21",
+    time: null,
+    uncertain: true,
+  }]);
+});
+
+
+for (const suffix of [
+  ".",
+  ". Anzi forse alle 17 ho un altro impegno.",
+  "; anzi forse alle 17 ho un altro impegno.",
+  ", poi anzi forse alle 17 vado in palestra.",
+  ", anzi forse alle 170.",
+]) {
+  test(`la continuazione non pertinente conserva l'orario: ${suffix}`, () => {
+    const fragment = "Sabato 21 novembre alle 16 ho il dentista";
+    const result = validateItems(
+      [{
+        type: "EVENT",
+        title: "Dentista",
+        originalFragment: fragment,
+        temporalExpression: "Sabato 21 novembre",
+        date: "2026-11-21",
+        time: "16:00",
+        uncertain: false,
+      }],
+      fragment + suffix,
+      "2026-11-14",
+    );
+    assert.deepEqual(result, [{
+      type: "EVENT",
+      title: "Dentista",
+      date: "2026-11-21",
+      time: "16:00",
+      uncertain: false,
+    }]);
+  });
+}
+
+test("la continuazione incerta si ferma al frammento di un altro elemento", () => {
+  const first = "Sabato 21 novembre alle 16 ho il dentista";
+  const second = "alle 17 vado in palestra";
+  const text = `${first}, anzi forse ${second}`;
+  const items = [
+    {
+      type: "EVENT", title: "Dentista", originalFragment: first,
+      temporalExpression: "Sabato 21 novembre", date: "2026-11-21",
+      time: "16:00", uncertain: false,
+    },
+    {
+      type: "INTENTION", title: "Palestra", originalFragment: second,
+      temporalExpression: null, date: null, time: "17:00", uncertain: true,
+    },
+  ];
+  const expected = items.map(({ type, title, date, time, uncertain }) =>
+    ({ type, title, date, time, uncertain }),
+  );
+  assert.deepEqual(validateItems(items, text, "2026-11-14"), expected);
+  assert.deepEqual(
+    validateItems([...items].reverse(), text, "2026-11-14"),
+    [...expected].reverse(),
+  );
+});
