@@ -2,7 +2,7 @@
   width: 100%;
 
   display: grid;
-  grid-template-columns: 38px 1fr 34px;
+  grid-template-columns: 38px minmax(0, 1fr);
   align-items: center;
   gap: 10px;
 
@@ -72,28 +72,56 @@
   font-weight: 400;
 }
 
-.next-step-card__action {
-  width: 32px;
-  height: 32px;
-
+.next-step-card__actions {
+  grid-column: 2;
   display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.next-step-card__actions button {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid #d9cdb2;
+  border-radius: 10px;
+  font: inherit;
+  cursor: pointer;
+}
 
-  padding: 0;
+.next-step-card__details {
+  color: #d9cdb2;
+  background: transparent;
+}
 
+.next-step-card__complete {
   color: #182238;
   background: #d9cdb2;
+}
 
-  border: none;
-  border-radius: 50%;
+.next-step-card__actions button:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
 
-  cursor: pointer;
+.next-step-card__actions button:focus-visible {
+  outline: 2px solid #a9cdeb;
+  outline-offset: 3px;
+}
+
+.next-step-card__error {
+  grid-column: 2;
+  margin: 0;
+  color: #ffd0c4;
+  font-size: 13px;
 }
 
 @media (min-width: 1024px) {
   .next-step-card {
-    grid-template-columns: 52px minmax(0, 1fr) auto;
+    grid-template-columns: 52px minmax(0, 1fr);
     gap: 18px;
 
     min-height: 120px;
@@ -132,23 +160,4 @@
     font-size: 14px;
     line-height: 1.5;
   }
-
-  .next-step-card__action {
-    width: 40px;
-    height: 40px;
-  }
-}
-
-/* La card diventa un pulsante interamente cliccabile. */
-
-button.next-step-card {
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-button.next-step-card:focus-visible {
-  outline: 2px solid #a9cdeb;
-  outline-offset: 5px;
 }

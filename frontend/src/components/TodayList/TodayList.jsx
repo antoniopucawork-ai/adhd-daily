@@ -24,6 +24,7 @@ function formatDate(date) {
 
 function TodayList({
   items = [],
+  highlightedActionId = null,
   onComplete,
   onOpenItem,
   completingId = null,
@@ -35,6 +36,9 @@ function TodayList({
   // 1. Selezione degli elementi
   const todayItems = getTodayItems(items, todayDate);
   const overdueActions = getOverdueActions(items, todayDate);
+  // Escludiamo l'azione evidenziata solo dagli elenchi, non dai contatori.
+  const listedTodayItems = todayItems.filter((item) => item.id !== highlightedActionId);
+  const listedOverdueActions = overdueActions.filter((item) => item.id !== highlightedActionId);
 
   // 2. Riepilogo della giornata
   const actionsCount = todayItems.filter(canCompleteAction).length;
@@ -106,52 +110,54 @@ function TodayList({
       )}
 
       {/* ATTIVITÀ DI OGGI */}
-      <div className="today__list">
-        {todayItems.length === 0 ? (
-          <div className="today__empty">
-            <p>Niente in programma per oggi.</p>
-          </div>
-        ) : (
-          todayItems.map((item) => {
-            const Icon = ICONS[item.type] || ListTodo;
-            const canComplete = canCompleteAction(item);
-            const isCompleting = completingId === item.id;
+      {(listedTodayItems.length > 0 || todayItems.length === 0) && (
+        <div className="today__list">
+          {listedTodayItems.length === 0 ? (
+            <div className="today__empty">
+              <p>Niente in programma per oggi.</p>
+            </div>
+          ) : (
+            listedTodayItems.map((item) => {
+              const Icon = ICONS[item.type] || ListTodo;
+              const canComplete = canCompleteAction(item);
+              const isCompleting = completingId === item.id;
 
-            return (
-              <div
-                className="today__item"
-                key={item.id}
-                aria-busy={isCompleting}
-              >
-                <div className="today__icon">
-                  <Icon size={17} strokeWidth={1.5} aria-hidden="true" />
+              return (
+                <div
+                  className="today__item"
+                  key={item.id}
+                  aria-busy={isCompleting}
+                >
+                  <div className="today__icon">
+                    <Icon size={17} strokeWidth={1.5} aria-hidden="true" />
+                  </div>
+
+                  <div className="today__content">
+                    <h3>{item.title}</h3>
+                    <p>{item.time || "Durante la giornata"}</p>
+                  </div>
+
+                  {canComplete ? (
+                    <button
+                      className="today__check"
+                      type="button"
+                      disabled={completingId !== null}
+                      onClick={() => onComplete?.(item.id)}
+                      aria-label={
+                        isCompleting
+                          ? `Completamento di ${item.title} in corso`
+                          : `Completa ${item.title}`
+                      }
+                    />
+                  ) : (
+                    <span aria-hidden="true" />
+                  )}
                 </div>
-
-                <div className="today__content">
-                  <h3>{item.title}</h3>
-                  <p>{item.time || "Durante la giornata"}</p>
-                </div>
-
-                {canComplete ? (
-                  <button
-                    className="today__check"
-                    type="button"
-                    disabled={completingId !== null}
-                    onClick={() => onComplete?.(item.id)}
-                    aria-label={
-                      isCompleting
-                        ? `Completamento di ${item.title} in corso`
-                        : `Completa ${item.title}`
-                    }
-                  />
-                ) : (
-                  <span aria-hidden="true" />
-                )}
-              </div>
-            );
-          })
-        )}
-      </div>
+              );
+            })
+          )}
+        </div>
+      )}
 
       {/* AZIONI ARRETRATE DA RIVEDERE */}
       {overdueActions.length > 0 && (
@@ -161,7 +167,12 @@ function TodayList({
           </div>
 
           <div className="today__list">
-            {overdueActions.map((item) => (
+            {listedOverdueActions.length === 0 && (
+              <div className="today__empty">
+                <p>L’attività arretrata è evidenziata in «Il prossimo passo».</p>
+              </div>
+            )}
+            {listedOverdueActions.map((item) => (
               <div className="today__item" key={item.id}>
                 <div className="today__icon">
                   <AlertTriangle

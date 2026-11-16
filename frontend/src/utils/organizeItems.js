@@ -37,10 +37,15 @@ export function getTodayItems(items, today) {
 
 export function getNextAction(items, today) {
   const actions = items.filter(canCompleteAction);
+  // Ordiniamo una nuova lista: prima la data, poi l'ora se presente.
+  const datedActions = actions.filter((item) => item.date).sort((a, b) =>
+    a.date.localeCompare(b.date) || (a.time || "99:99").localeCompare(b.time || "99:99"),
+  );
   return (
-    actions.find((item) => item.date === today) ??
-    actions.find((item) => item.date && item.date < today) ??
-    actions.find((item) => !item.date)
+    datedActions.find((item) => item.date === today) ??
+    datedActions.find((item) => item.date < today) ??
+    actions.find((item) => !item.date) ??
+    datedActions.find((item) => item.date > today)
   );
 }
 export function getOverdueActions(items, today) {

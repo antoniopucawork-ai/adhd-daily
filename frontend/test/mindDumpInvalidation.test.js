@@ -6,9 +6,11 @@ import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { Window } from "happy-dom";
 import { createServer } from "vite";
 import react from "@vitejs/plugin-react";
+import { getTodayDate } from "../src/utils/date.js";
 
 let server, browser, createRoot, root, router;
 let AppLayout, ProtectedRoute, ArchivePage, MindDumpPage, AuthContext;
+let HomePage, PreferencesContext;
 let useMindDumps, useMindDumpItemActions, useMindDumpInvalidation;
 let replaceSession, getSessionSignal;
 const previousGlobals = new Map();
@@ -45,6 +47,8 @@ before(async () => {
   ({ default: ProtectedRoute } = await server.ssrLoadModule("/src/routes/ProtectedRoute.jsx"));
   ({ default: ArchivePage } = await server.ssrLoadModule("/src/pages/ArchivePage.jsx"));
   ({ default: MindDumpPage } = await server.ssrLoadModule("/src/pages/MindDumpPage.jsx"));
+  ({ default: HomePage } = await server.ssrLoadModule("/src/pages/HomePage.jsx"));
+  ({ PreferencesContext } = await server.ssrLoadModule("/src/context/preferencesStore.js"));
   ({ AuthContext } = await server.ssrLoadModule("/src/context/authStore.js"));
   ({ useMindDumps } = await server.ssrLoadModule("/src/hooks/useMindDumps.js"));
   ({ useMindDumpItemActions } = await server.ssrLoadModule("/src/hooks/useMindDumpItemActions.js"));
@@ -386,4 +390,193 @@ test("un errore di analisi rimuove il messaggio di attesa e conserva il testo pe
   assert.equal(browser.document.querySelector("textarea").value, "Pensiero A");
   assert.equal(browser.document.querySelector("textarea").disabled, false);
   assert.equal(browser.localStorage.getItem("adhdDailyDraft:utente-A"), "Pensiero A");
+});
+
+
+function HomeWithNextStep({ showToday = false, showNextStep = true } = {}) {
+  return h(PreferencesContext.Provider, {
+    value: {
+      homeModules: [
+        { id: "today", enabled: showToday, order: 0 },
+        { id: "nextStep", enabled: showNextStep, order: 1 },
+      ],
+      isLoading: false,
+      error: "",
+    },
+  }, h(HomePage));
+}
+
+function mockNextStepApi(context, initialItems = null) {
+  const nextId = "dddddddddddddddddddddddd";
+  const items = structuredClone(initialItems ?? [
+    { ...item, title: "Comprare il latte", date: null, time: null },
+    { ...item, _id: nextId, title: "Inviare documento", date: "2099-12-01", time: "10:00" },
+    { ...item, _id: "eeeeeeeeeeeeeeeeeeeeeeee", type: "EVENT", title: "Riunione" },
+    { ...item, _id: "ffffffffffffffffffffffff", title: "Da verificare", uncertain: true },
+    { ...item, _id: "111111111111111111111111", title: "Già fatta", status: "DONE" },
+  ]);
+  const writes = [];
+  let reads = 0;
+  let pending = deferred();
+  context.mock.method(globalThis, "fetch", async (url, options = {}) => {
+    assert.equal(options.headers.get("Authorization"), "Bearer token-A");
+    if ((options.method ?? "GET") === "GET") {
+      reads++;
+      return Response.json([{ ...dump, items: structuredClone(items) }]);
+    }
+    assert.equal(options.method, "PATCH");
+    const id = new URL(url).pathname.split("/").at(-1);
+    const changes = JSON.parse(options.body);
+    assert.deepEqual(changes, { status: "DONE" });
+    writes.push(id);
+    const outcome = await pending.promise;
+    pending = deferred();
+    if (outcome === "error") return Response.json({}, { status: 500 });
+    const target = items.find((entry) => entry._id === id);
+    assert.ok(target);
+    if (outcome === "unconfirmed") return Response.json({ item: target });
+    Object.assign(target, changes);
+    return Response.json({ item: target });
+  });
+  return { writes, nextId, get reads() { return reads; }, reply(outcome = "success") { pending.resolve(outcome); } };
+}
+
+test("Home: completa dalla card, impedisce doppie richieste e propone la successiva fino allo stato vuoto", async (context) => {
+  const api = mockNextStepApi(context);
+  await mount(HomeWithNextStep);
+  assert.equal(browser.document.querySelector(".next-step-card h2").textContent, "Comprare il latte");
+  const button = browser.document.querySelector(".next-step-card__complete");
+  assert.ok(button);
+  await act(async () => { button.click(); button.click(); });
+  assert.equal(button.disabled, true);
+  assert.match(button.textContent, /Completamento/);
+  assert.deepEqual(api.writes, [itemId]);
+  assert.equal(browser.document.querySelector("dialog"), null);
+  await act(async () => api.reply());
+  assert.equal(api.reads, 2);
+  assert.equal(browser.document.querySelector(".next-step-card h2").textContent, "Inviare documento");
+  assert.match(browser.document.querySelector(".next-step-card").textContent, /2099/);
+  await click(".next-step-card__complete");
+  await act(async () => api.reply());
+  assert.deepEqual(api.writes, [itemId, api.nextId]);
+  assert.equal(api.reads, 3);
+  assert.equal(browser.document.querySelector(".next-step-card h2").textContent, "Per ora è tutto.");
+  assert.equal(browser.document.querySelector(".next-step-card__complete"), null);
+});
+
+for (const outcome of ["error", "unconfirmed"]) {
+  test(`Home: ${outcome} conserva l'azione e permette di riprovare`, async (context) => {
+    const api = mockNextStepApi(context);
+    await mount(HomeWithNextStep);
+    await click(".next-step-card__complete");
+    await act(async () => api.reply(outcome));
+    const card = browser.document.querySelector(".next-step-card");
+    assert.equal(card.querySelector("h2").textContent, "Comprare il latte");
+    assert.match(card.querySelector('[role="alert"]').textContent, /Riprova/);
+    assert.equal(card.querySelector(".next-step-card__complete").disabled, false);
+    assert.equal(api.reads, 1);
+    await click(".next-step-card__complete");
+    await act(async () => api.reply());
+    assert.equal(browser.document.querySelector(".next-step-card h2").textContent, "Inviare documento");
+    assert.equal(browser.document.querySelector('.next-step-card [role="alert"]'), null);
+    assert.deepEqual(api.writes, [itemId, itemId]);
+  });
+}
+
+test("Home: Dettagli apre il pannello dell'azione senza completarla", async (context) => {
+  const api = mockNextStepApi(context);
+  await mount(HomeWithNextStep);
+  await click(".next-step-card__details");
+  const dialog = browser.document.querySelector("dialog");
+  assert.ok(dialog?.open);
+  assert.equal(dialog.querySelector("h2").textContent, "Comprare il latte");
+  assert.deepEqual(api.writes, []);
+  await click('[aria-label="Chiudi il pannello"]');
+  assert.equal(browser.document.querySelector("dialog"), null);
+});
+
+
+test("Home: Oggi non duplica l'azione evidenziata, conserva i contatori e si aggiorna dopo Completa", async (context) => {
+  const today = getTodayDate();
+  const api = mockNextStepApi(context, [
+    { ...item, title: "Prima azione", date: today, time: "09:00" },
+    { ...item, _id: "dddddddddddddddddddddddd", title: "Seconda azione", date: today, time: "10:00" },
+    { ...item, _id: "eeeeeeeeeeeeeeeeeeeeeeee", title: "Riunione", type: "EVENT", date: today },
+    { ...item, _id: "ffffffffffffffffffffffff", title: "Da verificare", date: today, uncertain: true },
+    { ...item, _id: "111111111111111111111111", title: "Già fatta", date: today, status: "DONE" },
+  ]);
+  await mount(() => h(HomeWithNextStep, { showToday: true }));
+  const titles = () => [...browser.document.querySelectorAll(".today__list h3")].map((node) => node.textContent);
+  const counts = () => [...browser.document.querySelectorAll(".today__summary strong")].map((node) => node.textContent);
+  assert.equal(browser.document.querySelector(".next-step-card h2").textContent, "Prima azione");
+  assert.deepEqual(titles(), ["Seconda azione", "Riunione", "Da verificare"]);
+  assert.deepEqual(counts(), ["2", "1", "1"]);
+  await click(".next-step-card__complete");
+  await act(async () => api.reply());
+  assert.equal(browser.document.querySelector(".next-step-card h2").textContent, "Seconda azione");
+  assert.deepEqual(titles(), ["Riunione", "Da verificare"]);
+  assert.deepEqual(counts(), ["1", "1", "1"]);
+  await click(".next-step-card__complete");
+  await act(async () => api.reply());
+  assert.equal(browser.document.querySelector(".next-step-card h2").textContent, "Per ora è tutto.");
+  assert.deepEqual(titles(), ["Riunione", "Da verificare"]);
+  assert.deepEqual(counts(), ["0", "1", "1"]);
+});
+
+test("Home: con la sola azione evidenziata Oggi mostra solo i contatori, poi il vero stato vuoto", async (context) => {
+  const api = mockNextStepApi(context, [{ ...item, date: getTodayDate() }]);
+  await mount(() => h(HomeWithNextStep, { showToday: true }));
+  assert.equal(browser.document.querySelector(".today__summary strong").textContent, "1");
+  assert.equal(Boolean(browser.document.querySelector(".today__item")), false);
+  assert.equal(browser.document.querySelectorAll(".today__summary-card").length, 3);
+  assert.equal(Boolean(browser.document.querySelector(".today > .today__list")), false);
+  assert.equal(Boolean(browser.document.querySelector(".today__empty")), false);
+  await click(".next-step-card__complete");
+  await act(async () => api.reply());
+  assert.equal(browser.document.querySelector(".today__summary strong").textContent, "0");
+  assert.match(browser.document.querySelector(".today__empty").textContent, /Niente in programma/);
+});
+
+test("Home: se Il prossimo passo è nascosto l'azione resta nell'elenco Oggi", async (context) => {
+  mockNextStepApi(context, [{ ...item, date: getTodayDate() }]);
+  await mount(() => h(HomeWithNextStep, { showToday: true, showNextStep: false }));
+  assert.equal(browser.document.querySelector(".next-step-card"), null);
+  assert.equal(browser.document.querySelector(".today__item h3").textContent, item.title);
+  assert.equal(browser.document.querySelector(".today__summary strong").textContent, "1");
+});
+
+test("Home: una futura evidenziata non fa apparire attività previste oggi", async (context) => {
+  mockNextStepApi(context, [{ ...item, date: "2099-12-01" }]);
+  await mount(() => h(HomeWithNextStep, { showToday: true }));
+  assert.equal(browser.document.querySelector(".next-step-card h2").textContent, item.title);
+  assert.equal(browser.document.querySelector(".today__summary strong").textContent, "0");
+  assert.match(browser.document.querySelector(".today__empty").textContent, /Niente in programma/);
+});
+
+test("Home: anche un'azione arretrata evidenziata non viene duplicata in Da rivedere", async (context) => {
+  mockNextStepApi(context, [{ ...item, date: "2020-01-01" }]);
+  await mount(() => h(HomeWithNextStep, { showToday: true }));
+  assert.equal(browser.document.querySelector(".next-step-card h2").textContent, item.title);
+  assert.equal(Boolean(browser.document.querySelector(".today__overdue .today__item")), false);
+  assert.match(browser.document.querySelector(".today__overdue").textContent, /Da rivedere \(1\)/);
+  assert.match(browser.document.querySelector(".today__overdue").textContent, /Il prossimo passo/);
+});
+
+test("Home: un errore di completamento mantiene contatori e separazione dei moduli", async (context) => {
+  const api = mockNextStepApi(context, [{ ...item, date: getTodayDate() }]);
+  await mount(() => h(HomeWithNextStep, { showToday: true }));
+  await click(".next-step-card__complete");
+  await act(async () => api.reply("error"));
+  assert.equal(browser.document.querySelector(".next-step-card h2").textContent, item.title);
+  assert.equal(browser.document.querySelector(".today__summary strong").textContent, "1");
+  assert.equal(Boolean(browser.document.querySelector(".today__item")), false);
+  assert.equal(Boolean(browser.document.querySelector(".today > .today__list")), false);
+});
+
+
+test("Home: con Il prossimo passo disattivato resta il normale stato vuoto di Oggi", async (context) => {
+  mockNextStepApi(context, []);
+  await mount(() => h(HomeWithNextStep, { showToday: true, showNextStep: false }));
+  assert.equal(browser.document.querySelectorAll(".today__summary-card").length, 3);
+  assert.match(browser.document.querySelector(".today__empty").textContent, /Niente in programma/);
 });

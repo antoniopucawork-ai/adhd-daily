@@ -42,7 +42,7 @@ test("Oggi mostra azioni e appuntamenti del giorno senza includere i completati"
   );
 });
 
-test("Prossimo passo preferisce oggi, poi gli arretrati e infine le azioni senza data", () => {
+test("Prossimo passo preferisce oggi, arretrati, senza data e infine future", () => {
   const overdue = { ...action, date: "2026-11-04" };
   const undated = { ...action, date: null };
   const future = { ...action, date: "2026-11-06" };
@@ -58,7 +58,7 @@ test("Prossimo passo preferisce oggi, poi gli arretrati e infine le azioni senza
   );
   assert.equal(
     getNextAction([future, futureEvent, done, uncertain], today),
-    undefined,
+    future,
   );
   assert.deepEqual(organizeItems([overdue, undated, futureEvent])["da-fare"], [
     overdue,
@@ -90,4 +90,33 @@ test("le azioni arretrate restano aperte e vengono individuate", () => {
     ),
     [overdue],
   );
+});
+
+
+test("Prossimo passo ordina le azioni datate senza modificare la lista ricevuta", () => {
+  const later = { ...action, date: "2026-11-07", time: "08:00" };
+  const afternoon = { ...action, date: "2026-11-06", time: "18:00" };
+  const morning = { ...afternoon, time: "09:00" };
+  const noTime = { ...afternoon, time: null };
+  const items = [later, noTime, afternoon, morning];
+  assert.equal(getNextAction(items, today), morning);
+  assert.deepEqual(items, [later, noTime, afternoon, morning]);
+  assert.equal(getNextAction([noTime, afternoon], today), afternoon);
+  const oldest = { ...action, date: "2026-11-01" };
+  const recent = { ...action, date: "2026-11-04" };
+  assert.equal(getNextAction([recent, oldest], today), oldest);
+  assert.equal(getNextAction([afternoon, morning], "2026-11-06"), morning);
+});
+
+test("Prossimo passo non propone eventi, intenzioni, azioni incerte o completate", () => {
+  assert.equal(getNextAction([
+    { ...action, type: "EVENT" },
+    { ...action, type: "INTENTION" },
+    { ...action, uncertain: true },
+    { ...action, status: "DONE" },
+  ], today), undefined);
+  assert.equal(getNextAction([], today), undefined);
+  const first = { ...action };
+  const second = { ...action };
+  assert.equal(getNextAction([first, second], today), first);
 });

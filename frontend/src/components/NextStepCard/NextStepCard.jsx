@@ -1,13 +1,16 @@
 import { Sparkles, ArrowRight, Check } from "lucide-react";
 
-import { getTodayDate } from "../../utils/date";
-import { getNextAction } from "../../utils/organizeItems";
+import { parseCalendarDate } from "../../utils/date";
 
 import "./NextStepCard.css";
 
-function NextStepCard({ items = [], onOpenItem }) {
-  const nextItem = getNextAction(items, getTodayDate());
-
+function NextStepCard({
+  nextItem = null,
+  onOpenItem,
+  onComplete,
+  completingId = null,
+  completionError = "",
+}) {
   // Nessuna azione disponibile.
   if (!nextItem) {
     return (
@@ -25,18 +28,14 @@ function NextStepCard({ items = [], onOpenItem }) {
     );
   }
 
-  // Apriamo il pannello rapido tramite la Home.
-  function handleOpenItem() {
-    onOpenItem?.(nextItem);
-  }
+  const isCompleting = completingId === nextItem.id;
+  const date = parseCalendarDate(nextItem.date);
+  const dateLabel = date && new Intl.DateTimeFormat("it-IT", {
+    timeZone: "UTC", day: "numeric", month: "long", year: "numeric",
+  }).format(date);
 
   return (
-    <button
-      className="next-step-card glass-surface"
-      type="button"
-      onClick={handleOpenItem}
-      aria-label={`Apri il dettaglio di ${nextItem.title}`}
-    >
+    <section className="next-step-card glass-surface" aria-label="Il prossimo passo">
       <div className="next-step-card__icon">
         <Sparkles size={18} strokeWidth={1.5} aria-hidden="true" />
       </div>
@@ -44,13 +43,38 @@ function NextStepCard({ items = [], onOpenItem }) {
       <div className="next-step-card__content">
         <span>Il prossimo passo</span>
         <h2>{nextItem.title}</h2>
-        <p>Puoi iniziare da qui, con calma.</p>
+        <p>
+          {dateLabel ? `In programma: ${dateLabel}` : "Senza una data fissata"}
+          {nextItem.time && ` · ${nextItem.time}`}
+        </p>
       </div>
 
-      <span className="next-step-card__action" aria-hidden="true">
-        <ArrowRight size={17} strokeWidth={1.5} />
-      </span>
-    </button>
+      <div className="next-step-card__actions">
+        <button
+          className="next-step-card__details"
+          type="button"
+          onClick={() => onOpenItem?.(nextItem)}
+          disabled={completingId !== null}
+          aria-label={`Apri il dettaglio di ${nextItem.title}`}
+        >
+          Dettagli <ArrowRight size={17} aria-hidden="true" />
+        </button>
+        <button
+          className="next-step-card__complete"
+          type="button"
+          onClick={() => onComplete?.(nextItem.id)}
+          disabled={completingId !== null || !onComplete}
+          aria-label={`Completa ${nextItem.title}`}
+          aria-busy={isCompleting}
+        >
+          <Check size={17} aria-hidden="true" />
+          {isCompleting ? "Completamento..." : "Completa"}
+        </button>
+      </div>
+      {completionError && (
+        <p className="next-step-card__error" role="alert">{completionError}</p>
+      )}
+    </section>
   );
 }
 

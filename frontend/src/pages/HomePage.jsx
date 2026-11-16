@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { getTodayDate } from "../utils/date";
+import { getNextAction } from "../utils/organizeItems";
 
 import { useAuth } from "../context/useAuth";
 import { usePreferences } from "../context/usePreferences";
@@ -59,11 +61,18 @@ function HomePage() {
     .filter((module) => module.enabled)
     .sort((a, b) => a.order - b.order);
 
+  // La stessa azione guida la card e l'esclusione dall'elenco Oggi.
+  const nextAction = getNextAction(items, getTodayDate());
+  const highlightedActionId = visibleModules.some((module) => module.id === "nextStep")
+    ? nextAction?.id
+    : null;
+
   const moduleProps = {
     mindDump: {},
 
     today: {
       items,
+      highlightedActionId,
       onComplete: handleCompleteFromPanel,
       onOpenItem: handleOpenItem,
       completingId,
@@ -71,8 +80,11 @@ function HomePage() {
     },
 
     nextStep: {
-      items,
+      nextItem: nextAction,
       onOpenItem: handleOpenItem,
+      onComplete: handleCompleteFromPanel,
+      completingId,
+      completionError,
     },
   };
 
