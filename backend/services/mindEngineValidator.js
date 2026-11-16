@@ -246,7 +246,7 @@ function isTimeSupported(time, text, fragment, fragments) {
     isWithin(fragment, match.index, match.index + match[0].length),
   );
 
-  // Una citazione troncata non deve nascondere una correzione incerta.
+  // Una citazione troncata non deve nascondere una correzione dell'orario.
   // Ci fermiamo prima del frammento di qualsiasi altro elemento.
   let continuationEnd = text.length;
   for (const other of fragments) {
@@ -254,13 +254,25 @@ function isTimeSupported(time, text, fragment, fragments) {
       continuationEnd = Math.min(continuationEnd, other.start);
     }
   }
-  const continuation = text.slice(fragment.end, continuationEnd);
+  // Il frammento può finire dentro "Anzi, alle": includiamo il prefisso
+  // già citato, senza usare l'orario esterno come evidenza positiva.
+  const unfinishedCorrection = text.slice(fragment.start, fragment.end).match(
+    /\banzi\b[\s,:]*(?:forse\b[\s,]*)?(?:(?:alle(?: ore)?|ore)\s*)?$/,
+  );
+  const continuationStart = unfinishedCorrection
+    ? fragment.start + unfinishedCorrection.index
+    : fragment.end;
+  const continuation = text.slice(continuationStart, continuationEnd);
   const [nextTime] = continuation.matchAll(clockPattern);
   if (
     nextTime &&
-    /^[\s,]*anzi[\s,]+forse\s+$/.test(continuation.slice(0, nextTime.index))
+    (
+      /^[\s,]*anzi[\s,]+forse\s+$/.test(continuation.slice(0, nextTime.index)) ||
+      /^[\s,]*(?:\.\s*)?anzi[\s,:]*$/.test(continuation.slice(0, nextTime.index))
+    )
   ) return false;
 
+  let uncertainSentenceCorrection = false;
   const effectiveMatches = matches.filter((match, index) => {
     const next = matches[index + 1];
 
@@ -281,8 +293,22 @@ function isTimeSupported(time, text, fragment, fragments) {
       nextTime.start = previousTime.end + date.start;
     }
 
-    return correctionLink(previousTime, nextTime, text) !== "confirmed";
+    // Solo per gli orari, "Anzi" può correggere la frase appena conclusa.
+    // Non attraversiamo altre frasi o descrizioni dopo il punto.
+    const sentenceCorrection = /^[^.;!?]*\.\s*anzi[\s,:]*$/.test(between);
+    // Confermiamo solo una rettifica composta dal solo orario. Qualsiasi
+    // dubbio o descrizione aggiuntiva richiede una verifica dell'utente.
+    if (
+      sentenceCorrection &&
+      !/^\s*\.?\s*$/.test(
+        text.slice(next.index + next[0].length, continuationEnd),
+      )
+    ) uncertainSentenceCorrection = true;
+    return !sentenceCorrection &&
+      correctionLink(previousTime, nextTime, text) !== "confirmed";
   });
+
+  if (uncertainSentenceCorrection) return false;
 
   const times = new Set(
     effectiveMatches.map(([, hour, minutes, bareHour, bareMinutes, period]) => {
