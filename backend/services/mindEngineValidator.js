@@ -25,12 +25,28 @@ function findLiteralMatches(text, value) {
 }
 
 function findFragment(text, value) {
-  if (typeof value !== "string" || !value.trim()) return null;
+  if (typeof value !== "string" || !value.trim()) {
+    throw new Error("Elemento del Mind Engine senza evidenza nel testo");
+  }
   const fragment = normalizeText(value);
   const [match, duplicate] = findLiteralMatches(text, fragment);
-  if (!match || duplicate) return null;
+  if (!match) {
+    throw new Error("Elemento del Mind Engine senza evidenza nel testo");
+  }
+  if (duplicate) return null;
 
   return { start: match.index, end: match.index + fragment.length };
+}
+
+// Il dubbio resta locale: non cerchiamo "forse" nell'intero Mind Dump.
+function hasLocalForse(text, fragment, fragments) {
+  if (/\bforse\b/.test(text.slice(fragment.start, fragment.end))) return true;
+
+  // Gemini può aver omesso il qualificatore immediatamente precedente.
+  const prefix = text.slice(0, fragment.start).match(/\bforse[\s,:]*$/);
+  return Boolean(prefix) && !fragments.some(
+    (other) => other.start <= prefix.index && prefix.index < other.end,
+  );
 }
 
 function isWithin(fragment, start, end) {
@@ -358,6 +374,9 @@ function validateWithFragment(
 ) {
   const { type, title, temporalExpression } = item;
   let { date, time, uncertain } = item;
+
+  // Citazioni ripetute o sovrapposte non confermano un singolo elemento.
+  if (!fragment || hasLocalForse(text, fragment, fragments)) uncertain = true;
 
   if (
     (date !== null || temporalExpression !== null) &&

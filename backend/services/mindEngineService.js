@@ -51,10 +51,9 @@ const isValidItem = (item) => {
     !Array.isArray(item) &&
     ITEM_TYPES.includes(item.type) &&
     isValidTitle(item.title) &&
-    (item.originalFragment === null ||
-      (typeof item.originalFragment === "string" &&
-        item.originalFragment.trim().length > 0 &&
-        item.originalFragment.length <= MAX_TEXT_LENGTH)) &&
+    typeof item.originalFragment === "string" &&
+    item.originalFragment.trim().length > 0 &&
+    item.originalFragment.length <= MAX_TEXT_LENGTH &&
     (item.date === null ||
       (typeof item.date === "string" &&
         /^\d{4}-\d{2}-\d{2}$/.test(item.date))) &&
@@ -129,7 +128,10 @@ EVIDENZA PER ELEMENTO:
 - Cita la parte che descrive questo singolo pensiero, insieme ai suoi riferimenti
   temporali completi. Non copiare il testo degli altri elementi.
 - Conserva qualificatori, anni espliciti e alternative nella citazione.
-- Se non trovi un frammento univoco, usa originalFragment null.
+- Ogni elemento deve avere un originalFragment non vuoto e rintracciabile nel testo.
+- Non usare null e non inventare citazioni. Se la citazione si ripete,
+  ampliala con il contesto originale disponibile per distinguerla.
+- Conserva sempre "forse" e gli altri qualificatori di incertezza nella citazione.
 
 ESPRESSIONI TEMPORALI:
 
@@ -254,7 +256,7 @@ Restituisci esclusivamente un oggetto JSON:
     {
       "type": "ACTION",
       "title": "Descrizione dell'elemento",
-      "originalFragment": null,
+      "originalFragment": "Citazione letterale del testo originale",
       "date": null,
       "time": null,
       "uncertain": false,

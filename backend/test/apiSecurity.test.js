@@ -378,3 +378,28 @@ test("il timeout annulla il trasporto SDK e gli errori non rivelano dettagli int
     });
   }
 });
+
+
+test("analisi senza evidenza restituisce 502 senza risultati parziali e il tentativo valido successivo riesce", async (context) => {
+  mockActiveUser(context);
+  context.mock.method(console, "warn", () => {});
+  const item = { type: "ACTION", title: originalText, originalFragment: originalText,
+    date: null, time: null, uncertain: false, temporalExpression: null };
+  let items;
+  mockGemini(context, () => geminiResponse(JSON.stringify({ items })));
+  const post = await startApi(context);
+  const userId = "dddddddddddddddddddddddd";
+  for (const originalFragment of [null, "Prenotare un volo per Tokyo"]) {
+    items = [item, { ...item, title: "Prenotare un volo per Tokyo", originalFragment }];
+    const failed = await post("/api/mind-dumps/analyze", { originalText }, bearer(userId));
+    assert.equal(failed.status, 502);
+    assert.deepEqual(await failed.json(), {
+      message: "Non è stato possibile analizzare il pensiero. Riprova.",
+    });
+  }
+  items = [item];
+  const retry = await post("/api/mind-dumps/analyze", { originalText }, bearer(userId));
+  assert.equal(retry.status, 200);
+  assert.deepEqual(await retry.json(), { items: [{ type: "ACTION", title: originalText,
+    date: null, time: null, uncertain: false }] });
+});

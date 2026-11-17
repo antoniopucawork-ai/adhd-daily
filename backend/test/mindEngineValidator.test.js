@@ -86,12 +86,6 @@ for (const [name, text, fields, expected] of [
     { originalFragment: "Dentista", time: null, temporalExpression: "Domani" },
     { date: null, time: null },
   ],
-  [
-    "frammento inventato",
-    "Domani dentista alle 9",
-    { originalFragment: "Domani dentista alle 9 e visita" },
-    { date: null, time: null },
-  ],
 ]) {
   test(name, () => {
     const result = validateItemDate(
@@ -1281,6 +1275,7 @@ test("un pensiero senza riferimenti temporali non diventa incerto per i campi ma
     {
       ...dentist,
       type: "ACTION",
+      title: "Comprare il latte",
       originalFragment: text,
       date: null,
       time: null,
@@ -1291,7 +1286,7 @@ test("un pensiero senza riferimenti temporali non diventa incerto per i campi ma
   );
   assert.deepEqual(result, {
     type: "ACTION",
-    title: "Dentista",
+    title: "Comprare il latte",
     date: null,
     time: null,
     uncertain: false,
@@ -1884,3 +1879,141 @@ for (const [name, text, fragment, proposedTime] of [
     ]);
   });
 }
+
+
+const undatedAction = {
+  type: "ACTION",
+  title: "Comprare il latte",
+  date: null,
+  time: null,
+  uncertain: false,
+  temporalExpression: null,
+};
+
+for (const originalFragment of [null, undefined, "", "   ", "Prenotare un volo per Tokyo"]) {
+  test(`rifiuta l'elemento senza evidenza anche senza data e ora: ${JSON.stringify(originalFragment)}`, () => {
+    assert.throws(() => validateItems([
+      { ...undatedAction, title: "Prenotare un volo per Tokyo", originalFragment },
+    ], "Devo comprare il latte", referenceDate), /senza evidenza nel testo/);
+  });
+}
+
+test("rifiuta la citazione inventata anche quando contiene date e orari", () => {
+  assert.throws(() => validateItems([
+    { ...dentist, originalFragment: "Domani dentista alle 9 e visita" },
+  ], dentist.originalFragment, referenceDate), /senza evidenza nel testo/);
+});
+
+test("un elemento senza evidenza invalida l'intera analisi", () => {
+  assert.throws(() => validateItems([
+    { ...undatedAction, originalFragment: "Devo comprare il latte" },
+    { ...undatedAction, originalFragment: null },
+  ], "Devo comprare il latte", referenceDate), /senza evidenza nel testo/);
+});
+
+for (const [type, text, title] of [
+  ["ACTION", "Devo comprare il latte", "Acquistare il latte"],
+  ["THOUGHT", "Ho bisogno di riposarmi", "Prendermi una pausa"],
+  ["MEMORY", "Ricordo una bella vacanza", "Una bella vacanza"],
+  ["INTENTION", "Vorrei imparare a suonare", "Imparare a suonare"],
+]) {
+  test(`accetta una citazione autentica senza date e un titolo riformulato: ${type}`, () => {
+    const [result] = validateItems([
+      { ...undatedAction, type, title, originalFragment: text },
+    ], text, referenceDate);
+    assert.deepEqual(result, { type, title, date: null, time: null, uncertain: false });
+  });
+}
+
+test("tollera maiuscole, accenti e spazi nella ricerca della citazione", () => {
+  const [result] = validateItems([
+    { ...undatedAction, originalFragment: "devo comprare il caffe" },
+  ], "Devo  comprare il caffè", referenceDate);
+  assert.equal(result.uncertain, false);
+});
+
+test("una citazione ripetuta senza data rimane da verificare", () => {
+  const [result] = validateItems([
+    { ...undatedAction, originalFragment: "Comprare il latte" },
+  ], "Comprare il latte. Comprare il latte.", referenceDate);
+  assert.equal(result.uncertain, true);
+});
+
+test("citazioni sovrapposte senza data restano da verificare", () => {
+  const results = validateItems([
+    { ...undatedAction, originalFragment: "Devo comprare il latte" },
+    { ...undatedAction, originalFragment: "comprare il latte" },
+  ], "Devo comprare il latte", referenceDate);
+  assert.ok(results.every((item) => item.uncertain));
+});
+
+for (const [text, originalFragment] of [
+  ["Forse domani chiamo Marco", "Forse domani chiamo Marco"],
+  ["Forse domani chiamo Marco", "domani chiamo Marco"],
+  ["FORSE, domani chiamo Marco", "domani chiamo Marco"],
+  ["Domani forse chiamo Marco", "Domani forse chiamo Marco"],
+]) {
+  test(`forse conserva la data ma richiede verifica: ${text}, citazione ${originalFragment}`, () => {
+    const [result] = validateItems([
+      { ...undatedAction, title: "Chiamare Marco", originalFragment,
+        date: "2026-11-18", temporalExpression: "domani" },
+    ], text, "2026-11-17");
+    assert.deepEqual(result, { type: "ACTION", title: "Chiamare Marco",
+      date: "2026-11-18", time: null, uncertain: true });
+  });
+}
+
+test("forse conserva anche l'orario supportato e la categoria proposta", () => {
+  const text = "Forse domani alle 9 ho il dentista";
+  const [result] = validateItems([
+    { ...dentist, originalFragment: text, date: "2026-11-18" },
+  ], text, "2026-11-17");
+  assert.deepEqual(result, { type: "EVENT", title: "Dentista",
+    date: "2026-11-18", time: "09:00", uncertain: true });
+});
+
+for (const separator of [". ", "; ", ", "]) {
+  test(`forse non si propaga a un altro elemento separato da ${JSON.stringify(separator)}`, () => {
+    const first = "Forse domani chiamo Marco";
+    const second = "Domani compro il latte";
+    const items = [first, second].map((originalFragment) => ({
+      ...undatedAction, originalFragment, date: "2026-11-18", temporalExpression: "domani",
+    }));
+    const text = first + separator + second;
+    for (const order of [items, [...items].reverse()]) {
+      const results = validateItems(order, text, "2026-11-17");
+      assert.deepEqual(results.map((item) => item.uncertain), order.map((item) => item === items[0]));
+      assert.ok(results.every((item) => item.date === "2026-11-18"));
+    }
+  });
+}
+
+test("il forse immediatamente precedente non viene preso dalla citazione di un altro elemento", () => {
+  const items = [
+    { ...undatedAction, originalFragment: "Dico forse", uncertain: true },
+    { ...undatedAction, originalFragment: "Devo comprare il latte" },
+  ];
+  for (const order of [items, [...items].reverse()]) {
+    const results = validateItems(order, "Dico forse, Devo comprare il latte", referenceDate);
+    assert.deepEqual(results.map((item) => item.uncertain), order.map((item) => item === items[0]));
+  }
+});
+
+for (const text of ["Forse. Domani compro il latte", "Forse; Domani compro il latte", "Forse! Domani compro il latte"]) {
+  test(`non attraversa il confine di frase: ${text}`, () => {
+    const [result] = validateItems([
+      { ...undatedAction, originalFragment: "Domani compro il latte",
+        date: "2026-11-18", temporalExpression: "domani" },
+    ], text, "2026-11-17");
+    assert.equal(result.uncertain, false);
+    assert.equal(result.date, "2026-11-18");
+  });
+}
+
+test("l'incertezza preesistente non viene azzerata e non viene inventata una data", () => {
+  const [result] = validateItems([
+    { ...undatedAction, originalFragment: "Vorrei comprare il latte", uncertain: true },
+  ], "Vorrei comprare il latte", referenceDate);
+  assert.deepEqual(result, { type: "ACTION", title: "Comprare il latte",
+    date: null, time: null, uncertain: true });
+});
