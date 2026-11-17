@@ -1387,7 +1387,6 @@ for (const [text, expression, date] of [
   });
 }
 
-
 for (const [tail, expectedTime, expectedUncertain] of [
   ["anzi mercoledì 18 alle 17", "17:00", false],
   ["oppure alle 17", null, true],
@@ -1397,15 +1396,17 @@ for (const [tail, expectedTime, expectedUncertain] of [
     const text = `Martedì 17 alle 16 vado in banca, ${tail}`;
     const corrected = tail === "anzi mercoledì 18 alle 17";
     const result = validateItems(
-      [{
-        type: "EVENT",
-        title: "Banca",
-        originalFragment: text,
-        date: corrected ? "2026-11-18" : "2026-11-17",
-        time: "17:00",
-        uncertain: false,
-        temporalExpression: corrected ? "mercoledì 18" : "Martedì 17",
-      }],
+      [
+        {
+          type: "EVENT",
+          title: "Banca",
+          originalFragment: text,
+          date: corrected ? "2026-11-18" : "2026-11-17",
+          time: "17:00",
+          uncertain: false,
+          temporalExpression: corrected ? "mercoledì 18" : "Martedì 17",
+        },
+      ],
       text,
       "2026-11-14",
     );
@@ -1421,10 +1422,22 @@ test("la correzione di data e ora mantiene due impegni distinti", () => {
   const second = "giovedì 19 alle 18 vado in palestra";
   const result = validateItems(
     [
-      { ...dentist, title: "Banca", originalFragment: first,
-        date: "2026-11-18", time: "17:00", temporalExpression: "mercoledì 18" },
-      { ...dentist, title: "Palestra", originalFragment: second,
-        date: "2026-11-19", time: "18:00", temporalExpression: "giovedì 19" },
+      {
+        ...dentist,
+        title: "Banca",
+        originalFragment: first,
+        date: "2026-11-18",
+        time: "17:00",
+        temporalExpression: "mercoledì 18",
+      },
+      {
+        ...dentist,
+        title: "Palestra",
+        originalFragment: second,
+        date: "2026-11-19",
+        time: "18:00",
+        temporalExpression: "giovedì 19",
+      },
     ],
     `${first}, ${second}`,
     "2026-11-14",
@@ -1432,23 +1445,27 @@ test("la correzione di data e ora mantiene due impegni distinti", () => {
   assert.equal(result.length, 2);
   assert.deepEqual(
     result.map(({ date, time, uncertain }) => [date, time, uncertain]),
-    [["2026-11-18", "17:00", false], ["2026-11-19", "18:00", false]],
+    [
+      ["2026-11-18", "17:00", false],
+      ["2026-11-19", "18:00", false],
+    ],
   );
 });
-
 
 test("conserva la risposta reale di Gemini con il solo frammento corretto", () => {
   const text = "Martedì 17 alle 16 vado in banca, anzi mercoledì 18 alle 17";
   const result = validateItems(
-    [{
-      type: "EVENT",
-      title: "Andare in banca",
-      originalFragment: "mercoledì 18 alle 17",
-      temporalExpression: "mercoledì 18",
-      date: "2026-11-18",
-      time: "17:00",
-      uncertain: false,
-    }],
+    [
+      {
+        type: "EVENT",
+        title: "Andare in banca",
+        originalFragment: "mercoledì 18 alle 17",
+        temporalExpression: "mercoledì 18",
+        date: "2026-11-18",
+        time: "17:00",
+        uncertain: false,
+      },
+    ],
     text,
     "2026-11-14",
   );
@@ -1459,31 +1476,33 @@ test("conserva la risposta reale di Gemini con il solo frammento corretto", () =
   assert.equal(result[0].uncertain, false);
 });
 
-
 test("non conferma l'orario se il frammento omette anzi forse", () => {
   const fragment = "Sabato 21 novembre alle 16 ho il dentista";
   const result = validateItems(
-    [{
-      type: "EVENT",
-      title: "Dentista",
-      originalFragment: fragment,
-      temporalExpression: "Sabato 21 novembre",
-      date: "2026-11-21",
-      time: "16:00",
-      uncertain: false,
-    }],
+    [
+      {
+        type: "EVENT",
+        title: "Dentista",
+        originalFragment: fragment,
+        temporalExpression: "Sabato 21 novembre",
+        date: "2026-11-21",
+        time: "16:00",
+        uncertain: false,
+      },
+    ],
     `${fragment}, anzi forse alle 17, non sono sicuro.`,
     "2026-11-14",
   );
-  assert.deepEqual(result, [{
-    type: "EVENT",
-    title: "Dentista",
-    date: "2026-11-21",
-    time: null,
-    uncertain: true,
-  }]);
+  assert.deepEqual(result, [
+    {
+      type: "EVENT",
+      title: "Dentista",
+      date: "2026-11-21",
+      time: null,
+      uncertain: true,
+    },
+  ]);
 });
-
 
 for (const suffix of [
   ".",
@@ -1495,25 +1514,29 @@ for (const suffix of [
   test(`la continuazione non pertinente conserva l'orario: ${suffix}`, () => {
     const fragment = "Sabato 21 novembre alle 16 ho il dentista";
     const result = validateItems(
-      [{
-        type: "EVENT",
-        title: "Dentista",
-        originalFragment: fragment,
-        temporalExpression: "Sabato 21 novembre",
-        date: "2026-11-21",
-        time: "16:00",
-        uncertain: false,
-      }],
+      [
+        {
+          type: "EVENT",
+          title: "Dentista",
+          originalFragment: fragment,
+          temporalExpression: "Sabato 21 novembre",
+          date: "2026-11-21",
+          time: "16:00",
+          uncertain: false,
+        },
+      ],
       fragment + suffix,
       "2026-11-14",
     );
-    assert.deepEqual(result, [{
-      type: "EVENT",
-      title: "Dentista",
-      date: "2026-11-21",
-      time: "16:00",
-      uncertain: false,
-    }]);
+    assert.deepEqual(result, [
+      {
+        type: "EVENT",
+        title: "Dentista",
+        date: "2026-11-21",
+        time: "16:00",
+        uncertain: false,
+      },
+    ]);
   });
 }
 
@@ -1523,18 +1546,31 @@ test("la continuazione incerta si ferma al frammento di un altro elemento", () =
   const text = `${first}, anzi forse ${second}`;
   const items = [
     {
-      type: "EVENT", title: "Dentista", originalFragment: first,
-      temporalExpression: "Sabato 21 novembre", date: "2026-11-21",
-      time: "16:00", uncertain: false,
+      type: "EVENT",
+      title: "Dentista",
+      originalFragment: first,
+      temporalExpression: "Sabato 21 novembre",
+      date: "2026-11-21",
+      time: "16:00",
+      uncertain: false,
     },
     {
-      type: "INTENTION", title: "Palestra", originalFragment: second,
-      temporalExpression: null, date: null, time: "17:00", uncertain: true,
+      type: "INTENTION",
+      title: "Palestra",
+      originalFragment: second,
+      temporalExpression: null,
+      date: null,
+      time: "17:00",
+      uncertain: true,
     },
   ];
-  const expected = items.map(({ type, title, date, time, uncertain }) =>
-    ({ type, title, date, time, uncertain }),
-  );
+  const expected = items.map(({ type, title, date, time, uncertain }) => ({
+    type,
+    title,
+    date,
+    time,
+    uncertain,
+  }));
   assert.deepEqual(validateItems(items, text, "2026-11-14"), expected);
   assert.deepEqual(
     validateItems([...items].reverse(), text, "2026-11-14"),
@@ -1542,75 +1578,140 @@ test("la continuazione incerta si ferma al frammento di un altro elemento", () =
   );
 });
 
-
 test("correzione oraria dopo il punto: conserva la proposta finale", () => {
   const text = "Oggi ho il dentista alle 16. Anzi, alle 17.";
   const result = validateItems(
-    [{
-      type: "EVENT",
-      title: "Dentista",
-      originalFragment: text,
-      temporalExpression: "Oggi",
-      date: "2026-11-16",
-      time: "17:00",
-      uncertain: false,
-    }],
+    [
+      {
+        type: "EVENT",
+        title: "Dentista",
+        originalFragment: text,
+        temporalExpression: "Oggi",
+        date: "2026-11-16",
+        time: "17:00",
+        uncertain: false,
+      },
+    ],
     text,
     "2026-11-16",
   );
-  assert.deepEqual(result, [{
-    type: "EVENT",
-    title: "Dentista",
-    date: "2026-11-16",
-    time: "17:00",
-    uncertain: false,
-  }]);
+  assert.deepEqual(result, [
+    {
+      type: "EVENT",
+      title: "Dentista",
+      date: "2026-11-16",
+      time: "17:00",
+      uncertain: false,
+    },
+  ]);
 });
 
-
-for (const [name, text, fragment, proposedTime, expectedTime, expectedUncertain] of [
-  ["proposta superata con citazione completa",
+for (const [
+  name,
+  text,
+  fragment,
+  proposedTime,
+  expectedTime,
+  expectedUncertain,
+] of [
+  [
+    "proposta superata con citazione completa",
     "Oggi ho il dentista alle 16. Anzi, alle 17.",
-    "Oggi ho il dentista alle 16. Anzi, alle 17.", "16:00", null, true],
-  ["citazione iniziale senza punto",
     "Oggi ho il dentista alle 16. Anzi, alle 17.",
-    "Oggi ho il dentista alle 16", "16:00", null, true],
-  ["citazione iniziale con punto",
+    "16:00",
+    null,
+    true,
+  ],
+  [
+    "citazione iniziale senza punto",
     "Oggi ho il dentista alle 16. Anzi, alle 17.",
-    "Oggi ho il dentista alle 16.", "16:00", null, true],
-  ["citazione iniziale e correzione nella stessa frase",
-    "Oggi ho il dentista alle 16, anzi alle 17.",
-    "Oggi ho il dentista alle 16", "16:00", null, true],
-  ["proposta diversa dalla correzione",
+    "Oggi ho il dentista alle 16",
+    "16:00",
+    null,
+    true,
+  ],
+  [
+    "citazione iniziale con punto",
     "Oggi ho il dentista alle 16. Anzi, alle 17.",
-    "Oggi ho il dentista alle 16. Anzi, alle 17.", "18:00", null, true],
-  ["correzione incerta con citazione completa",
-    "Oggi ho il dentista alle 16, anzi forse alle 17.",
-    "Oggi ho il dentista alle 16, anzi forse alle 17.", "17:00", null, true],
-  ["ora non valida nella continuazione",
-    "Oggi ho il dentista alle 16. Anzi, alle 170.",
-    "Oggi ho il dentista alle 16", "16:00", "16:00", false],
-  ["orari con minuti separati da un punto",
-    "Oggi ho il dentista alle 16.30. Anzi, alle 17.30.",
-    "Oggi ho il dentista alle 16.30. Anzi, alle 17.30.", "17:30", "17:30", false],
-  ["appuntamento senza correzione",
     "Oggi ho il dentista alle 16.",
-    "Oggi ho il dentista alle 16.", "16:00", "16:00", false],
+    "16:00",
+    null,
+    true,
+  ],
+  [
+    "citazione iniziale e correzione nella stessa frase",
+    "Oggi ho il dentista alle 16, anzi alle 17.",
+    "Oggi ho il dentista alle 16",
+    "16:00",
+    null,
+    true,
+  ],
+  [
+    "proposta diversa dalla correzione",
+    "Oggi ho il dentista alle 16. Anzi, alle 17.",
+    "Oggi ho il dentista alle 16. Anzi, alle 17.",
+    "18:00",
+    null,
+    true,
+  ],
+  [
+    "correzione incerta con citazione completa",
+    "Oggi ho il dentista alle 16, anzi forse alle 17.",
+    "Oggi ho il dentista alle 16, anzi forse alle 17.",
+    "17:00",
+    null,
+    true,
+  ],
+  [
+    "ora non valida nella continuazione",
+    "Oggi ho il dentista alle 16. Anzi, alle 170.",
+    "Oggi ho il dentista alle 16",
+    "16:00",
+    "16:00",
+    false,
+  ],
+  [
+    "orari con minuti separati da un punto",
+    "Oggi ho il dentista alle 16.30. Anzi, alle 17.30.",
+    "Oggi ho il dentista alle 16.30. Anzi, alle 17.30.",
+    "17:30",
+    "17:30",
+    false,
+  ],
+  [
+    "appuntamento senza correzione",
+    "Oggi ho il dentista alle 16.",
+    "Oggi ho il dentista alle 16.",
+    "16:00",
+    "16:00",
+    false,
+  ],
 ]) {
   test(`correzione oraria adiacente: ${name}`, () => {
     const result = validateItems(
-      [{
-        type: "EVENT", title: "Dentista", originalFragment: fragment,
-        temporalExpression: "Oggi", date: "2026-11-16",
-        time: proposedTime, uncertain: false,
-      }],
+      [
+        {
+          type: "EVENT",
+          title: "Dentista",
+          originalFragment: fragment,
+          temporalExpression: "Oggi",
+          date: "2026-11-16",
+          time: proposedTime,
+          uncertain: false,
+        },
+      ],
       text,
       "2026-11-16",
     );
-    assert.deepEqual(result, [{
-      type: "EVENT", title: "Dentista", date: "2026-11-16",
-      time: expectedTime, uncertain: expectedUncertain,
-    }]);
+    assert.deepEqual(result, [
+      {
+        type: "EVENT",
+        title: "Dentista",
+        date: "2026-11-16",
+        time: expectedTime,
+        uncertain: expectedUncertain,
+      },
+    ]);
   });
 }
 
@@ -1619,17 +1720,39 @@ test("la correzione oraria adiacente rispetta i confini degli altri elementi", (
   const second = "Domani alle 10 ho una riunione, anzi alle 11";
   const items = [
     {
-      type: "EVENT", title: "Dentista", originalFragment: first,
-      temporalExpression: "Oggi", date: "2026-11-16", time: "16:00", uncertain: false,
+      type: "EVENT",
+      title: "Dentista",
+      originalFragment: first,
+      temporalExpression: "Oggi",
+      date: "2026-11-16",
+      time: "16:00",
+      uncertain: false,
     },
     {
-      type: "EVENT", title: "Riunione", originalFragment: second,
-      temporalExpression: "Domani", date: "2026-11-17", time: "11:00", uncertain: false,
+      type: "EVENT",
+      title: "Riunione",
+      originalFragment: second,
+      temporalExpression: "Domani",
+      date: "2026-11-17",
+      time: "11:00",
+      uncertain: false,
     },
   ];
   const expected = [
-    { type: "EVENT", title: "Dentista", date: "2026-11-16", time: "16:00", uncertain: false },
-    { type: "EVENT", title: "Riunione", date: "2026-11-17", time: "11:00", uncertain: false },
+    {
+      type: "EVENT",
+      title: "Dentista",
+      date: "2026-11-16",
+      time: "16:00",
+      uncertain: false,
+    },
+    {
+      type: "EVENT",
+      title: "Riunione",
+      date: "2026-11-17",
+      time: "11:00",
+      uncertain: false,
+    },
   ];
   const text = `${first}. ${second}.`;
   assert.deepEqual(validateItems(items, text, "2026-11-16"), expected);
@@ -1645,55 +1768,119 @@ test("Anzi fuori citazione non usa l'orario del frammento di un altro impegno", 
   const result = validateItems(
     [
       {
-        type: "EVENT", title: "Dentista", originalFragment: first,
-        temporalExpression: "Oggi", date: "2026-11-16", time: "16:00", uncertain: false,
+        type: "EVENT",
+        title: "Dentista",
+        originalFragment: first,
+        temporalExpression: "Oggi",
+        date: "2026-11-16",
+        time: "16:00",
+        uncertain: false,
       },
       {
-        type: "EVENT", title: "Riunione", originalFragment: second,
-        temporalExpression: null, date: null, time: "17:00", uncertain: false,
+        type: "EVENT",
+        title: "Riunione",
+        originalFragment: second,
+        temporalExpression: null,
+        date: null,
+        time: "17:00",
+        uncertain: false,
       },
     ],
     `${first}. Anzi, ${second}.`,
     "2026-11-16",
   );
   assert.deepEqual(result, [
-    { type: "EVENT", title: "Dentista", date: "2026-11-16", time: "16:00", uncertain: false },
-    { type: "EVENT", title: "Riunione", date: null, time: "17:00", uncertain: false },
+    {
+      type: "EVENT",
+      title: "Dentista",
+      date: "2026-11-16",
+      time: "16:00",
+      uncertain: false,
+    },
+    {
+      type: "EVENT",
+      title: "Riunione",
+      date: null,
+      time: "17:00",
+      uncertain: false,
+    },
   ]);
 });
 
-
 for (const [name, text, fragment, proposedTime] of [
-  ["dubbio dopo l'orario", "Oggi ho il dentista alle 16. Anzi, alle 17, forse.",
-    "Oggi ho il dentista alle 16. Anzi, alle 17, forse.", "17:00"],
-  ["orario interrogativo", "Oggi ho il dentista alle 16. Anzi, alle 17?",
-    "Oggi ho il dentista alle 16. Anzi, alle 17?", "17:00"],
-  ["citazione troncata dopo Anzi", "Oggi ho il dentista alle 16. Anzi, alle 17.",
-    "Oggi ho il dentista alle 16. Anzi,", "16:00"],
-  ["citazione troncata dopo alle", "Oggi ho il dentista alle 16. Anzi, alle 17.",
-    "Oggi ho il dentista alle 16. Anzi, alle", "16:00"],
-  ["descrizione di un altro evento", "Oggi ho il dentista alle 16. Anzi, alle 17 ho una riunione",
-    "Oggi ho il dentista alle 16. Anzi, alle 17 ho una riunione", "17:00"],
-  ["dubbio escluso dalla citazione", "Oggi ho il dentista alle 16. Anzi, alle 17, forse.",
-    "Oggi ho il dentista alle 16. Anzi, alle 17", "17:00"],
-  ["stesso orario ma certezza non dimostrata", "Oggi ho il dentista alle 16. Anzi, alle 16?",
-    "Oggi ho il dentista alle 16. Anzi, alle 16?", "16:00"],
-  ["citazione troncata dentro una correzione incerta", "Oggi ho il dentista alle 16, anzi forse alle 17.",
-    "Oggi ho il dentista alle 16, anzi forse", "16:00"],
+  [
+    "dubbio dopo l'orario",
+    "Oggi ho il dentista alle 16. Anzi, alle 17, forse.",
+    "Oggi ho il dentista alle 16. Anzi, alle 17, forse.",
+    "17:00",
+  ],
+  [
+    "orario interrogativo",
+    "Oggi ho il dentista alle 16. Anzi, alle 17?",
+    "Oggi ho il dentista alle 16. Anzi, alle 17?",
+    "17:00",
+  ],
+  [
+    "citazione troncata dopo Anzi",
+    "Oggi ho il dentista alle 16. Anzi, alle 17.",
+    "Oggi ho il dentista alle 16. Anzi,",
+    "16:00",
+  ],
+  [
+    "citazione troncata dopo alle",
+    "Oggi ho il dentista alle 16. Anzi, alle 17.",
+    "Oggi ho il dentista alle 16. Anzi, alle",
+    "16:00",
+  ],
+  [
+    "descrizione di un altro evento",
+    "Oggi ho il dentista alle 16. Anzi, alle 17 ho una riunione",
+    "Oggi ho il dentista alle 16. Anzi, alle 17 ho una riunione",
+    "17:00",
+  ],
+  [
+    "dubbio escluso dalla citazione",
+    "Oggi ho il dentista alle 16. Anzi, alle 17, forse.",
+    "Oggi ho il dentista alle 16. Anzi, alle 17",
+    "17:00",
+  ],
+  [
+    "stesso orario ma certezza non dimostrata",
+    "Oggi ho il dentista alle 16. Anzi, alle 16?",
+    "Oggi ho il dentista alle 16. Anzi, alle 16?",
+    "16:00",
+  ],
+  [
+    "citazione troncata dentro una correzione incerta",
+    "Oggi ho il dentista alle 16, anzi forse alle 17.",
+    "Oggi ho il dentista alle 16, anzi forse",
+    "16:00",
+  ],
 ]) {
   test(`sicurezza K5: ${name}`, () => {
     const result = validateItems(
-      [{
-        type: "EVENT", title: "Dentista", originalFragment: fragment,
-        temporalExpression: "Oggi", date: "2026-11-16",
-        time: proposedTime, uncertain: false,
-      }],
+      [
+        {
+          type: "EVENT",
+          title: "Dentista",
+          originalFragment: fragment,
+          temporalExpression: "Oggi",
+          date: "2026-11-16",
+          time: proposedTime,
+          uncertain: false,
+        },
+      ],
       text,
       "2026-11-16",
     );
-    assert.deepEqual(result, [{
-      type: "EVENT", title: "Dentista", date: "2026-11-16",
-      time: null, uncertain: true,
-    }]);
+    assert.deepEqual(result, [
+      {
+        type: "EVENT",
+        title: "Dentista",
+        date: "2026-11-16",
+        time: null,
+        uncertain: true,
+      },
+    ]);
   });
 }
