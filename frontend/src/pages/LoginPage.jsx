@@ -23,6 +23,7 @@ function LoginPage() {
   const [needsEmailVerification, setNeedsEmailVerification] = useState(false);
 
   // Riferimenti utilizzati per il login Google
+  const loginFormRef = useRef(null);
   const googleButtonRef = useRef(null);
   const googleLoginRef = useRef(loginWithGoogle);
   const loginInProgressRef = useRef(false);
@@ -66,9 +67,13 @@ function LoginPage() {
   // LOGIN CON GOOGLE
 
   useEffect(() => {
-    if (!GOOGLE_CLIENT_ID) return;
+    const form = loginFormRef.current;
+    const googleButton = googleButtonRef.current;
+    if (!GOOGLE_CLIENT_ID || !form || !googleButton) return;
 
     let active = true;
+    let resizeObserver;
+    let resizeFrame;
 
     // Riceviamo la credenziale restituita da Google
     async function handleGoogleCredential(response) {
@@ -104,29 +109,46 @@ function LoginPage() {
 
     // Prepariamo il pulsante ufficiale Google
     function initializeGoogle() {
-      if (!active || !window.google?.accounts?.id || !googleButtonRef.current) {
-        return;
-      }
+      const identity = window.google?.accounts?.id;
+      if (!active || !identity || resizeObserver) return;
 
-      window.google.accounts.id.initialize({
+      identity.initialize({
         client_id: GOOGLE_CLIENT_ID,
         callback: handleGoogleCredential,
         ux_mode: "popup",
       });
 
-      // Evitiamo di creare pulsanti duplicati
-      googleButtonRef.current.replaceChildren();
+      let renderedWidth = 0;
 
-      window.google.accounts.id.renderButton(googleButtonRef.current, {
-        type: "standard",
-        theme: "outline_dark",
-        size: "large",
-        text: "continue_with",
-        shape: "pill",
-        logo_alignment: "left",
-        width: String(Math.min(400, googleButtonRef.current.clientWidth)),
-        locale: "it",
+      function renderGoogleButton() {
+        resizeFrame = undefined;
+        if (!active) return;
+
+        // Il form si adatta alla scheda indipendentemente dall'iframe Google.
+        const width = Math.min(400, Math.floor(form.getBoundingClientRect().width));
+        if (width <= 0 || width === renderedWidth) return;
+
+        googleButton.replaceChildren();
+        identity.renderButton(googleButton, {
+          type: "standard",
+          theme: "outline_dark",
+          size: "large",
+          text: "continue_with",
+          shape: "pill",
+          logo_alignment: "left",
+          width: String(width),
+          locale: "it",
+        });
+        renderedWidth = width;
+      }
+
+      renderGoogleButton();
+      resizeObserver = new ResizeObserver(() => {
+        if (resizeFrame === undefined) {
+          resizeFrame = requestAnimationFrame(renderGoogleButton);
+        }
       });
+      resizeObserver.observe(form);
     }
 
     // Mostriamo un errore se lo script Google non viene caricato
@@ -163,6 +185,8 @@ function LoginPage() {
     // Rimuoviamo gli eventi quando lasciamo la pagina
     return () => {
       active = false;
+      resizeObserver?.disconnect();
+      if (resizeFrame !== undefined) cancelAnimationFrame(resizeFrame);
 
       script.removeEventListener("load", initializeGoogle);
       script.removeEventListener("error", handleScriptError);
@@ -182,6 +206,7 @@ function LoginPage() {
         {/* LOGIN CON EMAIL E PASSWORD */}
 
         <form
+          ref={loginFormRef}
           className="access-form"
           onSubmit={handleSubmit}
           aria-labelledby="login-title"
@@ -261,6 +286,7 @@ function LoginPage() {
             <div
               ref={googleButtonRef}
               style={{
+                colorScheme: "light",
                 width: "100%",
                 maxWidth: "400px",
                 opacity: isLoading ? 0.6 : 1,
