@@ -133,7 +133,17 @@ function TodayList({
                   </div>
 
                   <div className="today__content">
-                    <h3>{item.title}</h3>
+                    <h3>
+                      <button
+                        className="today__item-title"
+                        type="button"
+                        aria-label={`Apri dettagli di ${item.title}`}
+                        aria-haspopup="dialog"
+                        onClick={() => onOpenItem?.(item)}
+                      >
+                        {item.title}
+                      </button>
+                    </h3>
                     <p>{item.time || "Durante la giornata"}</p>
                   </div>
 

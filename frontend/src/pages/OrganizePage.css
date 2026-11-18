@@ -852,6 +852,33 @@
   text-decoration-color: rgba(169, 205, 235, 0.65);
 }
 
+.organize__reopen {
+  margin-top: 8px;
+  min-height: 44px;
+  padding: 6px 12px;
+  color: #a9cdeb;
+  background: transparent;
+  border: 1px solid rgba(169, 205, 235, 0.3);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.organize__reopen:hover:not(:disabled) {
+  background: rgba(169, 205, 235, 0.1);
+}
+
+.organize__reopen:focus-visible {
+  outline: 2px solid #a9cdeb;
+  outline-offset: 2px;
+}
+
+.organize__reopen:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
 @media (max-width: 768px) {
   .organize__completed {
     margin-top: 20px;

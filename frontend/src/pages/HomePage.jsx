@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { getTodayDate } from "../utils/date";
 import { getNextAction } from "../utils/organizeItems";
 
@@ -120,6 +121,11 @@ function HomePage() {
           <p role="alert" className="home__error">
             {loadingError}
           </p>
+        ) : visibleModules.length === 0 ? (
+          <div className="home__empty glass-surface">
+            <p>Hai nascosto tutti i moduli della Home</p>
+            <Link to="/impostazioni">Personalizza la Home</Link>
+          </div>
         ) : (
           <div className="home__dashboard">
             {visibleModules.map((module) => {

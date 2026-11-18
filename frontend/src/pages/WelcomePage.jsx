@@ -6,7 +6,6 @@ function WelcomePage() {
   return (
     <PublicAccessLayout
       variant="welcome"
-      eyebrow="Uno spazio tutto tuo"
       title="Qui inizia il tuo spazio."
       description="Non serve avere tutto in ordine. C’è spazio anche per i pensieri in disordine."
     >

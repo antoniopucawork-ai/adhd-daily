@@ -11,7 +11,7 @@ export default function PublicAccessLayout({ variant, eyebrow, title, descriptio
             <img src={adhdDailySymbol} alt="" width={746} height={542} />
             <span>ADHD Daily</span>
           </div>
-          <p className="access-page__eyebrow">{eyebrow}</p>
+          {eyebrow && <p className="access-page__eyebrow">{eyebrow}</p>}
           <h1>{title}</h1>
           <p className="access-page__description">{description}</p>
         </header>

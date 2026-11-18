@@ -122,9 +122,9 @@ function LoginPage() {
         theme: "outline_dark",
         size: "large",
         text: "continue_with",
-        shape: "rectangular",
+        shape: "pill",
         logo_alignment: "left",
-        width: Math.min(340, googleButtonRef.current.clientWidth),
+        width: String(Math.min(400, googleButtonRef.current.clientWidth)),
         locale: "it",
       });
     }

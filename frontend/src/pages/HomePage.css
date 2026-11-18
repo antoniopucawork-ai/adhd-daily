@@ -125,6 +125,33 @@
   line-height: 1.5;
 }
 
+.home__empty {
+  max-width: 420px;
+  padding: clamp(16px, 3vw, 24px);
+  border-radius: 18px;
+  color: var(--color-text);
+}
+
+.home__empty p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.home__empty a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: 4px;
+  color: #a9cdeb;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.home__empty a:focus-visible {
+  outline: 2px solid #a9cdeb;
+  outline-offset: 2px;
+}
+
 /* Moduli della dashboard */
 
 .home__dashboard {

@@ -151,6 +151,7 @@
 
 .access-page--welcome {
   --access-glow: #43304d;
+  font-family: var(--font-body);
   text-align: center;
 }
 
@@ -165,8 +166,8 @@
 }
 
 .access-page--welcome .access-page__layout {
-  width: min(100%, 720px);
-  gap: 26px;
+  width: min(100%, 572px);
+  gap: clamp(20px, 3vw, 26px);
 }
 
 .access-page__intro {
@@ -193,9 +194,15 @@
 }
 
 .access-page--welcome .access-page__brand {
-  --access-symbol-width: 60px;
+  --access-symbol-width: clamp(100px, 12vw, 144px);
 
-  font-size: 24px;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: clamp(20px, 3vw, 24px);
+  font-size: clamp(34px, 4.5vw, 48px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
 }
 
 .access-page__eyebrow {
@@ -222,7 +229,9 @@
 }
 
 .access-page--welcome h1 {
-  font-size: clamp(46px, 8vw, 94px);
+  font-size: clamp(23px, 3vw, 29px);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
 }
 
 .access-page__description {
@@ -380,18 +389,23 @@
   font-size: 14px;
 }
 
+@media (max-width: 560px) {
+  .access-page--welcome .access-page__actions {
+    flex-direction: column;
+  }
+
+  .access-page--welcome .access-page__actions a {
+    flex: auto;
+    max-width: none;
+  }
+}
+
 @media (min-width: 800px) {
   .access-page__brand {
     --access-symbol-width: 78px;
 
     gap: 10px;
     font-size: 29px;
-  }
-
-  .access-page--welcome .access-page__brand {
-    --access-symbol-width: 80px;
-
-    font-size: 30px;
   }
 
   :is(.access-page--login, .access-page--register) .access-page__layout {

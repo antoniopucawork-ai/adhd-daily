@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion, useReducedMotion } from "motion/react";
 
@@ -14,7 +14,9 @@ import {
 } from "lucide-react";
 
 import EditableItemQuickPanel from "../components/ItemQuickPanel/EditableItemQuickPanel";
+import { useAuth } from "../context/useAuth";
 import { useMindDumps } from "../hooks/useMindDumps";
+import { updateMindDumpItem } from "../services/mindDumpItems";
 
 import { organizeItems, getCompletedItems } from "../utils/organizeItems";
 
@@ -495,8 +497,12 @@ function OrganizePage() {
   const navigate = useNavigate();
   const { category } = useParams();
 
+  const { token } = useAuth();
   const { items, isLoading, error, reload } = useMindDumps();
   const [selectedItem, setSelectedItem] = useState(null);
+  const [reopeningId, setReopeningId] = useState(null);
+  const [reopenErrorId, setReopenErrorId] = useState(null);
+  const reopeningRef = useRef(false);
 
   // Tutti i gruppi derivano dai dati MongoDB.
   const organizedItems = organizeItems(items);
@@ -520,6 +526,26 @@ function OrganizePage() {
   const toggleVerification = () => {
     navigate(isVerificationActive ? "/organizza" : "/organizza/da-verificare");
   };
+
+  async function reopenItem(item) {
+    if (reopeningRef.current) return;
+
+    reopeningRef.current = true;
+    setReopeningId(item.id);
+    setReopenErrorId(null);
+
+    try {
+      await updateMindDumpItem({ item, changes: { status: "TODO" }, token });
+      reload();
+    } catch (requestError) {
+      if (requestError.name !== "AbortError" && requestError.status !== 401) {
+        setReopenErrorId(item.id);
+      }
+    } finally {
+      reopeningRef.current = false;
+      setReopeningId(null);
+    }
+  }
 
   return (
     <main className="organize">
@@ -646,6 +672,18 @@ function OrganizePage() {
                     <strong>{item.title}</strong>
                     {item.date && <p>Data prevista: {item.date}</p>}
                     {item.time && <p>Ora prevista: {item.time}</p>}
+                    <button
+                      type="button"
+                      className="organize__reopen"
+                      disabled={reopeningId !== null}
+                      aria-busy={reopeningId === item.id}
+                      onClick={() => reopenItem(item)}
+                    >
+                      {reopeningId === item.id ? "Riapertura in corso…" : "Riapri attività"}
+                    </button>
+                    {reopenErrorId === item.id && (
+                      <p role="alert">Non riesco a riaprire l’attività. Riprova.</p>
+                    )}
                   </li>
                 ))}
               </ul>
